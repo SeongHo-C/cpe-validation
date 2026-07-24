@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "digest": "sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+  "size": 3881,
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:4e9cb555d708e0829c9d93e5eeae9dfab0617b832ca436a690680e0fca735ef5",
+      "size": 2493,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "amd64",
+        "org.opencontainers.image.base.digest": "sha256:5009ae2bfc9ff32268f48dd81844776a977a88cdfba28577db9b5857127a044a",
+        "org.opencontainers.image.base.name": "buildpack-deps:bookworm",
+        "org.opencontainers.image.created": "2026-07-14T04:18:25Z",
+        "org.opencontainers.image.revision": "303e6c3be0be8010403376712d3018fb99809f86",
+        "org.opencontainers.image.source": "https://github.com/nodejs/docker-node.git#303e6c3be0be8010403376712d3018fb99809f86:24/bookworm",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/node",
+        "org.opencontainers.image.version": "24"
+      },
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:800a63272f0971cea91225ae9cc4fd59e1ef8a5db035fb24f7095e4f55fb6370",
+      "size": 842,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "amd64",
+        "vnd.docker.reference.digest": "sha256:4e9cb555d708e0829c9d93e5eeae9dfab0617b832ca436a690680e0fca735ef5",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:4ff2a3b4ac84d69e1f1a7f49d683e9675babea1828bdeeec1af0c6b7690ed0a4",
+      "size": 2495,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm64v8",
+        "org.opencontainers.image.base.digest": "sha256:a60c415ba968e9accc8795332295eca29c58968ef95d45616e90e2a5da40f498",
+        "org.opencontainers.image.base.name": "buildpack-deps:bookworm",
+        "org.opencontainers.image.created": "2026-07-14T04:20:17Z",
+        "org.opencontainers.image.revision": "303e6c3be0be8010403376712d3018fb99809f86",
+        "org.opencontainers.image.source": "https://github.com/nodejs/docker-node.git#303e6c3be0be8010403376712d3018fb99809f86:24/bookworm",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/node",
+        "org.opencontainers.image.version": "24"
+      },
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux",
+        "variant": "v8"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:643630ddea9bea9e0c78d2cf1f68d2d4dab6ffd957b8d980746eee5af60ee60d",
+      "size": 842,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm64v8",
+        "vnd.docker.reference.digest": "sha256:4ff2a3b4ac84d69e1f1a7f49d683e9675babea1828bdeeec1af0c6b7690ed0a4",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:f9b7695133613c2c7a3c417114056ebee006d9452eef17611d26c74e2057b12f",
+      "size": 2495,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "ppc64le",
+        "org.opencontainers.image.base.digest": "sha256:8c8d8bd39ee2cf2e6256b8efddad9f59061dc0c1618d834eb48c3c8ef2f74bab",
+        "org.opencontainers.image.base.name": "buildpack-deps:bookworm",
+        "org.opencontainers.image.created": "2026-07-14T18:40:55Z",
+        "org.opencontainers.image.revision": "303e6c3be0be8010403376712d3018fb99809f86",
+        "org.opencontainers.image.source": "https://github.com/nodejs/docker-node.git#303e6c3be0be8010403376712d3018fb99809f86:24/bookworm",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/node",
+        "org.opencontainers.image.version": "24"
+      },
+      "platform": {
+        "architecture": "ppc64le",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:370b058550f607d3c09e06c7a396d555937270361a583e69cc3cda3b100925f4",
+      "size": 842,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "ppc64le",
+        "vnd.docker.reference.digest": "sha256:f9b7695133613c2c7a3c417114056ebee006d9452eef17611d26c74e2057b12f",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    }
+  ]
+}

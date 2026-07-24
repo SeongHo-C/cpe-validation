@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "digest": "sha256:dc561d52bb8ad3c038867123ed2dc8357c4c128f047cdbd526cd65cf39408cbd",
+  "size": 10253,
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:af555492adabc62071f81d4364d17fb774f08bc9d0434b9bf393d9e8e616545d",
+      "size": 2106,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "amd64",
+        "org.opencontainers.image.base.digest": "sha256:9bb8a3626890e084ab54e888fdd7c4b6d2f119071cd4c5dc5fecb4d73062aa5f",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T01:22:08Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:340c38bd31b1a627d6968f7ffface7c2a40056869c0a9374e35465cf071d2436",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "amd64",
+        "vnd.docker.reference.digest": "sha256:af555492adabc62071f81d4364d17fb774f08bc9d0434b9bf393d9e8e616545d",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:e3fb16076977a97cead247a8cb08bee926c690e0b5705efbc051619429e37145",
+      "size": 2108,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm32v5",
+        "org.opencontainers.image.base.digest": "sha256:98f06d78c72d835482429d032cefc093ca6810163f9dcf4686af3bd82f43dc54",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T01:17:34Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v5"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:64fc0f04bbf16a3d69cd9beb2453bfaca369a1feef485fcf14083c2437f84ce1",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm32v5",
+        "vnd.docker.reference.digest": "sha256:e3fb16076977a97cead247a8cb08bee926c690e0b5705efbc051619429e37145",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:ea85bfaa5b0108d485e2eb9a279d99b3c58e5bcb5a6c4f874b33ff4b18f77f2c",
+      "size": 2108,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm32v7",
+        "org.opencontainers.image.base.digest": "sha256:0a9bba002ccc856b1f2eb307f0cc24a22ddbbb4eb891c2d21c83ba30afe43d8d",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T01:19:06Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v7"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:c9d2358a32d330fd23940d0d6df1b35c020ca45a386c637a196cf8e366baa9ff",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm32v7",
+        "vnd.docker.reference.digest": "sha256:ea85bfaa5b0108d485e2eb9a279d99b3c58e5bcb5a6c4f874b33ff4b18f77f2c",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:34e3f9d137fea087de25559f714b9296681d3a2df41767015ee18e761bc635e9",
+      "size": 2108,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm64v8",
+        "org.opencontainers.image.base.digest": "sha256:8b5033c95ca60cdffb0e0f4c446e5f714e82d8960a9ef4153c0eaf13e988b0ea",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T01:22:01Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux",
+        "variant": "v8"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:1e4c27c4f47fe1fa6b209073eb405e249d1f127c8335c44fab6c295bc5309798",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm64v8",
+        "vnd.docker.reference.digest": "sha256:34e3f9d137fea087de25559f714b9296681d3a2df41767015ee18e761bc635e9",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:08f6f3027bc563e87a18063846312b1b373df7a6a713bdaf31fa9c746128722a",
+      "size": 2105,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "i386",
+        "org.opencontainers.image.base.digest": "sha256:53dfdbcd6fbc78c5052f35d2a5c798259f4c615cd93582b4ff5ad4f04249c7e3",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T01:18:24Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "386",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:9d43cb5c6b6f521e2b2175394f4b1aee8b893842b72ba8d01b8477ebc0b97bc8",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "i386",
+        "vnd.docker.reference.digest": "sha256:08f6f3027bc563e87a18063846312b1b373df7a6a713bdaf31fa9c746128722a",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:8bfe3f2fcdda8d98450b9aaa97ac7b085ec8d0de3ab177c190e355b74783d5a1",
+      "size": 2108,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "ppc64le",
+        "org.opencontainers.image.base.digest": "sha256:cc651d86d3e639a3ce1e221ccd8d513d7e7026a64f4e6ef580af6db781902dae",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T01:31:10Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "ppc64le",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:f0bf9529792dd55bb3a144f0d4e024ab463eabb0c57dc1fe80c81d26f46616ff",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "ppc64le",
+        "vnd.docker.reference.digest": "sha256:8bfe3f2fcdda8d98450b9aaa97ac7b085ec8d0de3ab177c190e355b74783d5a1",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:e58d81ee4ec0beee328698e52027a4c467560d25140c0067de8bd073f595d345",
+      "size": 2108,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "riscv64",
+        "org.opencontainers.image.base.digest": "sha256:7244fbb388f7b59c9f584bb2bb7ef3a60b23aa1e55f1ad1d0641bd5ec12390f3",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T03:48:17Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "riscv64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:a1c8255458da1b4cdbc93657869386f3145f7c80ea743b0088d190c939dd3150",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "riscv64",
+        "vnd.docker.reference.digest": "sha256:e58d81ee4ec0beee328698e52027a4c467560d25140c0067de8bd073f595d345",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:add512adcd5f8f26cf3bf67fb7a2dc007ebc159740bb5b25ab353acd300d3ae9",
+      "size": 2106,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "s390x",
+        "org.opencontainers.image.base.digest": "sha256:a5b08992a61bd45490d3600a9e4a5774c114d4f76411c4337e1157827bdd7eb0",
+        "org.opencontainers.image.base.name": "debian:trixie-slim",
+        "org.opencontainers.image.created": "2026-07-14T01:20:31Z",
+        "org.opencontainers.image.revision": "53ac0ecb0bf88b471a0110f8996ce791baf1a667",
+        "org.opencontainers.image.source": "https://github.com/docker-library/memcached.git#53ac0ecb0bf88b471a0110f8996ce791baf1a667:1/debian",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/memcached",
+        "org.opencontainers.image.version": "1.6.45"
+      },
+      "platform": {
+        "architecture": "s390x",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:8bcfe0cc12bc341646774133f7454da0aaf6ec467ebe3d6bb2c1f08510080708",
+      "size": 841,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "s390x",
+        "vnd.docker.reference.digest": "sha256:add512adcd5f8f26cf3bf67fb7a2dc007ebc159740bb5b25ab353acd300d3ae9",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    }
+  ]
+}

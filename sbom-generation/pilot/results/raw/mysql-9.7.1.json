@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "digest": "sha256:cbade841779f1661300e705721f9d2ff159865cc7a8a291affbff43ac6ec7f1d",
+  "size": 2603,
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:b09034342b94a61117ccbf223a4c20f1eef060fcf11b6a721126a9a15286ea3b",
+      "size": 2856,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "amd64",
+        "org.opencontainers.image.base.digest": "sha256:431feabc43183b2f10e1401b0dfd504d8bbd32a851824c137a3e7a334fc054c8",
+        "org.opencontainers.image.base.name": "oraclelinux:9-slim",
+        "org.opencontainers.image.created": "2026-07-23T23:00:56Z",
+        "org.opencontainers.image.revision": "7f30fdb0738041fc5125e8218e393e0a891243e9",
+        "org.opencontainers.image.source": "https://github.com/docker-library/mysql.git#7f30fdb0738041fc5125e8218e393e0a891243e9:9.7",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/mysql",
+        "org.opencontainers.image.version": "9.7.1"
+      },
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:acef6498ad7097a10658f1d65c4e55eec56543be09f1da1c9f38acc835dc456f",
+      "size": 842,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "amd64",
+        "vnd.docker.reference.digest": "sha256:b09034342b94a61117ccbf223a4c20f1eef060fcf11b6a721126a9a15286ea3b",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:67818b6f65e184dd1660f018cd0504d32101dd07855d4fcf395135d337c9a619",
+      "size": 2858,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm64v8",
+        "org.opencontainers.image.base.digest": "sha256:22d40602b78a41cc8514b8c83348aba71c190f506a4d3fb2effb0434f726843d",
+        "org.opencontainers.image.base.name": "oraclelinux:9-slim",
+        "org.opencontainers.image.created": "2026-07-23T23:01:05Z",
+        "org.opencontainers.image.revision": "7f30fdb0738041fc5125e8218e393e0a891243e9",
+        "org.opencontainers.image.source": "https://github.com/docker-library/mysql.git#7f30fdb0738041fc5125e8218e393e0a891243e9:9.7",
+        "org.opencontainers.image.url": "https://hub.docker.com/_/mysql",
+        "org.opencontainers.image.version": "9.7.1"
+      },
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux",
+        "variant": "v8"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:d06479e8b298ce138d4c222371fb912c36a32f4b96d0e3e736a630551f1a27b4",
+      "size": 842,
+      "annotations": {
+        "com.docker.official-images.bashbrew.arch": "arm64v8",
+        "vnd.docker.reference.digest": "sha256:67818b6f65e184dd1660f018cd0504d32101dd07855d4fcf395135d337c9a619",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    }
+  ]
+}
