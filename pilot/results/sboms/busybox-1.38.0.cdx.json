@@ -1,0 +1,107 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:80260db2-b9b4-4fa2-af97-6f834722e2db",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-25T15:57:10+09:00",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "author": "anchore",
+          "name": "syft",
+          "version": "1.49.0"
+        }
+      ]
+    },
+    "component": {
+      "bom-ref": "4382801843ecbee7",
+      "type": "container",
+      "name": "docker.io/library/busybox",
+      "version": "sha256:1cfa4e2b09e127b9c4ed43578d3f3c18e7d44ea47b9ea98475c0cbe9086525f8"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:generic/busybox@1.38.0?package-id=5a5ba7c7211dc63a",
+      "type": "application",
+      "name": "busybox",
+      "version": "1.38.0",
+      "cpe": "cpe:2.3:a:busybox:busybox:1.38.0:*:*:*:*:*:*:*",
+      "purl": "pkg:generic/busybox@1.38.0",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "binary-classifier-cataloger"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "binary"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "binary-signature"
+        },
+        {
+          "name": "syft:location:0:layerID",
+          "value": "sha256:0958e0fef2d6a31e1325b8bfecd99dead933363682d69850a7606599023751bc"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/bin/["
+        }
+      ]
+    },
+    {
+      "bom-ref": "os:busybox@1.38.0",
+      "type": "operating-system",
+      "name": "busybox",
+      "version": "1.38.0",
+      "description": "BusyBox v1.38.0",
+      "swid": {
+        "tagId": "busybox",
+        "name": "busybox",
+        "version": "1.38.0"
+      },
+      "properties": [
+        {
+          "name": "syft:distro:extendedSupport",
+          "value": "false"
+        },
+        {
+          "name": "syft:distro:id",
+          "value": "busybox"
+        },
+        {
+          "name": "syft:distro:idLike:0",
+          "value": "busybox"
+        },
+        {
+          "name": "syft:distro:prettyName",
+          "value": "BusyBox v1.38.0"
+        },
+        {
+          "name": "syft:distro:versionID",
+          "value": "1.38.0"
+        }
+      ]
+    },
+    {
+      "bom-ref": "4707db691d76c753",
+      "type": "file",
+      "name": "/bin/[",
+      "hashes": [
+        {
+          "alg": "SHA-1",
+          "content": "ad043255229d0a1f0a99e1cebaf70d32914c50e1"
+        },
+        {
+          "alg": "SHA-256",
+          "content": "c849b73ca587db87c78f3fefce435c9ead2bbd0f3bb66257531eb8235a41ec45"
+        }
+      ]
+    }
+  ]
+}
