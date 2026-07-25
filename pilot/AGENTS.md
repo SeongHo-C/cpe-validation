@@ -15,3 +15,15 @@ SBOM에 포함된 CPE를 재현 가능하게 분석하는 파일럿 실험이다
 - 요청받은 작업 범위만 수행하고 다음 실험 단계로 임의 확장하지 않는다.
 - 작업 후 변경 파일, 실행 명령, 검증 결과와 실패 사항을 보고한다.
 - 명시적 요청 없이 Git 커밋이나 푸시를 수행하지 않는다.
+
+# Syft SBOM 생성 규칙
+
+- SBOM 생성 도구는 Syft `1.49.0`으로 고정한다.
+- `results/image-digests.json`의 `pinned_reference`를 입력으로 사용한다.
+- 분석 플랫폼은 `linux/amd64`, 이미지 소스는 원격 registry로 고정한다.
+- 출력 형식은 CycloneDX JSON, 분석 범위는 `squashed`로 고정한다.
+- 온라인 enrichment를 사용하지 않는다.
+- SBOM 결과는 `results/sboms/`에 저장한다.
+- 명시적인 덮어쓰기 옵션 없이 기존 SBOM을 덮어쓰지 않는다.
+- CPE가 없다는 이유로 표본이나 SBOM을 제외하지 않는다.
+- 명시적 요청 없이 실제 전체 SBOM 생성이나 취약점 분석 단계로 확장하지 않는다.
