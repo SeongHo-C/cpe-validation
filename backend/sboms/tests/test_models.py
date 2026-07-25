@@ -1,7 +1,7 @@
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from .models import Component, DockerImage, SBOMDocument
+from sboms.models import Component, DockerImage, SBOMDocument
 
 
 class SbomModelTests(TestCase):
