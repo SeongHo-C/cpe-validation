@@ -50,5 +50,36 @@ backend/.venv/bin/python backend/manage.py \
 ```
 
 Snapshots are not updated automatically during the experiment. Loading
-Dictionary entries into PostgreSQL is a later stage. The CPE Match Feed and
-incremental CPE API synchronization are outside the current scope.
+Dictionary entries into PostgreSQL is a separate 5B step. Import a specific
+VERIFIED snapshot from the repository root with:
+
+```bash
+backend/.venv/bin/python backend/manage.py \
+  import_cpe_dictionary \
+  --snapshot-id 20260725T035002Z
+```
+
+Validate every chunk and CPE record without database writes:
+
+```bash
+backend/.venv/bin/python backend/manage.py \
+  import_cpe_dictionary \
+  --snapshot-id 20260725T035002Z \
+  --dry-run
+```
+
+The importer parses one JSON chunk at a time, inserts CPE names with batched
+`bulk_create`, and wraps the complete snapshot import in one database
+transaction. Any error rolls back both the snapshot row and all CPE rows.
+Reimporting a consistent COMPLETE snapshot is a no-op.
+
+NVD `created` and `lastModified` timestamps are stored as timezone-aware UTC
+datetimes. An explicit source offset is applied before conversion to UTC.
+Official Feed timestamps without an offset are interpreted as UTC without
+altering or rounding their date, time, or millisecond precision. Invalid
+ISO-8601 timestamps stop and roll back the import.
+
+The 5A step verifies and preserves the official Feed snapshot; 5B loads that
+VERIFIED snapshot into PostgreSQL. Exact matching against SBOM Primary CPEs
+is deferred to 5C. The CPE Match Feed and incremental CPE API synchronization
+remain outside the current scope.
