@@ -39,6 +39,7 @@ import {
 import { ComponentsToolbar } from "@/features/components/components-toolbar"
 import type {
   ComponentSummary,
+  DictionaryStatus,
   DockerImageDetail,
   PaginatedResponse,
 } from "@/features/components/components-types"
@@ -58,15 +59,18 @@ interface QueryUpdates {
   ordering?: ComponentOrdering
   page?: number
   pageSize?: ComponentPageSize
+  dictionaryStatus?: DictionaryStatus | null
 }
 
 function EmptyComponents({
   hasSearch,
   hasImageFilter,
+  hasDictionaryFilter,
   onClearSearch,
 }: {
   hasSearch: boolean
   hasImageFilter: boolean
+  hasDictionaryFilter: boolean
   onClearSearch: () => void
 }) {
   let description =
@@ -74,6 +78,9 @@ function EmptyComponents({
   if (hasSearch) {
     description =
       "Try another component name, version, publisher, PURL, or CPE."
+  } else if (hasDictionaryFilter) {
+    description =
+      "No components match the selected Dictionary status."
   } else if (hasImageFilter) {
     description =
       "This image does not contain components with a primary CPE."
@@ -87,7 +94,9 @@ function EmptyComponents({
       <h2 className="mt-4 font-heading text-base font-semibold">
         {hasSearch
           ? "No matching components"
-          : "No primary CPE components available"}
+          : hasDictionaryFilter
+            ? "No components with this Dictionary status"
+            : "No primary CPE components available"}
       </h2>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">
         {description}
@@ -126,6 +135,7 @@ export function ComponentsPage() {
     ordering,
     page,
     pageSize,
+    dictionaryStatus,
   } = urlState
 
   const [searchInput, setSearchInput] = useState(search)
@@ -194,6 +204,16 @@ export function ComponentsPage() {
           next.set("page_size", String(updates.pageSize))
         }
       }
+      if ("dictionaryStatus" in updates) {
+        if (updates.dictionaryStatus == null) {
+          next.delete("dictionary_status")
+        } else {
+          next.set(
+            "dictionary_status",
+            updates.dictionaryStatus,
+          )
+        }
+      }
 
       setSearchParameters(next)
     },
@@ -255,6 +275,7 @@ export function ComponentsPage() {
         ordering,
         page,
         page_size: pageSize,
+        dictionary_status: dictionaryStatus,
       },
       controller.signal,
     )
@@ -281,6 +302,7 @@ export function ComponentsPage() {
     page,
     pageSize,
     search,
+    dictionaryStatus,
   ])
 
   useEffect(() => {
@@ -376,6 +398,7 @@ export function ComponentsPage() {
             isLoading={isImageLoading}
             error={imageError}
             componentCount={resultCount}
+            dictionaryStatus={dictionaryStatus}
             onClearImageFilter={clearImageFilter}
           />
 
@@ -387,6 +410,7 @@ export function ComponentsPage() {
               searchInput={searchInput}
               ordering={ordering}
               pageSize={pageSize}
+              dictionaryStatus={dictionaryStatus}
               resultCount={resultCount}
               isBusy={isLoading}
               onSearchInputChange={setSearchInput}
@@ -399,6 +423,12 @@ export function ComponentsPage() {
               onPageSizeChange={(nextPageSize) =>
                 updateListQuery({
                   pageSize: nextPageSize,
+                  page: DEFAULT_COMPONENT_PAGE,
+                })
+              }
+              onDictionaryStatusChange={(nextStatus) =>
+                updateListQuery({
+                  dictionaryStatus: nextStatus ?? null,
                   page: DEFAULT_COMPONENT_PAGE,
                 })
               }
@@ -442,6 +472,9 @@ export function ComponentsPage() {
               <EmptyComponents
                 hasSearch={Boolean(search)}
                 hasImageFilter={imageId !== undefined}
+                hasDictionaryFilter={
+                  dictionaryStatus !== undefined
+                }
                 onClearSearch={clearSearch}
               />
             ) : null}

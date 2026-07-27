@@ -111,9 +111,9 @@ export function ComponentsTable({
         isRefreshing && "opacity-60",
       )}
     >
-      <Table className="min-w-[1280px]">
+      <Table className="min-w-[1080px] table-auto">
         <TableCaption className="sr-only">
-          Primary CPE Components selected for structural validation
+          Primary CPE Components for Dictionary review
         </TableCaption>
         <TableHeader className="bg-muted/45">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -191,7 +191,7 @@ export function ComponentsTable({
 export function ComponentsTableSkeleton() {
   return (
     <div aria-label="Loading Primary CPE Component table">
-      <Table className="min-w-[1280px]">
+      <Table className="min-w-[1080px] table-auto">
         <TableCaption className="sr-only">
           Loading Primary CPE Components
         </TableCaption>
@@ -201,11 +201,8 @@ export function ComponentsTableSkeleton() {
               "Component",
               "Version",
               "Image",
-              "Type",
-              "Publisher",
               "Primary CPE",
-              "Part",
-              "Structural Status",
+              "Dictionary Status",
             ].map((label) => (
               <TableHead key={label}>{label}</TableHead>
             ))}
@@ -214,11 +211,11 @@ export function ComponentsTableSkeleton() {
         <TableBody>
           {Array.from({ length: 9 }, (_, rowIndex) => (
             <TableRow key={rowIndex}>
-              {Array.from({ length: 8 }, (_, cellIndex) => (
+              {Array.from({ length: 5 }, (_, cellIndex) => (
                 <TableCell key={cellIndex}>
                   <Skeleton
                     className={
-                      cellIndex === 0 || cellIndex === 5
+                      cellIndex === 0 || cellIndex === 3
                         ? "h-8 w-52"
                         : "h-5 w-20"
                     }

@@ -18,6 +18,12 @@ export interface CpeFields {
   other: string
 }
 
+export type DictionaryStatus =
+  | "OFFICIAL_ACTIVE"
+  | "OFFICIAL_DEPRECATED"
+  | "NOT_IN_DICTIONARY"
+  | "NOT_PRESENT"
+
 export interface ComponentSummary {
   id: number
   image: ComponentImageReference
@@ -30,6 +36,7 @@ export interface ComponentSummary {
   cpe: string
   structural_status: string
   cpe_fields: CpeFields | null
+  dictionary_status: DictionaryStatus
 }
 
 export interface ComponentProperty {
@@ -47,12 +54,20 @@ export interface ComponentSbomDocument {
   scope: string
 }
 
+export interface DictionaryMatch {
+  snapshot_id: string
+  cpe_name_id: string | null
+  matched_cpe_name: string | null
+  deprecated: boolean | null
+}
+
 export interface ComponentDetail extends ComponentSummary {
   bom_ref: string
   properties: ComponentProperty[]
   sbom_document: ComponentSbomDocument
   structural_error_message: string | null
-  dictionary_status: string
+  dictionary_status: DictionaryStatus
+  dictionary_match: DictionaryMatch
 }
 
 export interface PaginatedResponse<T> {
@@ -86,4 +101,5 @@ export interface ComponentsQuery {
   ordering?: string
   page?: number
   page_size?: number
+  dictionary_status?: DictionaryStatus
 }

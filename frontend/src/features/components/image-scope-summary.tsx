@@ -17,7 +17,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { DockerImageDetail } from "@/features/components/components-types"
+import type {
+  DictionaryStatus,
+  DockerImageDetail,
+} from "@/features/components/components-types"
 import { formatInteger, formatPercent } from "@/lib/format"
 
 export type ImageDetailError = "not-found" | "unavailable" | null
@@ -28,6 +31,7 @@ interface ImageScopeSummaryProps {
   isLoading: boolean
   error: ImageDetailError
   componentCount?: number
+  dictionaryStatus?: DictionaryStatus
   onClearImageFilter: () => void
 }
 
@@ -65,9 +69,13 @@ export function ImageScopeSummary({
   isLoading,
   error,
   componentCount,
+  dictionaryStatus,
   onClearImageFilter,
 }: ImageScopeSummaryProps) {
   if (imageId === undefined) {
+    const showsMissingCpes = dictionaryStatus === "NOT_PRESENT"
+    const hasDictionaryFilter =
+      dictionaryStatus !== undefined
     return (
       <Card>
         <CardHeader>
@@ -79,15 +87,22 @@ export function ImageScopeSummary({
             All Docker Images
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Showing components with a primary CPE from all pilot
-            images.
+            {showsMissingCpes
+              ? "Showing components without a Primary CPE from all pilot images."
+              : hasDictionaryFilter
+                ? "Showing Primary CPE Components with the selected Dictionary status from all pilot images."
+                : "Showing components with a primary CPE from all pilot images."}
           </p>
         </CardHeader>
         <CardContent>
           <ScopeStats
             stats={[
               {
-                label: "Primary CPE Components",
+                label: showsMissingCpes
+                  ? "Components without Primary CPE"
+                  : hasDictionaryFilter
+                    ? "Matching Components"
+                    : "Primary CPE Components",
                 value:
                   componentCount === undefined
                     ? "Loading"

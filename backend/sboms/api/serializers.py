@@ -5,6 +5,7 @@ from typing import Any
 from rest_framework import serializers
 
 from cpe.cpe23 import parse_cpe23_formatted_string
+from sboms.exact_matching import match_cpe
 from sboms.models import Component, DockerImage, SBOMDocument
 
 
@@ -139,7 +140,30 @@ class _ComponentCPESerializerMixin:
             representation[
                 "structural_error_message"
             ] = structural_error_message
-            representation["dictionary_status"] = "UNVALIDATED"
+            match_result = match_cpe(
+                instance.cpe,
+                self.context["cpe_dictionary_snapshot"],
+            )
+            representation[
+                "dictionary_status"
+            ] = match_result.status.value
+            representation["dictionary_match"] = {
+                "snapshot_id": match_result.snapshot_id,
+                "cpe_name_id": (
+                    match_result.matched_cpe_name_id
+                ),
+                "matched_cpe_name": (
+                    match_result.matched_cpe_name
+                ),
+                "deprecated": match_result.deprecated,
+            }
+        else:
+            match_result = self.context[
+                "cpe_dictionary_matches"
+            ][instance.cpe]
+            representation[
+                "dictionary_status"
+            ] = match_result.status.value
         return representation
 
 

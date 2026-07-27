@@ -12,7 +12,12 @@ export function buildComponentsApiUrl(
   parameters: ComponentsQuery,
 ): string {
   const searchParameters = new URLSearchParams()
-  searchParameters.set("has_cpe", "true")
+  searchParameters.set(
+    "has_cpe",
+    parameters.dictionary_status === "NOT_PRESENT"
+      ? "false"
+      : "true",
+  )
 
   if (parameters.image_id !== undefined) {
     searchParameters.set("image_id", String(parameters.image_id))
@@ -31,6 +36,12 @@ export function buildComponentsApiUrl(
     searchParameters.set(
       "page_size",
       String(parameters.page_size),
+    )
+  }
+  if (parameters.dictionary_status !== undefined) {
+    searchParameters.set(
+      "dictionary_status",
+      parameters.dictionary_status,
     )
   }
 

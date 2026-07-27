@@ -2,10 +2,18 @@ from __future__ import annotations
 
 from collections import Counter
 
+from django.conf import settings
 from django.db import DatabaseError, connection
-from django.db.models import Count, Prefetch, Q, QuerySet
+from django.db.models import (
+    Count,
+    Exists,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+)
 from rest_framework import generics, status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -20,6 +28,16 @@ from sboms.api.serializers import (
 from cpe.cpe23 import (
     CPE23StructuralStatus,
     parse_cpe23_formatted_string,
+)
+from cpe_dictionary.models import (
+    CpeDictionarySnapshot,
+    CpeName,
+)
+from sboms.exact_matching import (
+    CPEExactMatchStatus,
+    CpeDictionarySnapshotSelectionError,
+    match_cpes,
+    select_cpe_dictionary_snapshot,
 )
 from sboms.models import Component, DockerImage, SBOMDocument
 
@@ -40,6 +58,43 @@ COMPONENT_ORDERING_FIELDS = {
     "repository": "sbom_document__docker_image__repository",
     "tag": "sbom_document__docker_image__tag",
 }
+
+
+class CpeDictionarySnapshotAPIException(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_code = "cpe_dictionary_snapshot_unavailable"
+
+    def __init__(
+        self,
+        selection_error: CpeDictionarySnapshotSelectionError,
+    ) -> None:
+        super().__init__(
+            {
+                "code": selection_error.error_code,
+                "detail": str(selection_error),
+            },
+            code=selection_error.error_code,
+        )
+
+
+class CpeDictionarySnapshotViewMixin:
+    _cpe_dictionary_snapshot: CpeDictionarySnapshot | None = None
+
+    def get_cpe_dictionary_snapshot(
+        self,
+    ) -> CpeDictionarySnapshot:
+        if self._cpe_dictionary_snapshot is None:
+            try:
+                self._cpe_dictionary_snapshot = (
+                    select_cpe_dictionary_snapshot(
+                        settings.CPE_DICTIONARY_SNAPSHOT_ID
+                    )
+                )
+            except CpeDictionarySnapshotSelectionError as error:
+                raise CpeDictionarySnapshotAPIException(
+                    error
+                ) from error
+        return self._cpe_dictionary_snapshot
 
 
 def _annotated_image_queryset() -> QuerySet[DockerImage]:
@@ -159,12 +214,70 @@ class DockerImageDetailAPIView(generics.RetrieveAPIView):
         )
 
 
-class ComponentListAPIView(generics.ListAPIView):
+class ComponentListAPIView(
+    CpeDictionarySnapshotViewMixin,
+    generics.ListAPIView,
+):
     serializer_class = ComponentListSerializer
     pagination_class = StandardPageNumberPagination
     permission_classes = [AllowAny]
     authentication_classes = []
     http_method_names = ["get", "head", "options"]
+
+    @staticmethod
+    def _parse_dictionary_status(
+        raw_status: str | None,
+    ) -> CPEExactMatchStatus | None:
+        if raw_status is None:
+            return None
+        try:
+            return CPEExactMatchStatus(raw_status)
+        except ValueError as error:
+            raise ValidationError(
+                {
+                    "code": "invalid_dictionary_status",
+                    "detail": (
+                        "dictionary_status must be one of: "
+                        + ", ".join(
+                            status_value.value
+                            for status_value in CPEExactMatchStatus
+                        )
+                    ),
+                }
+            ) from error
+
+    @staticmethod
+    def _filter_dictionary_status(
+        queryset: QuerySet[Component],
+        dictionary_status: CPEExactMatchStatus,
+        snapshot: CpeDictionarySnapshot,
+    ) -> QuerySet[Component]:
+        if dictionary_status == CPEExactMatchStatus.NOT_PRESENT:
+            return queryset.filter(
+                Q(cpe="") | Q(cpe__isnull=True)
+            )
+
+        matching_names = CpeName.objects.filter(
+            snapshot=snapshot,
+            cpe_name=OuterRef("cpe"),
+        )
+        if (
+            dictionary_status
+            == CPEExactMatchStatus.OFFICIAL_ACTIVE
+        ):
+            return queryset.exclude(cpe="").filter(
+                Exists(matching_names.filter(deprecated=False))
+            )
+        if (
+            dictionary_status
+            == CPEExactMatchStatus.OFFICIAL_DEPRECATED
+        ):
+            return queryset.exclude(cpe="").filter(
+                Exists(matching_names.filter(deprecated=True))
+            )
+        return queryset.exclude(cpe="").filter(
+            ~Exists(matching_names)
+        )
 
     def get_queryset(self) -> QuerySet[Component]:
         queryset = Component.objects.select_related(
@@ -172,8 +285,38 @@ class ComponentListAPIView(generics.ListAPIView):
             "sbom_document__docker_image",
         )
         parameters = self.request.query_params
+        dictionary_status = self._parse_dictionary_status(
+            parameters.get("dictionary_status")
+        )
 
-        has_cpe = parameters.get("has_cpe", "true").lower()
+        raw_has_cpe = parameters.get("has_cpe")
+        if raw_has_cpe is None:
+            has_cpe = (
+                "false"
+                if dictionary_status
+                == CPEExactMatchStatus.NOT_PRESENT
+                else "true"
+            )
+        else:
+            has_cpe = raw_has_cpe.lower()
+        if (
+            dictionary_status == CPEExactMatchStatus.NOT_PRESENT
+            and has_cpe == "true"
+        ) or (
+            dictionary_status is not None
+            and dictionary_status
+            != CPEExactMatchStatus.NOT_PRESENT
+            and has_cpe == "false"
+        ):
+            raise ValidationError(
+                {
+                    "code": "incompatible_component_filters",
+                    "detail": (
+                        "has_cpe is incompatible with the requested "
+                        "dictionary_status"
+                    ),
+                }
+            )
         if has_cpe == "true":
             queryset = queryset.exclude(cpe="")
         elif has_cpe == "false":
@@ -185,6 +328,14 @@ class ComponentListAPIView(generics.ListAPIView):
                         "has_cpe must be one of: true, false, all"
                     )
                 }
+            )
+
+        snapshot = self.get_cpe_dictionary_snapshot()
+        if dictionary_status is not None:
+            queryset = self._filter_dictionary_status(
+                queryset,
+                dictionary_status,
+                snapshot,
             )
 
         raw_image_id = parameters.get("image_id")
@@ -246,8 +397,33 @@ class ComponentListAPIView(generics.ListAPIView):
             )
         return queryset.order_by(*ordering)
 
+    def list(self, request, *args, **kwargs) -> Response:
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is None:
+            components = list(queryset)
+        else:
+            components = page
+        snapshot = self.get_cpe_dictionary_snapshot()
+        serializer_context = self.get_serializer_context()
+        serializer_context["cpe_dictionary_matches"] = match_cpes(
+            (component.cpe for component in components),
+            snapshot,
+        )
+        serializer = self.get_serializer(
+            components,
+            many=True,
+            context=serializer_context,
+        )
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
-class ComponentDetailAPIView(generics.RetrieveAPIView):
+
+class ComponentDetailAPIView(
+    CpeDictionarySnapshotViewMixin,
+    generics.RetrieveAPIView,
+):
     serializer_class = ComponentDetailSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -256,3 +432,10 @@ class ComponentDetailAPIView(generics.RetrieveAPIView):
         "sbom_document",
         "sbom_document__docker_image",
     )
+
+    def get_serializer_context(self) -> dict:
+        context = super().get_serializer_context()
+        context[
+            "cpe_dictionary_snapshot"
+        ] = self.get_cpe_dictionary_snapshot()
+        return context

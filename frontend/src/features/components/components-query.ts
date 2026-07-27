@@ -1,3 +1,8 @@
+import {
+  isDictionaryStatus,
+} from "@/features/components/dictionary-status"
+import type { DictionaryStatus } from "@/features/components/components-types"
+
 export const DEFAULT_COMPONENT_ORDERING = "name"
 export const DEFAULT_COMPONENT_PAGE = 1
 export const DEFAULT_COMPONENT_PAGE_SIZE = 50
@@ -33,6 +38,7 @@ export interface ComponentsUrlState {
   ordering: ComponentOrdering
   page: number
   pageSize: ComponentPageSize
+  dictionaryStatus?: DictionaryStatus
 }
 
 function isPositiveInteger(value: string | null): boolean {
@@ -84,6 +90,9 @@ export function parseComponentsUrlState(
   const ordering = isComponentOrdering(rawOrdering)
     ? rawOrdering
     : DEFAULT_COMPONENT_ORDERING
+  const rawDictionaryStatus = searchParameters.get(
+    "dictionary_status",
+  )
 
   return {
     imageId:
@@ -101,6 +110,9 @@ export function parseComponentsUrlState(
     ordering,
     page,
     pageSize,
+    dictionaryStatus: isDictionaryStatus(rawDictionaryStatus)
+      ? rawDictionaryStatus
+      : undefined,
   }
 }
 
@@ -113,6 +125,9 @@ export function canonicalizeComponentsSearch(
   const rawPageSize = searchParameters.get("page_size")
   const rawOrdering = searchParameters.get("ordering")
   const rawSearch = searchParameters.get("search")
+  const rawDictionaryStatus = searchParameters.get(
+    "dictionary_status",
+  )
 
   if (
     rawPage !== null &&
@@ -141,6 +156,12 @@ export function canonicalizeComponentsSearch(
     } else {
       next.delete("search")
     }
+  }
+  if (
+    rawDictionaryStatus !== null &&
+    !isDictionaryStatus(rawDictionaryStatus)
+  ) {
+    next.delete("dictionary_status")
   }
 
   return next

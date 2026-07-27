@@ -104,6 +104,10 @@ DATABASES = {
     }
 }
 
+CPE_DICTIONARY_SNAPSHOT_ID = (
+    os.getenv("CPE_DICTIONARY_SNAPSHOT_ID", "").strip() or None
+)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

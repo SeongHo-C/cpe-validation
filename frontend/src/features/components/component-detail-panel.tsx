@@ -19,12 +19,17 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ComponentDetailContent } from "@/features/components/component-detail-content"
 import { ComponentDetailSkeleton } from "@/features/components/component-detail-skeleton"
+import {
+  dictionaryStatusClassName,
+  dictionaryStatusLabels,
+} from "@/features/components/dictionary-status"
 import { getComponentDetail } from "@/features/components/components-api"
 import type { ComponentDetail } from "@/features/components/components-types"
 import {
   ApiError,
   isAbortError,
 } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 
 type DetailStatus =
   | "unselected"
@@ -225,6 +230,21 @@ export function ComponentDetailPanel({
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">
                     {detail.component_type || "Not provided"}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "whitespace-nowrap",
+                      dictionaryStatusClassName(
+                        detail.dictionary_status,
+                      ),
+                    )}
+                  >
+                    {
+                      dictionaryStatusLabels[
+                        detail.dictionary_status
+                      ]
+                    }
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {repositoryBasename(

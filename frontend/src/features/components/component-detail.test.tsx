@@ -37,6 +37,7 @@ const componentSummary: ComponentSummary = {
   purl: "pkg:apk/alpine/curl@8.14.1-r1",
   cpe: "cpe:2.3:a:haxx:curl:8.14.1:*:*:*:*:*:*:*",
   structural_status: "STRUCTURALLY_VALID",
+  dictionary_status: "OFFICIAL_ACTIVE",
   cpe_fields: {
     part: "a",
     vendor: "haxx",
@@ -83,7 +84,13 @@ const componentDetail: ComponentDetail = {
     scope: "squashed",
   },
   structural_error_message: null,
-  dictionary_status: "UNVALIDATED",
+  dictionary_status: "OFFICIAL_ACTIVE",
+  dictionary_match: {
+    snapshot_id: "20260725T035002Z",
+    cpe_name_id: "11111111-1111-4111-8111-111111111111",
+    matched_cpe_name: componentSummary.cpe,
+    deprecated: false,
+  },
 }
 
 const imageDetail: DockerImageDetail = {
@@ -316,8 +323,30 @@ describe("Component Detail panel", () => {
       within(panel).getAllByText("STRUCTURALLY_VALID").length,
     ).toBeGreaterThanOrEqual(2)
     expect(
-      within(panel).getAllByText("UNVALIDATED").length,
+      within(panel).getAllByText("Active").length,
     ).toBe(1)
+    expect(
+      within(panel).getByText("Official Dictionary Match"),
+    ).toBeInTheDocument()
+    expect(
+      within(panel).getByText("Official Active"),
+    ).toBeInTheDocument()
+    expect(
+      within(panel).getByText("20260725T035002Z"),
+    ).toBeInTheDocument()
+    expect(
+      within(panel).getByText(
+        "11111111-1111-4111-8111-111111111111",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(panel).getAllByText("20260725T035002Z"),
+    ).toHaveLength(1)
+    expect(
+      within(panel).getAllByText(
+        "11111111-1111-4111-8111-111111111111",
+      ),
+    ).toHaveLength(1)
     expect(
       within(panel).getByText(
         "No structural issues detected by the formatted-string parser.",
@@ -555,6 +584,13 @@ describe("Component Detail panel", () => {
       structural_status: "NOT_PRESENT",
       structural_error_message: null,
       properties: [],
+      dictionary_status: "NOT_PRESENT",
+      dictionary_match: {
+        snapshot_id: "20260725T035002Z",
+        cpe_name_id: null,
+        matched_cpe_name: null,
+        deprecated: null,
+      },
     }
     installSuccessfulFetch(noCpeDetail)
     renderAppAt("/components?component_id=102")
@@ -566,11 +602,18 @@ describe("Component Detail panel", () => {
       screen.getByText("CPE fields are not available."),
     ).toBeInTheDocument()
     expect(
-      screen.getAllByText("NOT_PRESENT").length,
-    ).toBeGreaterThanOrEqual(2)
+      within(
+        screen.getByRole("complementary", {
+          name: "Component details",
+        }),
+      ).getAllByText("Primary CPE Not Present"),
+    ).toHaveLength(2)
+    expect(
+      screen.getAllByText("NOT_PRESENT"),
+    ).toHaveLength(2)
   })
 
-  it("shows structural parser errors without claiming a Dictionary result", async () => {
+  it("keeps structural and Dictionary evidence independent", async () => {
     const structuralErrorDetail: ComponentDetail = {
       ...componentDetail,
       structural_status: "INVALID_ESCAPE",
@@ -586,14 +629,129 @@ describe("Component Detail panel", () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getAllByText("UNVALIDATED").length,
-    ).toBe(1)
+      screen.getByText("Official Dictionary Match"),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Active")).toBeInTheDocument()
     expect(
       screen.getByText(
         "Checks the CPE 2.3 formatted-string structure only.",
       ),
     ).toBeInTheDocument()
   })
+
+  it.each([
+    {
+      status: "OFFICIAL_ACTIVE" as const,
+      title: "Official Dictionary Match",
+      badge: "Active",
+      description:
+        "The raw CPE string exactly matches an active entry in the selected NVD CPE Dictionary snapshot.",
+      cpeNameId: "11111111-1111-4111-8111-111111111111",
+      deprecated: false,
+    },
+    {
+      status: "OFFICIAL_DEPRECATED" as const,
+      title: "Official Dictionary Match",
+      badge: "Deprecated",
+      description:
+        "The raw CPE string exactly matches a deprecated entry in the selected NVD CPE Dictionary snapshot.",
+      cpeNameId: "22222222-2222-4222-8222-222222222222",
+      deprecated: true,
+    },
+    {
+      status: "NOT_IN_DICTIONARY" as const,
+      title: "Not Found in Dictionary",
+      badge: "No raw-string match",
+      description:
+        "No identical raw CPE string was found in the selected NVD CPE Dictionary snapshot.",
+      cpeNameId: null,
+      deprecated: null,
+    },
+    {
+      status: "NOT_PRESENT" as const,
+      title: "Primary CPE Not Present",
+      badge: "Not present",
+      description:
+        "This SBOM Component does not provide a Primary CPE to compare.",
+      cpeNameId: null,
+      deprecated: null,
+    },
+  ])(
+    "renders $status Dictionary evidence",
+    async ({
+      status,
+      title,
+      badge,
+      description,
+      cpeNameId,
+      deprecated,
+    }) => {
+      installSuccessfulFetch({
+        ...componentDetail,
+        dictionary_status: status,
+        dictionary_match: {
+          snapshot_id: "20260725T035002Z",
+          cpe_name_id: cpeNameId,
+          matched_cpe_name: cpeNameId
+            ? componentSummary.cpe
+            : null,
+          deprecated,
+        },
+      })
+      renderAppAt("/components?component_id=101")
+      await waitForDetail()
+
+      const dictionarySection = screen
+        .getByRole("heading", { name: "Dictionary Status" })
+        .closest("section")
+      expect(dictionarySection).not.toBeNull()
+      expect(
+        within(dictionarySection!).getByText(title),
+      ).toBeInTheDocument()
+      expect(
+        within(dictionarySection!).getAllByText(badge).length,
+      ).toBeGreaterThanOrEqual(1)
+      expect(
+        within(dictionarySection!).getByText(description),
+      ).toBeInTheDocument()
+      expect(
+        within(dictionarySection!).getByText("20260725T035002Z"),
+      ).toBeInTheDocument()
+      expect(
+        within(dictionarySection!).getByText(
+          "Dictionary exact match is automated evidence and does not establish semantic correctness for this component.",
+        ),
+      ).toBeInTheDocument()
+      expect(
+        screen.getAllByRole("heading", {
+          name: "Dictionary Status",
+        }),
+      ).toHaveLength(1)
+      if (cpeNameId) {
+        expect(
+          within(dictionarySection!).getByText(cpeNameId),
+        ).toBeInTheDocument()
+      } else {
+        expect(
+          within(dictionarySection!).queryByText(
+            "NVD CPE UUID",
+          ),
+        ).not.toBeInTheDocument()
+      }
+      for (const unsupportedClaim of [
+        "Valid",
+        "Correct",
+        "Verified",
+        "Trusted",
+      ]) {
+        expect(
+          within(dictionarySection!).queryByText(
+            unsupportedClaim,
+          ),
+        ).not.toBeInTheDocument()
+      }
+    },
+  )
 
   it("closes Detail when the list search changes", async () => {
     const user = userEvent.setup()

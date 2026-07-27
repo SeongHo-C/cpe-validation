@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import type {
   ComponentDetail,
   ComponentProperty,
+  DictionaryStatus,
 } from "@/features/components/components-types"
 import { formatInteger } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -28,6 +29,47 @@ function statusClassName(status: string): string {
     return "border-border bg-muted text-muted-foreground"
   }
   return "border-red-200 bg-red-50 text-red-700"
+}
+
+const dictionaryStatusPresentation: Record<
+  DictionaryStatus,
+  {
+    title: string
+    badge: string
+    description: string
+    className: string
+  }
+> = {
+  OFFICIAL_ACTIVE: {
+    title: "Official Dictionary Match",
+    badge: "Active",
+    description:
+      "The raw CPE string exactly matches an active entry in the selected NVD CPE Dictionary snapshot.",
+    className:
+      "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  OFFICIAL_DEPRECATED: {
+    title: "Official Dictionary Match",
+    badge: "Deprecated",
+    description:
+      "The raw CPE string exactly matches a deprecated entry in the selected NVD CPE Dictionary snapshot.",
+    className:
+      "border-amber-200 bg-amber-50 text-amber-700",
+  },
+  NOT_IN_DICTIONARY: {
+    title: "Not Found in Dictionary",
+    badge: "No raw-string match",
+    description:
+      "No identical raw CPE string was found in the selected NVD CPE Dictionary snapshot.",
+    className: "border-slate-200 bg-slate-50 text-slate-700",
+  },
+  NOT_PRESENT: {
+    title: "Primary CPE Not Present",
+    badge: "Not present",
+    description:
+      "This SBOM Component does not provide a Primary CPE to compare.",
+    className: "border-border bg-muted text-muted-foreground",
+  },
 }
 
 function DetailSection({
@@ -156,6 +198,8 @@ export function ComponentDetailContent({
     (property) => property.name !== "syft:cpe23",
   )
   const cpeFields = detail.cpe_fields
+  const dictionaryPresentation =
+    dictionaryStatusPresentation[detail.dictionary_status]
 
   return (
     <div className="space-y-6 p-4">
@@ -301,13 +345,56 @@ export function ComponentDetailContent({
       </DetailSection>
 
       <DetailSection title="Dictionary Status">
-        <div className="rounded-lg border bg-muted/20 p-3">
-          <Badge variant="secondary">
-            {detail.dictionary_status}
-          </Badge>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            This component has not yet been evaluated against an
-            official CPE Dictionary snapshot.
+        <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+          <div>
+            <p className="text-sm font-medium">
+              {dictionaryPresentation.title}
+            </p>
+            <Badge
+              variant="outline"
+              className={cn(
+                "mt-2",
+                dictionaryPresentation.className,
+              )}
+            >
+              {dictionaryPresentation.badge}
+            </Badge>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {dictionaryPresentation.description}
+            </p>
+          </div>
+          <EvidenceGrid
+            fields={[
+              {
+                label: "Snapshot ID",
+                value: detail.dictionary_match.snapshot_id,
+                monospace: true,
+              },
+              ...(detail.dictionary_match.cpe_name_id
+                ? [
+                    {
+                      label: "NVD CPE UUID",
+                      value:
+                        detail.dictionary_match.cpe_name_id,
+                      monospace: true,
+                    },
+                  ]
+                : []),
+              ...(detail.dictionary_match.deprecated !== null
+                ? [
+                    {
+                      label: "Deprecated",
+                      value: detail.dictionary_match.deprecated
+                        ? "Yes"
+                        : "No",
+                    },
+                  ]
+                : []),
+            ]}
+          />
+          <p className="text-xs leading-5 text-muted-foreground">
+            Dictionary exact match is automated evidence and does not
+            establish semantic correctness for this component.
           </p>
         </div>
       </DetailSection>

@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from unittest.mock import patch
+from uuid import UUID
 
 from django.db import DatabaseError, connection
+from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from cpe_dictionary.models import (
+    CpeDictionarySnapshot,
+    CpeName,
+)
+from sboms.exact_matching import match_cpes
 from sboms.models import Component, DockerImage, SBOMDocument
 
 
@@ -51,6 +59,82 @@ class ReadOnlyAPITests(APITestCase):
             generator_name="syft",
             generator_version="1.49.0",
         )
+        cls.dictionary_snapshot = (
+            CpeDictionarySnapshot.objects.create(
+                snapshot_id="20260725T035002Z",
+                status=CpeDictionarySnapshot.Status.COMPLETE,
+                feed_last_modified=datetime(
+                    2026,
+                    7,
+                    25,
+                    3,
+                    50,
+                    2,
+                    tzinfo=timezone.utc,
+                ),
+                manifest_sha256="d" * 64,
+                archive_sha256="e" * 64,
+                content_sha256="f" * 64,
+                member_count=1,
+                expected_record_count=2,
+                record_count=2,
+                active_count=1,
+                deprecated_count=1,
+                completed_at=datetime(
+                    2026,
+                    7,
+                    27,
+                    tzinfo=timezone.utc,
+                ),
+            )
+        )
+        cls.active_cpe_name_id = UUID(
+            "11111111-1111-4111-8111-111111111111"
+        )
+        cls.deprecated_cpe_name_id = UUID(
+            "22222222-2222-4222-8222-222222222222"
+        )
+        for cpe_name_id, raw_cpe, deprecated in (
+            (
+                cls.active_cpe_name_id,
+                cls.search_cpe,
+                False,
+            ),
+            (
+                cls.deprecated_cpe_name_id,
+                cls.os_cpe,
+                True,
+            ),
+        ):
+            CpeName.objects.create(
+                snapshot=cls.dictionary_snapshot,
+                cpe_name_id=cpe_name_id,
+                cpe_name=raw_cpe,
+                deprecated=deprecated,
+                created_at_nvd=datetime(
+                    2020,
+                    1,
+                    1,
+                    tzinfo=timezone.utc,
+                ),
+                last_modified_at_nvd=datetime(
+                    2026,
+                    1,
+                    1,
+                    tzinfo=timezone.utc,
+                ),
+                part="a",
+                vendor="example",
+                product="product",
+                version="1.0",
+                update="*",
+                edition="*",
+                language="*",
+                sw_edition="*",
+                target_sw="*",
+                target_hw="*",
+                other="*",
+            )
         cls.alpha_sbom = SBOMDocument.objects.create(
             docker_image=cls.alpha_image,
             source_path="pilot/results/sboms/alpha-1.0.cdx.json",
@@ -139,11 +223,13 @@ class ReadOnlyAPITests(APITestCase):
         )
 
     @staticmethod
-    def model_counts() -> tuple[int, int, int]:
+    def model_counts() -> tuple[int, int, int, int, int]:
         return (
             DockerImage.objects.count(),
             SBOMDocument.objects.count(),
             Component.objects.count(),
+            CpeDictionarySnapshot.objects.count(),
+            CpeName.objects.count(),
         )
 
     def test_health_api(self) -> None:
@@ -269,6 +355,27 @@ class ReadOnlyAPITests(APITestCase):
         self.assertTrue(
             all(row["cpe"] for row in body["results"])
         )
+        self.assertTrue(
+            all("dictionary_status" in row for row in body["results"])
+        )
+        self.assertTrue(
+            all(
+                "dictionary_match" not in row
+                for row in body["results"]
+            )
+        )
+        statuses = {
+            row["id"]: row["dictionary_status"]
+            for row in body["results"]
+        }
+        self.assertEqual(
+            statuses[self.search_component.id],
+            "OFFICIAL_ACTIVE",
+        )
+        self.assertEqual(
+            statuses[self.invalid_component.id],
+            "NOT_IN_DICTIONARY",
+        )
 
     def test_has_cpe_false_returns_only_missing_cpes(self) -> None:
         response = self.client.get(
@@ -280,6 +387,247 @@ class ReadOnlyAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(body["count"], 1)
         self.assertEqual(body["results"][0]["cpe"], "")
+        self.assertEqual(
+            body["results"][0]["dictionary_status"],
+            "NOT_PRESENT",
+        )
+
+    def test_dictionary_status_filters_all_four_states(
+        self,
+    ) -> None:
+        list_url = reverse("sboms_api:component-list")
+        expected = {
+            "OFFICIAL_ACTIVE": (
+                1,
+                {self.search_component.id},
+            ),
+            "OFFICIAL_DEPRECATED": (
+                1,
+                {self.os_component.id},
+            ),
+            "NOT_IN_DICTIONARY": (
+                55,
+                None,
+            ),
+            "NOT_PRESENT": (
+                1,
+                {self.no_cpe_component.id},
+            ),
+        }
+
+        for requested_status, (
+            expected_count,
+            expected_ids,
+        ) in expected.items():
+            with self.subTest(
+                dictionary_status=requested_status
+            ):
+                response = self.client.get(
+                    list_url,
+                    {
+                        "dictionary_status": requested_status,
+                        "page_size": 200,
+                    },
+                )
+                body = response.json()
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_200_OK,
+                )
+                self.assertEqual(body["count"], expected_count)
+                self.assertTrue(
+                    all(
+                        row["dictionary_status"]
+                        == requested_status
+                        for row in body["results"]
+                    )
+                )
+                if expected_ids is not None:
+                    self.assertEqual(
+                        {
+                            row["id"]
+                            for row in body["results"]
+                        },
+                        expected_ids,
+                    )
+
+    def test_invalid_dictionary_status_returns_400(self) -> None:
+        list_url = reverse("sboms_api:component-list")
+
+        for requested_status in (
+            "UNKNOWN",
+            "not_in_dictionary",
+        ):
+            with self.subTest(
+                dictionary_status=requested_status
+            ):
+                response = self.client.get(
+                    list_url,
+                    {"dictionary_status": requested_status},
+                )
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+                self.assertEqual(
+                    response.json()["code"],
+                    "invalid_dictionary_status",
+                )
+
+    def test_incompatible_component_filters_return_400(
+        self,
+    ) -> None:
+        list_url = reverse("sboms_api:component-list")
+        combinations = (
+            {
+                "has_cpe": "true",
+                "dictionary_status": "NOT_PRESENT",
+            },
+            {
+                "has_cpe": "false",
+                "dictionary_status": "OFFICIAL_ACTIVE",
+            },
+            {
+                "has_cpe": "false",
+                "dictionary_status": "OFFICIAL_DEPRECATED",
+            },
+            {
+                "has_cpe": "false",
+                "dictionary_status": "NOT_IN_DICTIONARY",
+            },
+        )
+
+        for parameters in combinations:
+            with self.subTest(parameters=parameters):
+                response = self.client.get(
+                    list_url,
+                    parameters,
+                )
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+                self.assertEqual(
+                    response.json()["code"],
+                    "incompatible_component_filters",
+                )
+
+    def test_dictionary_status_combines_with_existing_filters(
+        self,
+    ) -> None:
+        list_url = reverse("sboms_api:component-list")
+
+        active = self.client.get(
+            list_url,
+            {
+                "dictionary_status": "OFFICIAL_ACTIVE",
+                "image_id": self.alpha_image.id,
+                "search": "NameNeedle",
+            },
+        ).json()
+        self.assertEqual(active["count"], 1)
+        self.assertEqual(
+            active["results"][0]["id"],
+            self.search_component.id,
+        )
+
+        deprecated = self.client.get(
+            list_url,
+            {
+                "dictionary_status": "OFFICIAL_DEPRECATED",
+                "image_id": self.beta_image.id,
+            },
+        ).json()
+        self.assertEqual(deprecated["count"], 1)
+        self.assertEqual(
+            deprecated["results"][0]["id"],
+            self.os_component.id,
+        )
+
+        not_in_dictionary = self.client.get(
+            list_url,
+            {
+                "dictionary_status": "NOT_IN_DICTIONARY",
+                "ordering": "-name",
+                "page_size": 200,
+            },
+        ).json()
+        names = [
+            row["name"]
+            for row in not_in_dictionary["results"]
+        ]
+        self.assertEqual(names, sorted(names, reverse=True))
+
+    def test_reused_raw_cpe_has_consistent_list_status(
+        self,
+    ) -> None:
+        response = self.client.get(
+            reverse("sboms_api:component-list"),
+            {
+                "dictionary_status": "NOT_IN_DICTIONARY",
+                "search": "Shared",
+                "page_size": 200,
+            },
+        )
+        rows = response.json()["results"]
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(
+            {row["id"] for row in rows},
+            {self.alpha_shared.id, self.beta_shared.id},
+        )
+        self.assertEqual(
+            {row["dictionary_status"] for row in rows},
+            {"NOT_IN_DICTIONARY"},
+        )
+
+    def test_status_filter_applies_before_pagination(
+        self,
+    ) -> None:
+        response = self.client.get(
+            reverse("sboms_api:component-list"),
+            {
+                "dictionary_status": "NOT_IN_DICTIONARY",
+                "page_size": 25,
+            },
+        )
+        body = response.json()
+
+        self.assertEqual(body["count"], 55)
+        self.assertEqual(body["page_size"], 25)
+        self.assertEqual(body["total_pages"], 3)
+        self.assertEqual(len(body["results"]), 25)
+        self.assertTrue(
+            all(
+                row["dictionary_status"]
+                == "NOT_IN_DICTIONARY"
+                for row in body["results"]
+            )
+        )
+
+        large_page = self.client.get(
+            reverse("sboms_api:component-list"),
+            {
+                "dictionary_status": "NOT_IN_DICTIONARY",
+                "page_size": 200,
+            },
+        ).json()
+        self.assertEqual(large_page["count"], 55)
+        self.assertEqual(len(large_page["results"]), 55)
+
+    def test_has_cpe_all_is_compatible_with_status_filter(
+        self,
+    ) -> None:
+        response = self.client.get(
+            reverse("sboms_api:component-list"),
+            {
+                "has_cpe": "all",
+                "dictionary_status": "NOT_PRESENT",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["count"], 1)
 
     def test_has_cpe_all_returns_every_component(self) -> None:
         response = self.client.get(
@@ -483,6 +831,20 @@ class ReadOnlyAPITests(APITestCase):
         self.assertNotIn("file_sha256", row)
         self.assertNotIn("manifest_digest", row)
 
+        invalid_response = self.client.get(
+            reverse("sboms_api:component-list"),
+            {"search": "Invalid CPE"},
+        )
+        invalid_row = invalid_response.json()["results"][0]
+        self.assertEqual(
+            invalid_row["structural_status"],
+            "INVALID_PART",
+        )
+        self.assertEqual(
+            invalid_row["dictionary_status"],
+            "NOT_IN_DICTIONARY",
+        )
+
     def test_component_detail_includes_expected_research_fields(
         self,
     ) -> None:
@@ -511,7 +873,18 @@ class ReadOnlyAPITests(APITestCase):
         self.assertIsNone(body["structural_error_message"])
         self.assertEqual(
             body["dictionary_status"],
-            "UNVALIDATED",
+            "OFFICIAL_ACTIVE",
+        )
+        self.assertEqual(
+            body["dictionary_match"],
+            {
+                "snapshot_id": (
+                    self.dictionary_snapshot.snapshot_id
+                ),
+                "cpe_name_id": str(self.active_cpe_name_id),
+                "matched_cpe_name": self.search_cpe,
+                "deprecated": False,
+            },
         )
 
         missing = self.client.get(
@@ -538,7 +911,18 @@ class ReadOnlyAPITests(APITestCase):
         self.assertIsNone(body["structural_error_message"])
         self.assertEqual(
             body["dictionary_status"],
-            "UNVALIDATED",
+            "NOT_PRESENT",
+        )
+        self.assertEqual(
+            body["dictionary_match"],
+            {
+                "snapshot_id": (
+                    self.dictionary_snapshot.snapshot_id
+                ),
+                "cpe_name_id": None,
+                "matched_cpe_name": None,
+                "deprecated": None,
+            },
         )
 
     def test_structurally_invalid_cpe_is_represented(self) -> None:
@@ -556,8 +940,229 @@ class ReadOnlyAPITests(APITestCase):
         self.assertTrue(body["structural_error_message"])
         self.assertEqual(
             body["dictionary_status"],
-            "UNVALIDATED",
+            "NOT_IN_DICTIONARY",
         )
+        self.assertEqual(
+            body["dictionary_match"]["snapshot_id"],
+            self.dictionary_snapshot.snapshot_id,
+        )
+
+    def test_deprecated_dictionary_match_is_represented(
+        self,
+    ) -> None:
+        response = self.client.get(
+            reverse(
+                "sboms_api:component-detail",
+                args=[self.os_component.id],
+            )
+        )
+        body = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            body["dictionary_status"],
+            "OFFICIAL_DEPRECATED",
+        )
+        self.assertEqual(
+            body["dictionary_match"]["cpe_name_id"],
+            str(self.deprecated_cpe_name_id),
+        )
+        self.assertEqual(
+            body["dictionary_match"]["matched_cpe_name"],
+            self.os_cpe,
+        )
+        self.assertIs(body["dictionary_match"]["deprecated"], True)
+
+    @override_settings(CPE_DICTIONARY_SNAPSHOT_ID="missing")
+    def test_configured_missing_snapshot_returns_503(self) -> None:
+        response = self.client.get(
+            reverse(
+                "sboms_api:component-detail",
+                args=[self.search_component.id],
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        self.assertEqual(
+            response.json()["code"],
+            "cpe_dictionary_snapshot_unavailable",
+        )
+        self.assertIn("does not exist", response.json()["detail"])
+
+        list_response = self.client.get(
+            reverse("sboms_api:component-list")
+        )
+        self.assertEqual(
+            list_response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        self.assertEqual(
+            list_response.json()["code"],
+            response.json()["code"],
+        )
+
+    def test_ambiguous_snapshot_configuration_returns_503(
+        self,
+    ) -> None:
+        CpeDictionarySnapshot.objects.create(
+            snapshot_id="20260726T035002Z",
+            status=CpeDictionarySnapshot.Status.COMPLETE,
+            feed_last_modified=datetime(
+                2026,
+                7,
+                26,
+                3,
+                50,
+                2,
+                tzinfo=timezone.utc,
+            ),
+            manifest_sha256="1" * 64,
+            archive_sha256="2" * 64,
+            content_sha256="3" * 64,
+            member_count=1,
+            expected_record_count=0,
+            record_count=0,
+            active_count=0,
+            deprecated_count=0,
+            completed_at=datetime(
+                2026,
+                7,
+                27,
+                tzinfo=timezone.utc,
+            ),
+        )
+
+        response = self.client.get(
+            reverse(
+                "sboms_api:component-detail",
+                args=[self.search_component.id],
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        self.assertEqual(
+            response.json()["code"],
+            "cpe_dictionary_snapshot_ambiguous",
+        )
+
+        list_response = self.client.get(
+            reverse("sboms_api:component-list")
+        )
+        self.assertEqual(
+            list_response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        self.assertEqual(
+            list_response.json()["code"],
+            response.json()["code"],
+        )
+
+    @override_settings(
+        CPE_DICTIONARY_SNAPSHOT_ID="20260725T035002Z"
+    )
+    def test_list_rejects_non_complete_configured_snapshot(
+        self,
+    ) -> None:
+        CpeDictionarySnapshot.objects.filter(
+            pk=self.dictionary_snapshot.pk
+        ).update(status=CpeDictionarySnapshot.Status.IMPORTING)
+
+        response = self.client.get(
+            reverse("sboms_api:component-list")
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        self.assertEqual(
+            response.json()["code"],
+            "cpe_dictionary_snapshot_unavailable",
+        )
+
+    @override_settings(CPE_DICTIONARY_SNAPSHOT_ID=None)
+    def test_list_requires_one_complete_snapshot(self) -> None:
+        CpeDictionarySnapshot.objects.filter(
+            pk=self.dictionary_snapshot.pk
+        ).update(status=CpeDictionarySnapshot.Status.IMPORTING)
+
+        response = self.client.get(
+            reverse("sboms_api:component-list")
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+        self.assertEqual(
+            response.json()["code"],
+            "cpe_dictionary_snapshot_unavailable",
+        )
+
+    @override_settings(
+        CPE_DICTIONARY_SNAPSHOT_ID="20260725T035002Z"
+    )
+    def test_configured_snapshot_is_reused_when_multiple_exist(
+        self,
+    ) -> None:
+        CpeDictionarySnapshot.objects.create(
+            snapshot_id="20260726T035002Z",
+            status=CpeDictionarySnapshot.Status.COMPLETE,
+            feed_last_modified=datetime(
+                2026,
+                7,
+                26,
+                3,
+                50,
+                2,
+                tzinfo=timezone.utc,
+            ),
+            manifest_sha256="1" * 64,
+            archive_sha256="2" * 64,
+            content_sha256="3" * 64,
+            member_count=1,
+            expected_record_count=0,
+            record_count=0,
+            active_count=0,
+            deprecated_count=0,
+            completed_at=datetime(
+                2026,
+                7,
+                27,
+                tzinfo=timezone.utc,
+            ),
+        )
+
+        response = self.client.get(
+            reverse(
+                "sboms_api:component-detail",
+                args=[self.search_component.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.json()["dictionary_match"]["snapshot_id"],
+            "20260725T035002Z",
+        )
+
+    def test_detail_exact_match_uses_three_queries(self) -> None:
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(
+                reverse(
+                    "sboms_api:component-detail",
+                    args=[self.search_component.id],
+                )
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(queries), 3)
 
     def test_write_methods_are_not_allowed(self) -> None:
         requests = (
@@ -610,24 +1215,62 @@ class ReadOnlyAPITests(APITestCase):
 
     def test_list_queries_do_not_grow_with_page_size(self) -> None:
         component_url = reverse("sboms_api:component-list")
-        with CaptureQueriesContext(connection) as two_row_queries:
+        with CaptureQueriesContext(connection) as small_page_queries:
             response = self.client.get(
                 component_url,
-                {"page_size": 2},
+                {"page_size": 25},
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-        with CaptureQueriesContext(connection) as twenty_row_queries:
+        with CaptureQueriesContext(connection) as large_page_queries:
             response = self.client.get(
                 component_url,
-                {"page_size": 20},
+                {"page_size": 200},
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertLessEqual(
-            abs(len(twenty_row_queries) - len(two_row_queries)),
-            1,
+        self.assertEqual(len(small_page_queries), 4)
+        self.assertEqual(len(large_page_queries), 4)
+        for captured_queries in (
+            small_page_queries,
+            large_page_queries,
+        ):
+            dictionary_lookups = [
+                query
+                for query in captured_queries.captured_queries
+                if 'FROM "cpe_dictionary_cpename"' in query["sql"]
+            ]
+            snapshot_lookups = [
+                query
+                for query in captured_queries.captured_queries
+                if (
+                    'FROM "cpe_dictionary_cpedictionarysnapshot"'
+                    in query["sql"]
+                )
+            ]
+            self.assertEqual(len(dictionary_lookups), 1)
+            self.assertEqual(len(snapshot_lookups), 1)
+
+        matched_page_cpes: list[str] = []
+
+        def capture_bulk_match(raw_cpes, snapshot):
+            values = list(raw_cpes)
+            matched_page_cpes.extend(values)
+            return match_cpes(values, snapshot)
+
+        with patch(
+            "sboms.api.views.match_cpes",
+            side_effect=capture_bulk_match,
+        ) as bulk_match:
+            response = self.client.get(
+                component_url,
+                {"page_size": 200},
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        bulk_match.assert_called_once()
+        self.assertEqual(
+            len(matched_page_cpes),
+            57,
         )
-        self.assertLessEqual(len(twenty_row_queries), 3)
 
         with CaptureQueriesContext(connection) as image_queries:
             response = self.client.get(reverse("sboms_api:image-list"))

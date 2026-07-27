@@ -6,11 +6,11 @@ CPE Validation is a research workbench for evaluating CPE evidence emitted by
 external SBOM generators. The current pipeline preserves digest-pinned Docker
 image inputs, imports Syft CycloneDX SBOMs, validates the structure of Primary
 CPE 2.3 formatted strings, and imports a verified official NVD CPE Dictionary
-snapshot.
+snapshot. It also compares Primary CPEs with that snapshot by exact,
+case-sensitive raw-string equality.
 
-Raw-string exact matching against the Dictionary is the next research step. It
-is not implemented yet. Semantic review, candidate ranking, and Ground Truth
-decisions remain later work.
+Semantic review, candidate ranking, and Ground Truth decisions remain later
+work.
 
 ## Research Scope
 
@@ -33,7 +33,9 @@ therefore a reproducible structural signal, not Ground Truth.
    PostgreSQL.
 5. Profile Primary CPE structure without changing imported records.
 6. Download, verify, and import an immutable NVD CPE Dictionary snapshot.
-7. Browse the image and Primary CPE Component inventory through a read-only
+7. Evaluate raw Primary CPE strings against one explicitly selected COMPLETE
+   Dictionary snapshot.
+8. Browse the image and Primary CPE Component inventory through a read-only
    Django REST Framework API and React UI.
 
 ## Repository Structure
@@ -100,6 +102,11 @@ backend/.venv/bin/python backend/manage.py import_cpe_dictionary \
 backend/.venv/bin/python backend/manage.py import_cpe_dictionary \
   --snapshot-id 20260725T035002Z
 ```
+
+Set `CPE_DICTIONARY_SNAPSHOT_ID=20260725T035002Z` in `.env` to make the
+snapshot used by the Component Detail API explicit. If this setting is empty,
+automatic selection is allowed only when the database contains exactly one
+COMPLETE snapshot.
 
 Start the backend:
 
@@ -192,6 +199,11 @@ offset is converted to UTC. An NVD `created` or `lastModified` timestamp with
 no offset is interpreted as UTC without rounding or changing millisecond
 precision; invalid timestamps fail the import.
 
+Only COMPLETE snapshots can be used for exact matching. An explicit snapshot
+ID must exist and be COMPLETE. Without an explicit ID, zero COMPLETE snapshots
+is an error and multiple COMPLETE snapshots are ambiguous; the application
+never selects the newest snapshot by timestamp or database ID.
+
 ## Backend
 
 The API is mounted at `/api/` and currently provides:
@@ -199,10 +211,26 @@ The API is mounted at `/api/` and currently provides:
 - database health;
 - pilot image list and detail;
 - dashboard summary;
-- paginated Primary CPE Component list and detail.
+- paginated Primary CPE Component list and detail;
+- raw-string Dictionary status and snapshot provenance for Component detail.
 
 The DRF endpoints are read-only. The Component endpoint supports image,
-Primary CPE presence, search, ordering, page, and page-size parameters.
+Primary CPE presence, Dictionary status, search, ordering, page, and page-size
+parameters. List rows contain `dictionary_status` but omit per-record
+Dictionary provenance; Component detail provides the selected snapshot and
+matched NVD CPE record.
+
+Filter the list before pagination with:
+
+```text
+GET /api/components/?dictionary_status=NOT_IN_DICTIONARY
+```
+
+Supported values are `OFFICIAL_ACTIVE`, `OFFICIAL_DEPRECATED`,
+`NOT_IN_DICTIONARY`, and `NOT_PRESENT`. The default list retains its existing
+`has_cpe=true` scope. `dictionary_status=NOT_PRESENT` uses the missing-Primary-
+CPE scope; explicitly contradictory `has_cpe` and `dictionary_status` values
+return HTTP 400.
 
 ## Frontend
 
@@ -213,12 +241,19 @@ The desktop-oriented React UI provides:
   Component evidence panel.
 
 The Components route supports `image_id`, `search`, `ordering`, `page`,
-`page_size`, and `component_id` query parameters. The application uses
+`page_size`, `dictionary_status`, and `component_id` query parameters. Its
+table shows structural and Dictionary status side by side. The Dictionary
+filter is preserved in the URL, composes with the existing image and search
+filters, and requests `has_cpe=false` for `NOT_PRESENT`. Component detail shows
+a summary status badge at the top and keeps snapshot and UUID provenance in
+the detailed Dictionary section. Status indicates raw-string presence in the
+selected NVD snapshot, not semantic correctness. The application uses
 `BrowserRouter`; a production static host would need an SPA fallback for
 frontend routes.
 
 The Validation Workbench remains disabled. The current detail API returns the
-placeholder Dictionary status `UNVALIDATED`.
+exact-match status, snapshot ID, matched NVD CPE UUID, matched raw CPE, and
+deprecation flag where a Dictionary record exists.
 
 ## CPE Profiling
 
@@ -235,6 +270,37 @@ backend/.venv/bin/python backend/manage.py profile_cpes
 ```
 
 The profiler reads imported records and does not modify them.
+
+## Dictionary Exact Match
+
+The exact-match service compares only:
+
+```text
+Component.cpe == CpeName.cpe_name
+```
+
+It does not trim, normalize case or escapes, apply aliases, replace deprecated
+CPEs, or parse the string as a prerequisite. Results use four statuses:
+
+- `OFFICIAL_ACTIVE`: an identical active Dictionary record exists;
+- `OFFICIAL_DEPRECATED`: an identical deprecated Dictionary record exists;
+- `NOT_IN_DICTIONARY`: a Primary CPE exists but no identical record exists;
+- `NOT_PRESENT`: the Component has no Primary CPE.
+
+These statuses are automated evidence, not a semantic correctness decision or
+Ground Truth. Reproduce the unique-CPE and Component-level evaluation with:
+
+```bash
+backend/.venv/bin/python backend/manage.py evaluate_cpe_exact_matches \
+  --snapshot-id 20260725T035002Z
+```
+
+The default output directory is
+`analysis/results/cpe-exact-match/20260725T035002Z/` and contains
+`summary.json`, `unique_cpe_matches.csv`, and `component_matches.csv`. Use
+`--output-dir` to choose another directory. Existing known output files are
+protected unless `--overwrite` is supplied. The command reads the database but
+does not create or update match records.
 
 ## Tests
 
@@ -279,10 +345,16 @@ The following counts apply to the tracked pilot and the
 | Active NVD CPE records | 1,687,483 |
 | Deprecated NVD CPE records | 98,642 |
 
+For raw-string exact matching against snapshot `20260725T035002Z`, the 1,337
+unique Primary CPEs contain 6 `OFFICIAL_ACTIVE`, 0
+`OFFICIAL_DEPRECATED`, and 1,331 `NOT_IN_DICTIONARY` results. At Component
+level, the counts are 6, 0, 1,763, and 85,642 respectively for
+`OFFICIAL_ACTIVE`, `OFFICIAL_DEPRECATED`, `NOT_IN_DICTIONARY`, and
+`NOT_PRESENT`.
+
 ## Limitations
 
-- The Dictionary raw-string exact-match API is not implemented.
-- `UNVALIDATED` remains a placeholder Dictionary status.
+- Dictionary search and candidate lookup are not implemented.
 - Dictionary membership is not a semantic correctness decision or Ground
   Truth.
 - Semantic review and Ground Truth storage are later research stages.
