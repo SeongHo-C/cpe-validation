@@ -4,6 +4,7 @@ import {
   ScanSearch,
   ShieldCheck,
 } from "lucide-react"
+import { NavLink } from "react-router-dom"
 
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -14,11 +15,20 @@ interface AppNavigationProps {
   className?: string
 }
 
-const futureNavigationItems = [
+const navigationItems = [
+  {
+    label: "Images",
+    to: "/images",
+    icon: Boxes,
+  },
   {
     label: "Components",
+    to: "/components",
     icon: Layers3,
   },
+] as const
+
+const futureNavigationItems = [
   {
     label: "Workbench",
     icon: ScanSearch,
@@ -51,14 +61,26 @@ export function AppNavigation({
         aria-label="Primary navigation"
         className="flex-1 space-y-1 p-3"
       >
-        <a
-          href="#images"
-          aria-current="page"
-          className="flex h-9 items-center gap-3 rounded-lg bg-cyan-50 px-3 text-sm font-medium text-cyan-800 outline-none transition-colors hover:bg-cyan-100 focus-visible:ring-2 focus-visible:ring-cyan-600"
-        >
-          <Boxes className="size-4" aria-hidden="true" />
-          Images
-        </a>
+        {navigationItems.map((item) => {
+          const Icon = item.icon
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  "flex h-9 items-center gap-3 rounded-lg px-3 text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-cyan-600",
+                  isActive
+                    ? "bg-cyan-50 font-medium text-cyan-800 hover:bg-cyan-100"
+                    : "text-muted-foreground hover:text-foreground",
+                )
+              }
+            >
+              <Icon className="size-4" aria-hidden="true" />
+              {item.label}
+            </NavLink>
+          )
+        })}
 
         {futureNavigationItems.map((item) => {
           const Icon = item.icon

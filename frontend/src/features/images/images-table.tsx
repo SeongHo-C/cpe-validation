@@ -5,7 +5,10 @@ import {
   useReactTable,
   type SortingState,
 } from "@tanstack/react-table"
-import { useState } from "react"
+import {
+  useState,
+  type KeyboardEvent,
+} from "react"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -22,6 +25,7 @@ import type { DockerImageSummary } from "@/features/images/images-types"
 
 interface ImagesTableProps {
   images: DockerImageSummary[]
+  onSelectImage: (imageId: number) => void
 }
 
 const defaultSorting: SortingState = [
@@ -29,7 +33,10 @@ const defaultSorting: SortingState = [
   { id: "tag", desc: false },
 ]
 
-export function ImagesTable({ images }: ImagesTableProps) {
+export function ImagesTable({
+  images,
+  onSelectImage,
+}: ImagesTableProps) {
   const [sorting, setSorting] =
     useState<SortingState>(defaultSorting)
   const table = useReactTable({
@@ -78,7 +85,25 @@ export function ImagesTable({ images }: ImagesTableProps) {
       </TableHeader>
       <TableBody>
         {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.original.id}>
+          <TableRow
+            key={row.original.id}
+            role="link"
+            tabIndex={0}
+            aria-label={`View Primary CPE Components for ${row.original.repository}:${row.original.tag}`}
+            className="cursor-pointer outline-none focus-visible:bg-cyan-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-600"
+            onClick={() => onSelectImage(row.original.id)}
+            onKeyDown={(
+              event: KeyboardEvent<HTMLTableRowElement>,
+            ) => {
+              if (
+                event.key === "Enter" ||
+                event.key === " "
+              ) {
+                event.preventDefault()
+                onSelectImage(row.original.id)
+              }
+            }}
+          >
             {row.getVisibleCells().map((cell) => (
               <TableCell key={cell.id}>
                 {flexRender(

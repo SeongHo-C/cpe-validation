@@ -1,4 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table"
+import { ChevronRight } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -20,13 +21,19 @@ export const imagesTableColumns: ColumnDef<DockerImageSummary>[] = [
       />
     ),
     cell: ({ row }) => (
-      <div className="min-w-52">
-        <p className="font-medium text-foreground">
-          {repositoryBasename(row.original.repository)}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {row.original.repository}
-        </p>
+      <div className="flex min-w-52 items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-foreground">
+            {repositoryBasename(row.original.repository)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {row.original.repository}
+          </p>
+        </div>
+        <ChevronRight
+          className="size-4 shrink-0 text-muted-foreground"
+          aria-hidden="true"
+        />
       </div>
     ),
   },

@@ -1,12 +1,20 @@
 import { Menu, ShieldCheck } from "lucide-react"
-import type { ReactNode } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
+import {
+  Outlet,
+  useLocation,
+} from "react-router-dom"
 
 import { AppHeader } from "@/components/app-header"
 import {
   AppNavigation,
   AppSidebar,
 } from "@/components/app-sidebar"
-import type { ApiConnectionStatus } from "@/components/api-status"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -16,18 +24,32 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useApiHealth } from "@/hooks/use-api-health"
 
-interface AppShellProps {
-  apiStatus: ApiConnectionStatus
-  imageCount?: number
-  children: ReactNode
+export interface AppShellOutletContext {
+  setImageCount: (count: number | undefined) => void
 }
 
-export function AppShell({
-  apiStatus,
-  imageCount,
-  children,
-}: AppShellProps) {
+export function AppShell() {
+  const location = useLocation()
+  const apiStatus = useApiHealth()
+  const [imageCount, setImageCountState] = useState<number>()
+  const [mobileNavigationOpen, setMobileNavigationOpen] =
+    useState(false)
+
+  const setImageCount = useCallback(
+    (count: number | undefined) => setImageCountState(count),
+    [],
+  )
+  const outletContext = useMemo<AppShellOutletContext>(
+    () => ({ setImageCount }),
+    [setImageCount],
+  )
+
+  useEffect(() => {
+    setMobileNavigationOpen(false)
+  }, [location.pathname])
+
   return (
     <div className="min-h-screen bg-muted/35">
       <AppSidebar imageCount={imageCount} />
@@ -43,7 +65,10 @@ export function AppShell({
             </span>
           </div>
 
-          <Sheet>
+          <Sheet
+            open={mobileNavigationOpen}
+            onOpenChange={setMobileNavigationOpen}
+          >
             <SheetTrigger asChild>
               <Button
                 variant="outline"
@@ -67,7 +92,7 @@ export function AppShell({
 
         <AppHeader apiStatus={apiStatus} />
         <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          {children}
+          <Outlet context={outletContext} />
         </main>
       </div>
     </div>

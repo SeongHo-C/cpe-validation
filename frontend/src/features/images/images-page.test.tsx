@@ -1,5 +1,4 @@
 import {
-  render,
   screen,
   waitFor,
   within,
@@ -14,11 +13,11 @@ import {
   vi,
 } from "vitest"
 
-import { ImagesPage } from "@/features/images/images-page"
 import type {
   ApiHealth,
   DockerImageSummary,
 } from "@/features/images/images-types"
+import { renderAppAt } from "@/test/render-app"
 
 const healthResponse: ApiHealth = {
   status: "ok",
@@ -83,12 +82,14 @@ async function renderLoadedPage(
   images: DockerImageSummary[] = imageFixtures,
 ) {
   installSuccessfulFetch(images)
-  render(<ImagesPage />)
+  renderAppAt("/images")
   await screen.findByText("docker.io/library/alpine")
 }
 
 function firstRepositoryName(): string {
-  const rows = screen.getAllByRole("row").slice(1)
+  const rows = screen.getAllByRole("link", {
+    name: /View Primary CPE Components for/,
+  })
   return (
     within(rows[0])
       .getByText(/^(alpine|redis)$/)
@@ -110,7 +111,7 @@ describe("ImagesPage", () => {
       () => new Promise<Response>(() => undefined),
     )
 
-    render(<ImagesPage />)
+    renderAppAt("/images")
 
     expect(
       screen.getByLabelText("Loading summary metrics"),
@@ -217,7 +218,7 @@ describe("ImagesPage", () => {
       )
     })
 
-    render(<ImagesPage />)
+    renderAppAt("/images")
 
     expect(
       await screen.findByText("Unable to load Docker images"),
@@ -249,7 +250,7 @@ describe("ImagesPage", () => {
       return Promise.resolve(jsonResponse(imageFixtures))
     })
 
-    render(<ImagesPage />)
+    renderAppAt("/images")
     await user.click(
       await screen.findByRole("button", { name: "Retry" }),
     )
@@ -268,7 +269,7 @@ describe("ImagesPage", () => {
       return Promise.resolve(jsonResponse(imageFixtures))
     })
 
-    render(<ImagesPage />)
+    renderAppAt("/images")
 
     expect(
       await screen.findByText("docker.io/library/alpine"),
@@ -280,7 +281,7 @@ describe("ImagesPage", () => {
 
   it("distinguishes an empty API dataset", async () => {
     installSuccessfulFetch([])
-    render(<ImagesPage />)
+    renderAppAt("/images")
 
     expect(
       await screen.findByText("No Docker images available"),
@@ -316,4 +317,57 @@ describe("ImagesPage", () => {
       expect(firstRepositoryName()).toBe("redis")
     })
   })
+
+  it("opens an image Component queue when its row is clicked", async () => {
+    const user = userEvent.setup()
+    await renderLoadedPage()
+
+    await user.click(
+      screen.getByRole("link", {
+        name: /View Primary CPE Components for docker.io\/library\/alpine:3.24.1/,
+      }),
+    )
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Primary CPE Components",
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId("route-location")).toHaveTextContent(
+      "/components?image_id=1",
+    )
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.filter(
+          ([input]) => String(input) === "/api/health/",
+        ),
+    ).toHaveLength(1)
+  })
+
+  it.each([
+    ["Enter", "{Enter}"],
+    ["Space", " "],
+  ])(
+    "opens an image Component queue with the %s key",
+    async (_keyName, keyboardInput) => {
+      const user = userEvent.setup()
+      await renderLoadedPage()
+      const imageRow = screen.getByRole("link", {
+        name: /View Primary CPE Components for docker.io\/library\/alpine:3.24.1/,
+      })
+
+      imageRow.focus()
+      await user.keyboard(keyboardInput)
+
+      expect(
+        await screen.findByRole("heading", {
+          name: "Primary CPE Components",
+        }),
+      ).toBeInTheDocument()
+      expect(screen.getByTestId("route-location")).toHaveTextContent(
+        "/components?image_id=1",
+      )
+    },
+  )
 })

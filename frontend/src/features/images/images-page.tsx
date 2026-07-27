@@ -8,9 +8,12 @@ import {
   useMemo,
   useState,
 } from "react"
+import {
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom"
 
-import { AppShell } from "@/components/app-shell"
-import type { ApiConnectionStatus } from "@/components/api-status"
+import type { AppShellOutletContext } from "@/components/app-shell"
 import {
   Alert,
   AlertDescription,
@@ -21,7 +24,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  getApiHealth,
   getDockerImages,
 } from "@/features/images/images-api"
 import {
@@ -33,10 +35,7 @@ import {
   ImagesTableSkeleton,
 } from "@/features/images/images-table"
 import type { DockerImageSummary } from "@/features/images/images-types"
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError"
-}
+import { isAbortError } from "@/lib/api-client"
 
 function repositoryBasename(repository: string): string {
   return repository.split("/").at(-1) ?? repository
@@ -96,8 +95,9 @@ function LoadingContent() {
 }
 
 export function ImagesPage() {
-  const [apiStatus, setApiStatus] =
-    useState<ApiConnectionStatus>("checking")
+  const navigate = useNavigate()
+  const { setImageCount } =
+    useOutletContext<AppShellOutletContext>()
   const [images, setImages] = useState<DockerImageSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
@@ -108,43 +108,20 @@ export function ImagesPage() {
     const controller = new AbortController()
     let active = true
 
-    setApiStatus("checking")
-    getApiHealth(controller.signal)
-      .then((health) => {
-        if (!active) return
-        setApiStatus(
-          health.status === "ok" && health.database === "ok"
-            ? "connected"
-            : "unavailable",
-        )
-      })
-      .catch((error: unknown) => {
-        if (active && !isAbortError(error)) {
-          setApiStatus("unavailable")
-        }
-      })
-
-    return () => {
-      active = false
-      controller.abort()
-    }
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    let active = true
-
     setIsLoading(true)
     setHasError(false)
+    setImageCount(undefined)
     getDockerImages(controller.signal)
       .then((responseImages) => {
         if (!active) return
         setImages(responseImages)
+        setImageCount(responseImages.length)
         setIsLoading(false)
       })
       .catch((error: unknown) => {
         if (!active || isAbortError(error)) return
         setHasError(true)
+        setImageCount(undefined)
         setIsLoading(false)
       })
 
@@ -152,7 +129,7 @@ export function ImagesPage() {
       active = false
       controller.abort()
     }
-  }, [reloadToken])
+  }, [reloadToken, setImageCount])
 
   const normalizedSearch = search.trim().toLowerCase()
   const filteredImages = useMemo(() => {
@@ -169,11 +146,8 @@ export function ImagesPage() {
     )
   }, [images, normalizedSearch])
 
-  const imageCount = isLoading || hasError ? undefined : images.length
-
   return (
-    <AppShell apiStatus={apiStatus} imageCount={imageCount}>
-      <div id="images" className="mx-auto max-w-[1600px]">
+    <div id="images" className="mx-auto max-w-[1600px]">
         {isLoading ? <LoadingContent /> : null}
 
         {!isLoading && hasError ? (
@@ -240,7 +214,12 @@ export function ImagesPage() {
               </div>
 
               {filteredImages.length > 0 ? (
-                <ImagesTable images={filteredImages} />
+                <ImagesTable
+                  images={filteredImages}
+                  onSelectImage={(imageId) =>
+                    navigate(`/components?image_id=${imageId}`)
+                  }
+                />
               ) : (
                 <div className="p-4">
                   <EmptyState
@@ -253,7 +232,6 @@ export function ImagesPage() {
             </Card>
           </div>
         ) : null}
-      </div>
-    </AppShell>
+    </div>
   )
 }
