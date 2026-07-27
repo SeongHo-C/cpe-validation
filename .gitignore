@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# NVD CPE Dictionary snapshot archives and partial work
+data/cpe-dictionary/snapshots/*/nvdcpe-2.0.tar.gz
+data/cpe-dictionary/snapshots/*/nvdcpe-2.0.json
+data/cpe-dictionary/snapshots/.*.tmp-*/
+data/cpe-dictionary/snapshots/**/*.part
