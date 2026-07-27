@@ -302,6 +302,42 @@ The default output directory is
 protected unless `--overwrite` is supplied. The command reads the database but
 does not create or update match records.
 
+## Dictionary Mismatch Profiling
+
+Profile unique `NOT_IN_DICTIONARY` Primary CPEs against the selected
+Dictionary snapshot with exact equality at three structured-field levels:
+
+```text
+part + vendor + product + version
+part + vendor + product
+part + product
+```
+
+The mutually exclusive statuses are
+`SAME_PART_VENDOR_PRODUCT_VERSION`, `SAME_PART_VENDOR_PRODUCT`,
+`SAME_PART_PRODUCT`, `NO_STRUCTURED_MATCH`, and `UNPARSABLE`. The comparison
+does not normalize fields, apply aliases, rank candidates, or decide semantic
+correctness or Ground Truth.
+
+Run the read-only analysis with:
+
+```bash
+backend/.venv/bin/python backend/manage.py \
+  profile_cpe_dictionary_mismatches \
+  --snapshot-id 20260725T035002Z
+```
+
+The default snapshot-specific directory is
+`analysis/results/cpe-dictionary-mismatch/20260725T035002Z/`. It contains
+`summary.json`, `unique_cpe_mismatch_profiles.csv`, and
+`field_value_counts.json`; existing known files require `--overwrite`.
+
+For snapshot `20260725T035002Z`, the 1,331 unique raw mismatches profile as 3
+`SAME_PART_VENDOR_PRODUCT_VERSION`, 44 `SAME_PART_VENDOR_PRODUCT`, 149
+`SAME_PART_PRODUCT`, 1,135 `NO_STRUCTURED_MATCH`, and 0 `UNPARSABLE`. These
+counts measure exact structured-field presence only and do not identify a
+correct replacement CPE.
+
 ## Tests
 
 Run backend checks and tests from `backend/`:

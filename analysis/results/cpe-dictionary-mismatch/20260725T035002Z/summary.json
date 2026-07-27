@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "analysis_scope": "Exact structured-field presence counts only; not candidate ranking, semantic correctness, or Ground Truth.",
+  "snapshot_id": "20260725T035002Z",
+  "snapshot_manifest_sha256": "f754ca6144a8791b70e2a27cba9b39f3db814aa5b9fe07d539a7640e58ae3dac",
+  "generated_at": "2026-07-27T10:46:51.815Z",
+  "analysis_duration_seconds": 1.278813,
+  "total_components": 87411,
+  "components_with_primary_cpe": 1769,
+  "components_without_primary_cpe": 85642,
+  "unique_primary_cpes": 1337,
+  "unique_official_active": 6,
+  "unique_official_deprecated": 0,
+  "unique_not_in_dictionary": 1331,
+  "profiled_unique_cpes": 1331,
+  "unparsable_unique_cpes": 0,
+  "component_weighted_not_in_dictionary": 1763,
+  "profile_status_counts": {
+    "SAME_PART_VENDOR_PRODUCT_VERSION": 3,
+    "SAME_PART_VENDOR_PRODUCT": 44,
+    "SAME_PART_PRODUCT": 149,
+    "NO_STRUCTURED_MATCH": 1135,
+    "UNPARSABLE": 0
+  },
+  "component_weighted_profile_status_counts": {
+    "SAME_PART_VENDOR_PRODUCT_VERSION": 4,
+    "SAME_PART_VENDOR_PRODUCT": 49,
+    "SAME_PART_PRODUCT": 216,
+    "NO_STRUCTURED_MATCH": 1494,
+    "UNPARSABLE": 0
+  },
+  "dictionary_record_count": 1786125,
+  "dictionary_active_count": 1687483,
+  "dictionary_deprecated_count": 98642,
+  "unique_part_vendor_product_version_keys": 1331,
+  "unique_part_vendor_product_keys": 914,
+  "unique_part_product_keys": 898,
+  "dictionary_query_count": 2,
+  "field_value_counts_truncated": false
+}
