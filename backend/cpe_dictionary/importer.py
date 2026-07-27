@@ -14,7 +14,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from sboms.cpe23 import (
+from cpe.cpe23 import (
     CPE23_ATTRIBUTE_NAMES,
     parse_cpe23_formatted_string,
 )

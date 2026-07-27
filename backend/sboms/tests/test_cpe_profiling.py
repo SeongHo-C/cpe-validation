@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 
-from sboms.cpe23 import CPE23StructuralStatus
+from cpe.cpe23 import CPE23StructuralStatus
 from sboms.cpe_profiling import (
     COMPONENT_CPES_FILENAME,
     OUTPUT_FILENAMES,

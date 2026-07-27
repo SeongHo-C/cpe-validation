@@ -12,7 +12,7 @@ from typing import Any, Iterable
 
 from django.db.models import Count, Q
 
-from sboms.cpe23 import (
+from cpe.cpe23 import (
     CPE23_ATTRIBUTE_NAMES,
     CPE23ParseResult,
     CPE23StructuralStatus,

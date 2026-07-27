@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from sboms.cpe23 import (
+from cpe.cpe23 import (
     CPE23StructuralStatus,
     parse_cpe23_formatted_string,
 )

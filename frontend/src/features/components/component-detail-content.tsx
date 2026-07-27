@@ -177,13 +177,15 @@ export function ComponentDetailContent({
           </div>
           <div className="rounded-lg border bg-muted/20 p-3">
             <p className="text-xs text-muted-foreground">
-              Dictionary Status
+              Primary CPE
             </p>
             <Badge variant="secondary" className="mt-2">
-              {detail.dictionary_status}
+              {detail.cpe ? "Present" : "Not present"}
             </Badge>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Not evaluated against the official CPE Dictionary.
+              {detail.cpe
+                ? "A Primary CPE is present in the SBOM Component."
+                : "No Primary CPE is present in the SBOM Component."}
             </p>
           </div>
         </div>

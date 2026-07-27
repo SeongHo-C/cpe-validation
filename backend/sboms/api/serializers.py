@@ -4,7 +4,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from sboms.cpe23 import parse_cpe23_formatted_string
+from cpe.cpe23 import parse_cpe23_formatted_string
 from sboms.models import Component, DockerImage, SBOMDocument
 
 

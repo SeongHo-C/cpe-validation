@@ -317,7 +317,7 @@ describe("Component Detail panel", () => {
     ).toBeGreaterThanOrEqual(2)
     expect(
       within(panel).getAllByText("UNVALIDATED").length,
-    ).toBeGreaterThanOrEqual(2)
+    ).toBe(1)
     expect(
       within(panel).getByText(
         "No structural issues detected by the formatted-string parser.",
@@ -587,7 +587,7 @@ describe("Component Detail panel", () => {
     ).toBeInTheDocument()
     expect(
       screen.getAllByText("UNVALIDATED").length,
-    ).toBeGreaterThanOrEqual(2)
+    ).toBe(1)
     expect(
       screen.getByText(
         "Checks the CPE 2.3 formatted-string structure only.",
