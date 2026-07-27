@@ -1,6 +1,7 @@
 import { getJson } from "@/lib/api-client"
 
 import type {
+  ComponentDetail,
   ComponentsQuery,
   ComponentSummary,
   DockerImageDetail,
@@ -52,6 +53,16 @@ export function getDockerImageDetail(
 ): Promise<DockerImageDetail> {
   return getJson<DockerImageDetail>(
     `/api/images/${imageId}/`,
+    { signal },
+  )
+}
+
+export function getComponentDetail(
+  componentId: number,
+  signal?: AbortSignal,
+): Promise<ComponentDetail> {
+  return getJson<ComponentDetail>(
+    `/api/components/${componentId}/`,
     { signal },
   )
 }

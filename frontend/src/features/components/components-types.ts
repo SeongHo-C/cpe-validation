@@ -32,6 +32,29 @@ export interface ComponentSummary {
   cpe_fields: CpeFields | null
 }
 
+export interface ComponentProperty {
+  name: string
+  value: string
+}
+
+export interface ComponentSbomDocument {
+  id: number
+  source_path: string
+  spec_version: string
+  generator_name: string
+  generator_version: string
+  source_type: string
+  scope: string
+}
+
+export interface ComponentDetail extends ComponentSummary {
+  bom_ref: string
+  properties: ComponentProperty[]
+  sbom_document: ComponentSbomDocument
+  structural_error_message: string | null
+  dictionary_status: string
+}
+
 export interface PaginatedResponse<T> {
   count: number
   page: number

@@ -119,7 +119,7 @@ export function AppNavigation({
 
 export function AppSidebar({ imageCount }: { imageCount?: number }) {
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r bg-card lg:block">
+    <aside className="fixed inset-y-0 left-0 z-30 w-60 border-r bg-card">
       <AppNavigation imageCount={imageCount} />
     </aside>
   )

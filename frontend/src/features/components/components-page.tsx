@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { ComponentDetailPanel } from "@/features/components/component-detail-panel"
 import {
   getComponents,
   getDockerImageDetail,
@@ -52,6 +53,7 @@ import {
 
 interface QueryUpdates {
   imageId?: number | null
+  componentId?: number | null
   search?: string
   ordering?: ComponentOrdering
   page?: number
@@ -118,6 +120,8 @@ export function ComponentsPage() {
   const {
     imageId,
     invalidImageId,
+    componentId,
+    invalidComponentId,
     search,
     ordering,
     page,
@@ -147,6 +151,16 @@ export function ComponentsPage() {
           next.delete("image_id")
         } else if (updates.imageId !== undefined) {
           next.set("image_id", String(updates.imageId))
+        }
+      }
+      if ("componentId" in updates) {
+        if (updates.componentId === null) {
+          next.delete("component_id")
+        } else if (updates.componentId !== undefined) {
+          next.set(
+            "component_id",
+            String(updates.componentId),
+          )
         }
       }
       if (updates.search !== undefined) {
@@ -186,6 +200,15 @@ export function ComponentsPage() {
     [searchSignature, setSearchParameters],
   )
 
+  const updateListQuery = useCallback(
+    (updates: QueryUpdates) =>
+      updateQuery({
+        ...updates,
+        componentId: null,
+      }),
+    [updateQuery],
+  )
+
   useEffect(() => {
     const current = new URLSearchParams(searchSignature)
     const canonical = canonicalizeComponentsSearch(current)
@@ -203,14 +226,14 @@ export function ComponentsPage() {
     if (normalizedSearch === search) return
 
     const timeout = window.setTimeout(() => {
-      updateQuery({
+      updateListQuery({
         search: normalizedSearch,
         page: DEFAULT_COMPONENT_PAGE,
       })
     }, 300)
 
     return () => window.clearTimeout(timeout)
-  }, [search, searchInput, updateQuery])
+  }, [search, searchInput, updateListQuery])
 
   useEffect(() => {
     if (invalidImageId) {
@@ -298,14 +321,14 @@ export function ComponentsPage() {
 
   const clearSearch = () => {
     setSearchInput("")
-    updateQuery({
+    updateListQuery({
       search: "",
       page: DEFAULT_COMPONENT_PAGE,
     })
   }
 
   const clearImageFilter = () => {
-    updateQuery({
+    updateListQuery({
       imageId: null,
       page: DEFAULT_COMPONENT_PAGE,
     })
@@ -339,110 +362,133 @@ export function ComponentsPage() {
 
   return (
     <div
-      className="mx-auto max-w-[1800px] space-y-5"
+      className="mx-auto min-w-[1180px] max-w-[2200px]"
       aria-busy={isLoading}
     >
-      <ImageScopeSummary
-        imageId={imageId}
-        image={image}
-        isLoading={isImageLoading}
-        error={imageError}
-        componentCount={resultCount}
-        onClearImageFilter={clearImageFilter}
-      />
-
-      <Card
-        id="components-table"
-        className="gap-0 py-0"
-      >
-        <ComponentsToolbar
-          searchInput={searchInput}
-          ordering={ordering}
-          pageSize={pageSize}
-          resultCount={resultCount}
-          isBusy={isLoading}
-          onSearchInputChange={setSearchInput}
-          onOrderingChange={(nextOrdering) =>
-            updateQuery({
-              ordering: nextOrdering,
-              page: DEFAULT_COMPONENT_PAGE,
-            })
-          }
-          onPageSizeChange={(nextPageSize) =>
-            updateQuery({
-              pageSize: nextPageSize,
-              page: DEFAULT_COMPONENT_PAGE,
-            })
-          }
-        />
-
-        {isInitialLoading ? <ComponentsTableSkeleton /> : null}
-
-        {!isInitialLoading && componentsError ? (
-          <div className="p-4">
-            <Alert variant="destructive" className="p-4">
-              <TriangleAlert aria-hidden="true" />
-              <AlertTitle>Unable to load components</AlertTitle>
-              <AlertDescription>
-                The frontend could not retrieve the CPE validation
-                queue.
-              </AlertDescription>
-              <div className="col-start-2 mt-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    setComponentsReloadToken(
-                      (current) => current + 1,
-                    )
-                  }
-                >
-                  Retry
-                </Button>
-              </div>
-            </Alert>
-          </div>
-        ) : null}
-
-        {!isInitialLoading &&
-        !componentsError &&
-        components?.count === 0 ? (
-          <EmptyComponents
-            hasSearch={Boolean(search)}
-            hasImageFilter={imageId !== undefined}
-            onClearSearch={clearSearch}
+      <div className="flex items-start gap-5">
+        <section
+          aria-label="Primary CPE Component list"
+          className="min-w-0 flex-1 space-y-5"
+        >
+          <ImageScopeSummary
+            imageId={imageId}
+            image={image}
+            isLoading={isImageLoading}
+            error={imageError}
+            componentCount={resultCount}
+            onClearImageFilter={clearImageFilter}
           />
-        ) : null}
 
-        {!componentsError &&
-        components &&
-        components.count > 0 ? (
-          <>
-            <ComponentsTable
-              components={components.results}
+          <Card
+            id="components-table"
+            className="gap-0 py-0"
+          >
+            <ComponentsToolbar
+              searchInput={searchInput}
               ordering={ordering}
-              page={components.page}
-              pageSize={components.page_size}
-              totalPages={components.total_pages}
-              isRefreshing={isLoading}
+              pageSize={pageSize}
+              resultCount={resultCount}
+              isBusy={isLoading}
+              onSearchInputChange={setSearchInput}
               onOrderingChange={(nextOrdering) =>
-                updateQuery({
+                updateListQuery({
                   ordering: nextOrdering,
                   page: DEFAULT_COMPONENT_PAGE,
                 })
               }
-            />
-            <ComponentsPagination
-              page={components.page}
-              totalPages={components.total_pages}
-              disabled={isLoading}
-              onPageChange={(nextPage) =>
-                updateQuery({ page: nextPage })
+              onPageSizeChange={(nextPageSize) =>
+                updateListQuery({
+                  pageSize: nextPageSize,
+                  page: DEFAULT_COMPONENT_PAGE,
+                })
               }
             />
-          </>
-        ) : null}
-      </Card>
+
+            {isInitialLoading ? (
+              <ComponentsTableSkeleton />
+            ) : null}
+
+            {!isInitialLoading && componentsError ? (
+              <div className="p-4">
+                <Alert variant="destructive" className="p-4">
+                  <TriangleAlert aria-hidden="true" />
+                  <AlertTitle>
+                    Unable to load components
+                  </AlertTitle>
+                  <AlertDescription>
+                    The frontend could not retrieve the CPE
+                    validation queue.
+                  </AlertDescription>
+                  <div className="col-start-2 mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setComponentsReloadToken(
+                          (current) => current + 1,
+                        )
+                      }
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </Alert>
+              </div>
+            ) : null}
+
+            {!isInitialLoading &&
+            !componentsError &&
+            components?.count === 0 ? (
+              <EmptyComponents
+                hasSearch={Boolean(search)}
+                hasImageFilter={imageId !== undefined}
+                onClearSearch={clearSearch}
+              />
+            ) : null}
+
+            {!componentsError &&
+            components &&
+            components.count > 0 ? (
+              <>
+                <ComponentsTable
+                  components={components.results}
+                  ordering={ordering}
+                  page={components.page}
+                  pageSize={components.page_size}
+                  totalPages={components.total_pages}
+                  isRefreshing={isLoading}
+                  selectedComponentId={componentId}
+                  onOrderingChange={(nextOrdering) =>
+                    updateListQuery({
+                      ordering: nextOrdering,
+                      page: DEFAULT_COMPONENT_PAGE,
+                    })
+                  }
+                  onSelectComponent={(nextComponentId) =>
+                    updateQuery({
+                      componentId: nextComponentId,
+                    })
+                  }
+                />
+                <ComponentsPagination
+                  page={components.page}
+                  totalPages={components.total_pages}
+                  disabled={isLoading}
+                  onPageChange={(nextPage) =>
+                    updateListQuery({ page: nextPage })
+                  }
+                />
+              </>
+            ) : null}
+          </Card>
+        </section>
+
+        <ComponentDetailPanel
+          componentId={componentId}
+          invalidComponentId={invalidComponentId}
+          onClose={() => updateQuery({ componentId: null })}
+        />
+      </div>
     </div>
   )
 }

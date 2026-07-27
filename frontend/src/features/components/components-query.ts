@@ -27,6 +27,8 @@ export type ComponentOrdering =
 export interface ComponentsUrlState {
   imageId?: number
   invalidImageId: boolean
+  componentId?: number
+  invalidComponentId: boolean
   search: string
   ordering: ComponentOrdering
   page: number
@@ -63,6 +65,10 @@ export function parseComponentsUrlState(
   const hasImageId = rawImageId !== null
   const validImageId =
     !hasImageId || isPositiveInteger(rawImageId)
+  const rawComponentId = searchParameters.get("component_id")
+  const hasComponentId = rawComponentId !== null
+  const validComponentId =
+    !hasComponentId || isPositiveInteger(rawComponentId)
 
   const rawPage = searchParameters.get("page")
   const page = isPositiveInteger(rawPage)
@@ -85,6 +91,12 @@ export function parseComponentsUrlState(
         ? Number(rawImageId)
         : undefined,
     invalidImageId: hasImageId && !validImageId,
+    componentId:
+      hasComponentId && validComponentId
+        ? Number(rawComponentId)
+        : undefined,
+    invalidComponentId:
+      hasComponentId && !validComponentId,
     search: (searchParameters.get("search") ?? "").trim(),
     ordering,
     page,

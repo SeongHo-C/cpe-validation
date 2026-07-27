@@ -6,6 +6,7 @@ import {
   type SortingState,
   type Updater,
 } from "@tanstack/react-table"
+import type { KeyboardEvent } from "react"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -31,7 +32,9 @@ interface ComponentsTableProps {
   pageSize: number
   totalPages: number
   isRefreshing: boolean
+  selectedComponentId?: number
   onOrderingChange: (ordering: ComponentOrdering) => void
+  onSelectComponent: (componentId: number) => void
 }
 
 const sortableColumnIds = new Set([
@@ -69,7 +72,9 @@ export function ComponentsTable({
   pageSize,
   totalPages,
   isRefreshing,
+  selectedComponentId,
   onOrderingChange,
+  onSelectComponent,
 }: ComponentsTableProps) {
   const sorting = orderingToSorting(ordering)
   const table = useReactTable({
@@ -139,18 +144,44 @@ export function ComponentsTable({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.original.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(
-                    cell.column.columnDef.cell,
-                    cell.getContext(),
-                  )}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
+          {table.getRowModel().rows.map((row) => {
+            const isSelected =
+              row.original.id === selectedComponentId
+            return (
+              <TableRow
+                key={row.original.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`Inspect component ${row.original.name} ${row.original.version || "without a version"}`}
+                aria-pressed={isSelected}
+                data-state={isSelected ? "selected" : undefined}
+                className="cursor-pointer outline-none focus-visible:bg-cyan-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-600"
+                onClick={() =>
+                  onSelectComponent(row.original.id)
+                }
+                onKeyDown={(
+                  event: KeyboardEvent<HTMLTableRowElement>,
+                ) => {
+                  if (
+                    event.key === "Enter" ||
+                    event.key === " "
+                  ) {
+                    event.preventDefault()
+                    onSelectComponent(row.original.id)
+                  }
+                }}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext(),
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

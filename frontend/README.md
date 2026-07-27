@@ -4,6 +4,17 @@ React interface for browsing the Docker Official Image inventory used by the
 CPE Validation research pilot. The current UI covers the image inventory and
 the read-only Primary CPE Component validation queue.
 
+## Supported environment
+
+- Desktop research workstation
+- Recommended browser width: 1280px or wider
+- Fixed navigation sidebar and wide evidence tables
+- Mobile-specific UI is not supported
+
+Tables retain horizontal scrolling and long evidence values wrap so narrower
+desktop windows and unusually long CPE, PURL, bom-ref, and path values do not
+break the layout.
+
 ## Technology
 
 - React and TypeScript
@@ -61,10 +72,11 @@ The Components route supports these query parameters:
 - `ordering` — server-side sort field and direction
 - `page` — page number
 - `page_size` — one of 25, 50, 100, or 200
+- `component_id` — open one read-only Component Detail panel
 
 For example:
 
-<http://127.0.0.1:5173/components?image_id=1>
+<http://127.0.0.1:5173/components?image_id=1&component_id=101>
 
 The application uses `BrowserRouter`. A production static host must provide
 an SPA fallback that serves `index.html` for frontend routes such as
@@ -89,8 +101,13 @@ image opens its Component queue.
 
 The Components screen provides an image scope summary plus server-side
 search, sorting, page-size selection, and pagination for Components with a
-Primary CPE.
+Primary CPE. Selecting a Component row opens a read-only evidence panel with
+Component metadata, the Primary CPE and all CPE 2.3 fields, structural status,
+Syft candidate properties, other SBOM properties, and SBOM source metadata.
+The `component_id` URL state restores the same selection after reload.
 
-Component detail, CPE Dictionary exact matching, Validation Workbench,
-manual review, review history, authentication, exports, and frontend
-containerization are not implemented in this phase.
+The Detail panel is evidence inspection only; it is not a Ground Truth
+decision screen. Official CPE Dictionary exact matching, Ground Truth review,
+manual decision storage, candidate ranking, Validation Workbench, review
+history, authentication, exports, and frontend containerization are not
+implemented in this phase.
