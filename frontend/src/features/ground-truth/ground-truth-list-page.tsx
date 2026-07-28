@@ -1,5 +1,4 @@
 import {
-  ClipboardList,
   LoaderCircle,
   RotateCcw,
   Search,
@@ -21,17 +20,22 @@ import {
 } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DataPanelHeader } from "@/components/data-panel-header"
+import {
+  formLabelClassName,
+  selectControlClassName,
+} from "@/components/form-control-styles"
+import { PageContent } from "@/components/page-content"
 import {
   Card,
   CardContent,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -40,6 +44,7 @@ import {
 import { ComponentsPagination } from "@/features/components/components-pagination"
 import type { DictionaryStatus } from "@/features/components/components-types"
 import {
+  dictionaryStatuses,
   dictionaryStatusClassName,
   dictionaryStatusLabels,
 } from "@/features/components/dictionary-status"
@@ -56,6 +61,7 @@ import type {
   GroundTruthOrdering,
   GroundTruthStatus,
 } from "@/features/ground-truth/ground-truth-types"
+import { groundTruthStatusLabels } from "@/features/ground-truth/ground-truth-status"
 import { getDockerImages } from "@/features/images/images-api"
 import type { DockerImageSummary } from "@/features/images/images-types"
 import {
@@ -64,28 +70,27 @@ import {
 } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 
-const selectClassName =
-  "h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-
 function groundTruthValue(
   component: GroundTruthComponentSummary,
 ): string {
   const groundTruth = component.ground_truth
-  if (!groundTruth) return "미작성"
+  if (!groundTruth) return "Not Assigned"
   if (groundTruth.source === "DICTIONARY") {
-    return groundTruth.dictionary_cpe?.cpe_name ?? "CPE 없음"
+    return (
+      groundTruth.dictionary_cpe?.cpe_name ?? "No CPE Assigned"
+    )
   }
   if (groundTruth.source === "MANUAL") {
-    return groundTruth.manual_cpe ?? "CPE 없음"
+    return groundTruth.manual_cpe ?? "No CPE Assigned"
   }
-  return "CPE 없음"
+  return "No CPE Assigned"
 }
 
 function requestError(error: unknown): string {
   if (error instanceof ApiError) {
     return error.detail ?? error.message
   }
-  return "Ground Truth 검토 목록을 불러오지 못했습니다."
+  return "Unable to load Ground Truth review components."
 }
 
 export function GroundTruthListPage() {
@@ -180,32 +185,20 @@ export function GroundTruthListPage() {
   }
 
   return (
-    <div className="mx-auto min-w-0 max-w-[2200px] space-y-5">
-      <header>
-        <div className="flex items-center gap-2">
-          <ClipboardList
-            className="size-5 text-cyan-700"
-            aria-hidden="true"
-          />
-          <h2 className="font-heading text-xl font-semibold tracking-tight">
-            Ground Truth 검토 목록
-          </h2>
-        </div>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          Primary CPE가 있는 Component를 대상으로 검색 알고리즘과
-          독립적인 예상 정답을 구축합니다.
-        </p>
-      </header>
-
+    <PageContent>
       <Card className="gap-0 py-0" aria-busy={loading}>
-        <CardHeader className="border-b">
-          <CardTitle>Review Components</CardTitle>
+        <DataPanelHeader
+          title="Review Components"
+          description="Review components with a Primary CPE and assign an independent expected CPE."
+        >
           <form
-            className="mt-4 space-y-4"
+            className="mt-3 space-y-4"
             onSubmit={submitSearch}
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <label className="min-w-0 flex-1 space-y-1 text-xs font-medium">
+              <label
+                className={`${formLabelClassName} min-w-0 flex-1`}
+              >
                 <span className="block">Component Keyword</span>
                 <Input
                   aria-label="Component Keyword"
@@ -228,11 +221,13 @@ export function GroundTruthListPage() {
 
             <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap">
-                <label className="space-y-1 text-xs font-medium sm:w-full lg:w-[220px]">
+                <label
+                  className={`${formLabelClassName} sm:w-full lg:w-[220px]`}
+                >
                   <span className="block">Image</span>
                   <select
                     aria-label="Image"
-                    className={`${selectClassName} w-full`}
+                    className={`${selectControlClassName} w-full`}
                     value={query.image_id ?? ""}
                     onChange={(event) =>
                       setQuery({
@@ -251,11 +246,13 @@ export function GroundTruthListPage() {
                     ))}
                   </select>
                 </label>
-                <label className="space-y-1 text-xs font-medium sm:w-full lg:w-[200px]">
+                <label
+                  className={`${formLabelClassName} sm:w-full lg:w-[200px]`}
+                >
                   <span className="block">Ground Truth Status</span>
                   <select
                     aria-label="Ground Truth Status"
-                    className={`${selectClassName} w-full`}
+                    className={`${selectControlClassName} w-full`}
                     value={query.ground_truth_status ?? ""}
                     onChange={(event) =>
                       setQuery({
@@ -269,15 +266,17 @@ export function GroundTruthListPage() {
                     }
                   >
                     <option value="">All Statuses</option>
-                    <option value="UNREVIEWED">Unreviewed</option>
+                    <option value="UNREVIEWED">Not Reviewed</option>
                     <option value="COMPLETED">Completed</option>
                   </select>
                 </label>
-                <label className="space-y-1 text-xs font-medium sm:w-full lg:w-[210px]">
+                <label
+                  className={`${formLabelClassName} sm:w-full lg:w-[210px]`}
+                >
                   <span className="block">Exact Match</span>
                   <select
                     aria-label="Exact Match"
-                    className={`${selectClassName} w-full`}
+                    className={`${selectControlClassName} w-full`}
                     value={query.dictionary_status ?? ""}
                     onChange={(event) =>
                       setQuery({
@@ -293,25 +292,25 @@ export function GroundTruthListPage() {
                     <option value="">
                       All Exact Match Results
                     </option>
-                    <option value="OFFICIAL_ACTIVE">
-                      Official active
-                    </option>
-                    <option value="OFFICIAL_DEPRECATED">
-                      Official deprecated
-                    </option>
-                    <option value="NOT_IN_DICTIONARY">
-                      Not in Dictionary
-                    </option>
+                    {dictionaryStatuses
+                      .filter((status) => status !== "NOT_PRESENT")
+                      .map((status) => (
+                        <option key={status} value={status}>
+                          {dictionaryStatusLabels[status]}
+                        </option>
+                      ))}
                   </select>
                 </label>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end xl:ml-auto xl:shrink-0">
-                <label className="space-y-1 text-xs font-medium sm:w-[220px]">
+                <label
+                  className={`${formLabelClassName} sm:w-[220px]`}
+                >
                   <span className="block">Sort</span>
                   <select
                     aria-label="Sort"
-                    className={`${selectClassName} w-full`}
+                    className={`${selectControlClassName} w-full`}
                     value={query.ordering}
                     onChange={(event) =>
                       setQuery({
@@ -342,13 +341,15 @@ export function GroundTruthListPage() {
               </div>
             </div>
           </form>
-        </CardHeader>
+        </DataPanelHeader>
 
         {error ? (
           <div className="p-4">
             <Alert variant="destructive">
               <TriangleAlert aria-hidden="true" />
-              <AlertTitle>목록 조회 실패</AlertTitle>
+              <AlertTitle>
+                Unable to load review components
+              </AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           </div>
@@ -360,7 +361,7 @@ export function GroundTruthListPage() {
               className="size-4 animate-spin"
               aria-hidden="true"
             />
-            검토 목록을 불러오는 중…
+            Loading review components…
           </CardContent>
         ) : null}
 
@@ -370,12 +371,15 @@ export function GroundTruthListPage() {
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
                 <LoaderCircle
                   className="size-5 animate-spin"
-                  aria-label="검토 목록 불러오는 중"
+                  aria-label="Loading review components"
                 />
               </div>
             ) : null}
             <Table className="min-w-[1180px]">
-              <TableHeader>
+              <TableCaption className="sr-only">
+                Ground Truth review components
+              </TableCaption>
+              <TableHeader className="bg-muted/45">
                 <TableRow>
                   <TableHead>Component</TableHead>
                   <TableHead>Version</TableHead>
@@ -434,10 +438,11 @@ export function GroundTruthListPage() {
                               : "outline"
                           }
                         >
-                          {component.ground_truth_status ===
-                          "COMPLETED"
-                            ? "작성 완료"
-                            : "미작성"}
+                          {
+                            groundTruthStatusLabels[
+                              component.ground_truth_status
+                            ]
+                          }
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -459,7 +464,10 @@ export function GroundTruthListPage() {
                               new URLSearchParams(searchSignature),
                             )}
                           >
-                            Ground Truth 작성
+                            {component.ground_truth_status ===
+                            "COMPLETED"
+                              ? "Edit"
+                              : "Review"}
                           </Link>
                         </Button>
                       </TableCell>
@@ -470,7 +478,7 @@ export function GroundTruthListPage() {
             </Table>
             {components.results.length === 0 ? (
               <CardContent className="py-16 text-center text-sm text-muted-foreground">
-                현재 필터와 일치하는 Component가 없습니다.
+                No components match the current filters.
               </CardContent>
             ) : null}
           </div>
@@ -484,7 +492,7 @@ export function GroundTruthListPage() {
               </span>
               <select
                 aria-label="Rows per page"
-                className={selectClassName}
+                className={`${selectControlClassName} w-auto`}
                 value={query.page_size}
                 onChange={(event) =>
                   setQuery({
@@ -508,6 +516,6 @@ export function GroundTruthListPage() {
           </CardFooter>
         ) : null}
       </Card>
-    </div>
+    </PageContent>
   )
 }

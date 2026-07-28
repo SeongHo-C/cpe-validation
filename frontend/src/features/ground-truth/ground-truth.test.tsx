@@ -209,6 +209,9 @@ interface FetchOptions {
   saveError?: boolean
   invalidManual?: boolean
   delayedSave?: boolean
+  delayedList?: boolean
+  emptyList?: boolean
+  listError?: boolean
 }
 
 function installFetch(options: FetchOptions = {}) {
@@ -241,9 +244,17 @@ function installFetch(options: FetchOptions = {}) {
       )
     }
     if (url.pathname === "/api/ground-truth/components/") {
+      if (options.delayedList) {
+        return new Promise<Response>(() => undefined)
+      }
+      if (options.listError) {
+        return Promise.resolve(
+          jsonResponse({ detail: "List unavailable" }, 500),
+        )
+      }
       return Promise.resolve(
         jsonResponse({
-          count: 2,
+          count: options.emptyList ? 0 : 2,
           page: Number(url.searchParams.get("page") ?? 1),
           page_size: Number(
             url.searchParams.get("page_size") ?? 50,
@@ -251,7 +262,9 @@ function installFetch(options: FetchOptions = {}) {
           total_pages: 1,
           next: null,
           previous: null,
-          results: [listRow(101, null), listRow(102, "MANUAL")],
+          results: options.emptyList
+            ? []
+            : [listRow(101, null), listRow(102, "MANUAL")],
         }),
       )
     }
@@ -364,7 +377,7 @@ function installFetch(options: FetchOptions = {}) {
 }
 
 function groundTruthEditor(): HTMLElement {
-  const title = screen.getByText("예상 Ground Truth", {
+  const title = screen.getByText("Expected Ground Truth CPE", {
     selector: "[data-slot='card-title']",
   })
   const card = title.closest("[data-slot='card']")
@@ -402,9 +415,60 @@ describe("Ground Truth workflow", () => {
     expect(
       screen.getByRole("heading", { name: "Ground Truth" }),
     ).toBeInTheDocument()
-    expect(await screen.findAllByText("미작성")).not.toHaveLength(0)
-    expect(screen.getAllByText("작성 완료")).not.toHaveLength(0)
+    expect(
+      screen.getByText("Independent human-authored CPE answers"),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Review Components"))
+      .toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Review components with a Primary CPE and assign an independent expected CPE.",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findAllByText("Not Reviewed"),
+    ).not.toHaveLength(0)
+    expect(screen.getAllByText("Completed")).not.toHaveLength(0)
+    expect(
+      screen.getByRole("columnheader", {
+        name: "Ground Truth Status",
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", { name: "Review" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", { name: "Edit" }),
+    ).toBeInTheDocument()
     expect(screen.getByTitle(manualCpe)).toBeInTheDocument()
+  })
+
+  it("renders list loading, empty, and error states in English", async () => {
+    installFetch({ delayedList: true })
+    const loadingView = renderAppAt("/ground-truth")
+    expect(
+      await screen.findByText("Loading review components…"),
+    ).toBeInTheDocument()
+    loadingView.unmount()
+
+    installFetch({ emptyList: true })
+    const emptyView = renderAppAt("/ground-truth")
+    expect(
+      await screen.findByText(
+        "No components match the current filters.",
+      ),
+    ).toBeInTheDocument()
+    emptyView.unmount()
+
+    installFetch({ listError: true })
+    renderAppAt("/ground-truth")
+    expect(
+      await screen.findByText(
+        "Unable to load review components",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText("List unavailable"))
+      .toBeInTheDocument()
   })
 
   it("renders the search, filter, sort, and reset controls in English", async () => {
@@ -420,6 +484,11 @@ describe("Ground Truth workflow", () => {
     expect(
       screen.getByText("Review Components"),
     ).toBeInTheDocument()
+    expect(
+      screen
+        .getByText("Review Components")
+        .closest('[data-slot="card-header"]'),
+    ).not.toBeNull()
     expect(keyword).toHaveAttribute(
       "placeholder",
       "Search by name, version, publisher, PURL, or CPE",
@@ -458,7 +527,7 @@ describe("Ground Truth workflow", () => {
     const user = userEvent.setup()
     installFetch()
     renderAppAt("/ground-truth")
-    await screen.findAllByText("미작성")
+    await screen.findAllByText("Not Reviewed")
 
     await user.selectOptions(
       screen.getByLabelText("Ground Truth Status"),
@@ -578,13 +647,13 @@ describe("Ground Truth workflow", () => {
     )
     await user.click(
       screen.getAllByRole("link", {
-        name: "Ground Truth 작성",
+        name: "Review",
       })[0],
     )
 
     expect(
       await screen.findByRole("heading", {
-        name: "Ground Truth 작성",
+        name: "Ground Truth Review",
       }),
     ).toBeInTheDocument()
     const location =
@@ -606,7 +675,18 @@ describe("Ground Truth workflow", () => {
     expect(screen.getByText("apk-db-cataloger"))
       .toBeInTheDocument()
     expect(screen.getByText("Exact Match")).toBeInTheDocument()
-    expect(screen.queryByText(/BM25|ranking|score/i))
+    expect(
+      screen.getByRole("link", {
+        name: "Back to Review Queue",
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Previous" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Next" }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/BM25|BM25F|fuzzy|rerank/i))
       .not.toBeInTheDocument()
   })
 
@@ -615,7 +695,7 @@ describe("Ground Truth workflow", () => {
     "MANUAL",
     "NONE",
   ] as const) {
-    it(`restores ${source} Ground Truth`, async () => {
+    it(`restores ${source} Ground Truth without translating stored values`, async () => {
       installFetch({ restoredSource: source })
       renderAppAt("/ground-truth/components/101")
       const editor = groundTruthEditor()
@@ -633,12 +713,14 @@ describe("Ground Truth workflow", () => {
           within(editor).getByDisplayValue(manualCpe),
         ).toBeInTheDocument()
         expect(
-          within(editor).getByText(/저장된 메모 있음/),
+          within(editor).getByText("Add Note · Saved note", {
+            selector: "summary",
+          }),
         ).toBeInTheDocument()
       } else {
         expect(
           within(editor).getByText(
-            "선택된 Dictionary CPE 없음",
+            "No Dictionary CPE selected",
           ),
         ).toBeInTheDocument()
       }
@@ -650,11 +732,11 @@ describe("Ground Truth workflow", () => {
     installFetch()
     renderAppAt("/ground-truth/components/101?q=curl")
     await screen.findByText("1 result")
-    await screen.findByText("선택된 Dictionary CPE 없음")
+    await screen.findByText("No Dictionary CPE selected")
 
     await user.click(
       screen.getByRole("button", {
-        name: "Ground Truth로 선택",
+        name: "Select as Ground Truth",
       }),
     )
     let editor = groundTruthEditor()
@@ -664,30 +746,30 @@ describe("Ground Truth workflow", () => {
 
     await user.click(
       within(editor).getByRole("button", {
-        name: "수동 CPE로 복사",
+        name: "Copy to Manual CPE",
       }),
     )
     expect(
       within(editor).getByDisplayValue(cpeName),
     ).toBeInTheDocument()
     expect(
-      within(editor).getByText("선택된 Dictionary CPE 없음"),
+      within(editor).getByText("No Dictionary CPE selected"),
     ).toBeInTheDocument()
 
     await user.clear(within(editor).getByDisplayValue(cpeName))
     await user.click(
       screen.getByRole("button", {
-        name: "Ground Truth로 선택",
+        name: "Select as Ground Truth",
       }),
     )
     editor = groundTruthEditor()
     await user.click(
       within(editor).getByRole("button", {
-        name: "CPE 선택 해제",
+        name: "Remove Selection",
       }),
     )
     expect(
-      within(editor).getByText("선택된 Dictionary CPE 없음"),
+      within(editor).getByText("No Dictionary CPE selected"),
     ).toBeInTheDocument()
   })
 
@@ -697,7 +779,7 @@ describe("Ground Truth workflow", () => {
     renderAppAt("/ground-truth/components/101")
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
     const manual = within(editor).getByPlaceholderText(
       /cpe:2\.3:a:vendor/,
@@ -705,13 +787,13 @@ describe("Ground Truth workflow", () => {
     await user.type(manual, "invalid")
     await user.type(
       within(editor).getByPlaceholderText(
-        "판정 유형을 자유롭게 입력",
+        "Enter a free-form decision type",
       ),
       "Manual review",
     )
     await user.click(
       within(editor).getByRole("button", {
-        name: "검토 결과 저장",
+        name: "Save Ground Truth",
       }),
     )
 
@@ -729,19 +811,19 @@ describe("Ground Truth workflow", () => {
     renderAppAt("/ground-truth/components/101")
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
-    const noteSummary = within(editor).getByText("메모 추가")
+    const noteSummary = within(editor).getByText("Add Note")
     expect(noteSummary.closest("details")).not.toHaveAttribute(
       "open",
     )
     await user.click(
       within(editor).getByRole("button", {
-        name: "검토 결과 저장",
+        name: "Save Ground Truth",
       }),
     )
     expect(
-      within(editor).getByText("판정 유형은 필수 입력입니다."),
+      within(editor).getByText("Decision Type is required."),
     ).toBeInTheDocument()
     expect(putRequests()).toHaveLength(0)
   })
@@ -753,20 +835,20 @@ describe("Ground Truth workflow", () => {
     await screen.findByText("1 result")
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
     const decision = within(editor).getByPlaceholderText(
-      "판정 유형을 자유롭게 입력",
+      "Enter a free-form decision type",
     )
     await user.type(decision, "No CPE")
     await user.click(
       within(editor).getByRole("button", {
-        name: "검토 결과 저장",
+        name: "Save Ground Truth",
       }),
     )
     expect(
       await within(editor).findByText(
-        "검토 결과가 저장되었습니다.",
+        "Ground Truth saved.",
       ),
     ).toBeInTheDocument()
     expect(
@@ -782,7 +864,7 @@ describe("Ground Truth workflow", () => {
     )
     await user.click(
       within(editor).getByRole("button", {
-        name: "검토 결과 저장",
+        name: "Save Ground Truth",
       }),
     )
     await waitFor(() => expect(putRequests()).toHaveLength(2))
@@ -798,12 +880,12 @@ describe("Ground Truth workflow", () => {
     )
     await user.click(
       screen.getByRole("button", {
-        name: "Ground Truth로 선택",
+        name: "Select as Ground Truth",
       }),
     )
     await user.click(
       within(editor).getByRole("button", {
-        name: "검토 결과 저장",
+        name: "Save Ground Truth",
       }),
     )
     await waitFor(() => expect(putRequests()).toHaveLength(3))
@@ -821,16 +903,16 @@ describe("Ground Truth workflow", () => {
     renderAppAt("/ground-truth/components/101")
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
     await user.type(
       within(editor).getByPlaceholderText(
-        "판정 유형을 자유롭게 입력",
+        "Enter a free-form decision type",
       ),
       "Pending save",
     )
     const save = within(editor).getByRole("button", {
-      name: "검토 결과 저장",
+      name: "Save Ground Truth",
     })
     await user.click(save)
     expect(save).toBeDisabled()
@@ -839,7 +921,7 @@ describe("Ground Truth workflow", () => {
 
     await act(async () => controls.resolveSave())
     expect(
-      await within(editor).findByText("저장 완료"),
+      await within(editor).findByText("Saved"),
     ).toBeInTheDocument()
   })
 
@@ -849,15 +931,15 @@ describe("Ground Truth workflow", () => {
     renderAppAt("/ground-truth/components/101")
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
     const decision = within(editor).getByPlaceholderText(
-      "판정 유형을 자유롭게 입력",
+      "Enter a free-form decision type",
     )
     await user.type(decision, "Keep this value")
     await user.click(
       within(editor).getByRole("button", {
-        name: "검토 결과 저장",
+        name: "Save Ground Truth",
       }),
     )
 
@@ -875,17 +957,17 @@ describe("Ground Truth workflow", () => {
     )
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
     await user.type(
       within(editor).getByPlaceholderText(
-        "판정 유형을 자유롭게 입력",
+      "Enter a free-form decision type",
       ),
       "Complete and continue",
     )
     await user.click(
       within(editor).getByRole("button", {
-        name: "저장 후 다음",
+        name: "Save and Next",
       }),
     )
 
@@ -907,17 +989,17 @@ describe("Ground Truth workflow", () => {
     ])
     let editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
     await user.type(
       within(editor).getByPlaceholderText(
-        "판정 유형을 자유롭게 입력",
+        "Enter a free-form decision type",
       ),
       "Unsaved",
     )
     vi.mocked(confirm).mockReturnValueOnce(false)
     await user.click(
-      screen.getByRole("button", { name: "다음" }),
+      screen.getByRole("button", { name: "Next" }),
     )
     expect(
       screen.getByTestId("route-location").textContent,
@@ -928,11 +1010,11 @@ describe("Ground Truth workflow", () => {
     })
     editor = groundTruthEditor()
     await within(editor).findByText(
-      "선택된 Dictionary CPE 없음",
+      "No Dictionary CPE selected",
     )
     expect(
       within(editor).getByPlaceholderText(
-        "판정 유형을 자유롭게 입력",
+        "Enter a free-form decision type",
       ),
     ).toHaveValue("")
   })

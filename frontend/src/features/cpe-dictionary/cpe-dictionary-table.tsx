@@ -116,7 +116,7 @@ export function CpeDictionaryResultsTable({
                 }
               >
                 <BadgeCheck aria-hidden="true" />
-                Ground Truth로 선택
+                Select as Ground Truth
               </Button>
             ) : null}
             {onCopyToManual ? (
@@ -129,7 +129,7 @@ export function CpeDictionaryResultsTable({
                 }
               >
                 <Clipboard aria-hidden="true" />
-                수동 CPE로 복사
+                Copy to Manual CPE
               </Button>
             ) : null}
             <Button

@@ -784,7 +784,7 @@ describe("Component Detail panel", () => {
       }),
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByText("예상 Ground Truth"),
+      screen.queryByText("Expected Ground Truth CPE"),
     ).not.toBeInTheDocument()
     expect(
       screen.getByRole("heading", { name: "Exact Match" }),

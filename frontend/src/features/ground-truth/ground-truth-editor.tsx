@@ -42,7 +42,7 @@ function requestError(error: unknown): string {
   if (error instanceof ApiError) {
     return error.detail ?? error.message
   }
-  return "Ground Truth 요청을 완료하지 못했습니다."
+  return "Unable to complete the Ground Truth request."
 }
 
 function stateSignature(
@@ -171,7 +171,7 @@ export function GroundTruthEditor({
   ): Promise<void> => {
     if (!decisionType.trim()) {
       setSuccess(null)
-      setError("판정 유형은 필수 입력입니다.")
+      setError("Decision Type is required.")
       return
     }
     setSaving(true)
@@ -207,7 +207,7 @@ export function GroundTruthEditor({
           restoredNote,
         ),
       )
-      setSuccess("검토 결과가 저장되었습니다.")
+      setSuccess("Ground Truth saved.")
       if (moveNext) onSavedAndNext()
     } catch (reason: unknown) {
       setError(requestError(reason))
@@ -224,11 +224,12 @@ export function GroundTruthEditor({
             className="size-4 text-cyan-700"
             aria-hidden="true"
           />
-          <CardTitle>예상 Ground Truth</CardTitle>
+          <CardTitle>Expected Ground Truth CPE</CardTitle>
           <Badge variant="outline">Human review</Badge>
         </div>
         <CardDescription>
-          검색 순위나 점수와 독립적으로 정답을 기록합니다.
+          Record an expected CPE independently of search rankings and
+          scores.
           {snapshotId ? ` Snapshot: ${snapshotId}` : ""}
         </CardDescription>
       </CardHeader>
@@ -239,13 +240,13 @@ export function GroundTruthEditor({
               className="size-4 animate-spin"
               aria-hidden="true"
             />
-            기존 Ground Truth를 불러오는 중…
+            Loading existing Ground Truth…
           </div>
         ) : (
           <>
             <section className="rounded-lg border bg-muted/20 p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                Dictionary Ground Truth CPE
+                Dictionary CPE
               </p>
               {selectedCpe ? (
                 <div className="mt-2 space-y-2">
@@ -282,7 +283,7 @@ export function GroundTruthEditor({
                         onSelectedCpeChange(null)
                       }}
                     >
-                      수동 CPE로 복사
+                      Copy to Manual CPE
                     </Button>
                     <Button
                       type="button"
@@ -293,19 +294,19 @@ export function GroundTruthEditor({
                       }
                     >
                       <X aria-hidden="true" />
-                      CPE 선택 해제
+                      Remove Selection
                     </Button>
                   </div>
                 </div>
               ) : (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  선택된 Dictionary CPE 없음
+                  No Dictionary CPE selected
                 </p>
               )}
             </section>
 
             <label className="block space-y-1.5 text-sm font-medium">
-              <span>수동 CPE 2.3</span>
+              <span>Manual CPE 2.3</span>
               <textarea
                 className="min-h-24 w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 font-mono text-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 value={manualCpe}
@@ -319,18 +320,18 @@ export function GroundTruthEditor({
                 }}
               />
               <span className="block text-xs font-normal text-muted-foreground">
-                Dictionary에 없는 CPE도 입력할 수 있으며 서버가
-                CPE 2.3 구조를 검증합니다.
+                You may enter a CPE that is not in the Dictionary. The
+                server validates its CPE 2.3 structure.
               </span>
             </label>
 
             <label className="block space-y-1.5 text-sm font-medium">
               <span>
-                판정 유형 <span className="text-red-600">*</span>
+                Decision Type <span className="text-red-600">*</span>
               </span>
               <Input
                 value={decisionType}
-                placeholder="판정 유형을 자유롭게 입력"
+                placeholder="Enter a free-form decision type"
                 onChange={(event) => {
                   setDecisionType(event.target.value)
                   setSuccess(null)
@@ -340,13 +341,13 @@ export function GroundTruthEditor({
 
             <details className="rounded-lg border bg-muted/20 px-3 py-2">
               <summary className="cursor-pointer text-sm font-medium">
-                메모 추가
-                {note ? " · 저장된 메모 있음" : ""}
+                Add Note
+                {note ? " · Saved note" : ""}
               </summary>
               <textarea
                 className="mt-3 min-h-28 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 value={note}
-                placeholder="선택 사항"
+                placeholder="Optional"
                 onChange={(event) => {
                   setNote(event.target.value)
                   setSuccess(null)
@@ -357,7 +358,7 @@ export function GroundTruthEditor({
             {error ? (
               <Alert variant="destructive">
                 <TriangleAlert aria-hidden="true" />
-                <AlertTitle>저장할 수 없습니다</AlertTitle>
+                <AlertTitle>Unable to save</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             ) : null}
@@ -367,7 +368,7 @@ export function GroundTruthEditor({
                   className="text-emerald-700"
                   aria-hidden="true"
                 />
-                <AlertTitle>저장 완료</AlertTitle>
+                <AlertTitle>Saved</AlertTitle>
                 <AlertDescription>{success}</AlertDescription>
               </Alert>
             ) : null}
@@ -386,7 +387,7 @@ export function GroundTruthEditor({
                 ) : (
                   <Save aria-hidden="true" />
                 )}
-                {saving ? "저장 중…" : "검토 결과 저장"}
+                {saving ? "Saving…" : "Save Ground Truth"}
               </Button>
               <Button
                 type="button"
@@ -394,7 +395,7 @@ export function GroundTruthEditor({
                 disabled={saving || !canMoveNext}
                 onClick={() => void saveGroundTruth(true)}
               >
-                저장 후 다음
+                Save and Next
               </Button>
             </div>
           </>

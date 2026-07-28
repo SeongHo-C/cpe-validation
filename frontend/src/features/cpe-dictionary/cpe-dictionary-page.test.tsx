@@ -157,7 +157,7 @@ describe("read-only CPE Dictionary", () => {
       screen.getByRole("heading", { name: "CPE Dictionary" }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByText("예상 Ground Truth"),
+      screen.queryByText("Expected Ground Truth CPE"),
     ).not.toBeInTheDocument()
     expect(
       screen.queryByText("Component context"),
@@ -217,7 +217,7 @@ describe("read-only CPE Dictionary", () => {
     ).toBeInTheDocument()
     expect(
       within(dialog).queryByRole("button", {
-        name: "Ground Truth로 선택",
+        name: "Select as Ground Truth",
       }),
     ).not.toBeInTheDocument()
   })
@@ -246,7 +246,7 @@ describe("read-only CPE Dictionary", () => {
       screen.getByRole("button", { name: "Next page" }),
     )
 
-    expect(await screen.findByText("불러오는 중..."))
+    expect(await screen.findByText("Loading results…"))
       .toBeInTheDocument()
     expect(screen.getByTitle(cpeName)).toBeInTheDocument()
     expect(

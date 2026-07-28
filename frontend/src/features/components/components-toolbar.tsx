@@ -1,5 +1,9 @@
 import { LoaderCircle, Search } from "lucide-react"
 
+import {
+  formLabelTextClassName,
+  selectControlClassName,
+} from "@/components/form-control-styles"
 import { Input } from "@/components/ui/input"
 import {
   componentOrderings,
@@ -28,9 +32,6 @@ const orderingLabels: Record<ComponentOrdering, string> = {
   tag: "Tag A–Z",
   "-tag": "Tag Z–A",
 }
-
-const selectClassName =
-  "h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
 
 interface ComponentsToolbarProps {
   searchInput: string
@@ -65,7 +66,7 @@ export function ComponentsToolbar({
         <div className="min-w-0 flex-1">
           <label
             htmlFor="component-search"
-            className="mb-1.5 block text-xs font-medium text-foreground"
+            className={formLabelTextClassName}
           >
             Search components
           </label>
@@ -86,11 +87,11 @@ export function ComponentsToolbar({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 sm:flex">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:flex">
           <div>
             <label
               htmlFor="component-dictionary-status"
-              className="mb-1.5 block text-xs font-medium text-foreground"
+              className={formLabelTextClassName}
             >
               Dictionary status
             </label>
@@ -105,7 +106,7 @@ export function ComponentsToolbar({
                     : undefined,
                 )
               }
-              className={selectClassName}
+              className={`${selectControlClassName} w-full`}
             >
               <option value="">All Dictionary Statuses</option>
               {dictionaryStatuses.map((value) => (
@@ -119,7 +120,7 @@ export function ComponentsToolbar({
           <div>
             <label
               htmlFor="component-ordering"
-              className="mb-1.5 block text-xs font-medium text-foreground"
+              className={formLabelTextClassName}
             >
               Sort by
             </label>
@@ -132,7 +133,7 @@ export function ComponentsToolbar({
                   event.target.value as ComponentOrdering,
                 )
               }
-              className={selectClassName}
+              className={`${selectControlClassName} w-full`}
             >
               {componentOrderings.map((value) => (
                 <option key={value} value={value}>
@@ -145,7 +146,7 @@ export function ComponentsToolbar({
           <div>
             <label
               htmlFor="component-page-size"
-              className="mb-1.5 block text-xs font-medium text-foreground"
+              className={formLabelTextClassName}
             >
               Per page
             </label>
@@ -158,7 +159,7 @@ export function ComponentsToolbar({
                   Number(event.target.value) as ComponentPageSize,
                 )
               }
-              className={selectClassName}
+              className={`${selectControlClassName} w-full`}
             >
               {componentPageSizes.map((value) => (
                 <option key={value} value={value}>

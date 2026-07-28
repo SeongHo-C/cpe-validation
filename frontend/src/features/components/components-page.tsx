@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { DataPanelHeader } from "@/components/data-panel-header"
+import { PageContent } from "@/components/page-content"
 import { ComponentDetailPanel } from "@/features/components/component-detail-panel"
 import {
   getComponents,
@@ -358,7 +360,7 @@ export function ComponentsPage() {
 
   if (invalidImageId) {
     return (
-      <div className="mx-auto max-w-[1600px]">
+      <PageContent>
         <Alert variant="destructive" className="p-4">
           <TriangleAlert aria-hidden="true" />
           <AlertTitle>Invalid image filter</AlertTitle>
@@ -375,7 +377,7 @@ export function ComponentsPage() {
             </Button>
           </div>
         </Alert>
-      </div>
+      </PageContent>
     )
   }
 
@@ -383,10 +385,7 @@ export function ComponentsPage() {
   const resultCount = components?.count
 
   return (
-    <div
-      className="mx-auto min-w-[1180px] max-w-[2200px]"
-      aria-busy={isLoading}
-    >
+    <PageContent aria-busy={isLoading}>
       <div className="flex items-start gap-5">
         <section
           aria-label="Primary CPE Component list"
@@ -406,6 +405,10 @@ export function ComponentsPage() {
             id="components-table"
             className="gap-0 py-0"
           >
+            <DataPanelHeader
+              title="Validation Queue"
+              description="Search and filter components selected for Primary CPE validation."
+            />
             <ComponentsToolbar
               searchInput={searchInput}
               ordering={ordering}
@@ -522,6 +525,6 @@ export function ComponentsPage() {
           onClose={() => updateQuery({ componentId: null })}
         />
       </div>
-    </div>
+    </PageContent>
   )
 }

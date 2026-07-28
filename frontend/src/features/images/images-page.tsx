@@ -14,6 +14,8 @@ import {
 } from "react-router-dom"
 
 import type { AppShellOutletContext } from "@/components/app-shell"
+import { DataPanelHeader } from "@/components/data-panel-header"
+import { PageContent } from "@/components/page-content"
 import {
   Alert,
   AlertDescription,
@@ -82,6 +84,10 @@ function LoadingContent() {
     <div className="space-y-5">
       <ImagesSummarySkeleton />
       <Card className="gap-0 py-0">
+        <DataPanelHeader
+          title="Image Inventory"
+          description="Docker Official Images with imported SBOM and Primary CPE coverage."
+        />
         <div className="flex items-center justify-between gap-4 border-b p-4">
           <div className="relative w-full max-w-sm">
             <Skeleton className="h-9 w-full" />
@@ -147,91 +153,95 @@ export function ImagesPage() {
   }, [images, normalizedSearch])
 
   return (
-    <div id="images" className="mx-auto max-w-[1600px]">
-        {isLoading ? <LoadingContent /> : null}
+    <PageContent id="images">
+      {isLoading ? <LoadingContent /> : null}
 
-        {!isLoading && hasError ? (
-          <Alert variant="destructive" className="p-4">
-            <TriangleAlert aria-hidden="true" />
-            <AlertTitle>Unable to load Docker images</AlertTitle>
-            <AlertDescription>
-              The frontend could not reach the SBOM API.
-            </AlertDescription>
-            <div className="col-start-2 mt-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  setReloadToken((current) => current + 1)
-                }
-              >
-                Retry
-              </Button>
-            </div>
-          </Alert>
-        ) : null}
-
-        {!isLoading && !hasError && images.length === 0 ? (
-          <EmptyState
-            title="No Docker images available"
-            description="Import SBOM data before using the validation workbench."
-          />
-        ) : null}
-
-        {!isLoading && !hasError && images.length > 0 ? (
-          <div className="space-y-5">
-            <ImagesSummary images={images} />
-
-            <Card className="gap-0 py-0">
-              <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="relative w-full max-w-md">
-                  <label
-                    htmlFor="image-search"
-                    className="sr-only"
-                  >
-                    Search Docker images
-                  </label>
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    id="image-search"
-                    value={search}
-                    onChange={(event) =>
-                      setSearch(event.target.value)
-                    }
-                    placeholder="Search repository, tag, or platform..."
-                    className="pl-9"
-                  />
-                </div>
-                <p
-                  className="shrink-0 text-sm text-muted-foreground"
-                  aria-live="polite"
-                >
-                  {filteredImages.length} of {images.length} images
-                </p>
-              </div>
-
-              {filteredImages.length > 0 ? (
-                <ImagesTable
-                  images={filteredImages}
-                  onSelectImage={(imageId) =>
-                    navigate(`/components?image_id=${imageId}`)
-                  }
-                />
-              ) : (
-                <div className="p-4">
-                  <EmptyState
-                    title="No matching images"
-                    description="Try another repository, tag, or platform."
-                    onClear={() => setSearch("")}
-                  />
-                </div>
-              )}
-            </Card>
+      {!isLoading && hasError ? (
+        <Alert variant="destructive" className="p-4">
+          <TriangleAlert aria-hidden="true" />
+          <AlertTitle>Unable to load Docker images</AlertTitle>
+          <AlertDescription>
+            The frontend could not reach the SBOM API.
+          </AlertDescription>
+          <div className="col-start-2 mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setReloadToken((current) => current + 1)
+              }
+            >
+              Retry
+            </Button>
           </div>
-        ) : null}
-    </div>
+        </Alert>
+      ) : null}
+
+      {!isLoading && !hasError && images.length === 0 ? (
+        <EmptyState
+          title="No Docker images available"
+          description="Import SBOM data before using the validation workbench."
+        />
+      ) : null}
+
+      {!isLoading && !hasError && images.length > 0 ? (
+        <div className="space-y-5">
+          <ImagesSummary images={images} />
+
+          <Card className="gap-0 py-0">
+            <DataPanelHeader
+              title="Image Inventory"
+              description="Docker Official Images with imported SBOM and Primary CPE coverage."
+            />
+            <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full max-w-md">
+                <label
+                  htmlFor="image-search"
+                  className="sr-only"
+                >
+                  Search Docker images
+                </label>
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="image-search"
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(event.target.value)
+                  }
+                  placeholder="Search repository, tag, or platform..."
+                  className="pl-9"
+                />
+              </div>
+              <p
+                className="shrink-0 text-sm text-muted-foreground"
+                aria-live="polite"
+              >
+                {filteredImages.length} of {images.length} images
+              </p>
+            </div>
+
+            {filteredImages.length > 0 ? (
+              <ImagesTable
+                images={filteredImages}
+                onSelectImage={(imageId) =>
+                  navigate(`/components?image_id=${imageId}`)
+                }
+              />
+            ) : (
+              <div className="p-4">
+                <EmptyState
+                  title="No matching images"
+                  description="Try another repository, tag, or platform."
+                  onClear={() => setSearch("")}
+                />
+              </div>
+            )}
+          </Card>
+        </div>
+      ) : null}
+    </PageContent>
   )
 }

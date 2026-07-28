@@ -24,6 +24,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { PageContent } from "@/components/page-content"
 import { CpeDictionarySearch } from "@/features/cpe-dictionary/cpe-dictionary-search"
 import type { CpeDictionaryCandidate } from "@/features/cpe-dictionary/cpe-dictionary-types"
 import { getComponentDetail } from "@/features/components/components-api"
@@ -47,7 +48,7 @@ function loadError(error: unknown): string {
   if (error instanceof ApiError) {
     return error.detail ?? error.message
   }
-  return "Component Ground Truth 화면을 불러오지 못했습니다."
+  return "Unable to load the Component Ground Truth screen."
 }
 
 export function GroundTruthEditorPage() {
@@ -83,7 +84,7 @@ export function GroundTruthEditorPage() {
     if (!componentId) {
       setComponent(null)
       setComponentLoading(false)
-      setComponentError("Component ID가 올바르지 않습니다.")
+      setComponentError("The Component ID is invalid.")
       return
     }
     const controller = new AbortController()
@@ -132,7 +133,7 @@ export function GroundTruthEditorPage() {
         !ignoreDirty &&
         dirty &&
         !window.confirm(
-          "저장하지 않은 변경사항이 있습니다. 이동할까요?",
+          "You have unsaved changes. Leave this component?",
         )
       ) {
         return
@@ -148,35 +149,37 @@ export function GroundTruthEditorPage() {
 
   if (!componentId) {
     return (
-      <Alert variant="destructive">
-        <TriangleAlert aria-hidden="true" />
-        <AlertTitle>잘못된 Component</AlertTitle>
-        <AlertDescription>
-          양의 정수 Component ID가 필요합니다.
-        </AlertDescription>
-      </Alert>
+      <PageContent>
+        <Alert variant="destructive">
+          <TriangleAlert aria-hidden="true" />
+          <AlertTitle>Invalid Component</AlertTitle>
+          <AlertDescription>
+            A positive integer Component ID is required.
+          </AlertDescription>
+        </Alert>
+      </PageContent>
     )
   }
 
   return (
-    <div className="mx-auto min-w-[1280px] max-w-[2200px] space-y-5">
-      <header className="flex items-start justify-between gap-6">
+    <PageContent className="space-y-5">
+      <section className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <ClipboardCheck
               className="size-5 text-cyan-700"
               aria-hidden="true"
             />
-            <h1 className="font-heading text-2xl font-semibold tracking-tight">
-              Ground Truth 작성
-            </h1>
+            <h2 className="font-heading text-lg font-semibold tracking-tight">
+              Ground Truth Review
+            </h2>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            검색 알고리즘 후보와 점수를 보지 않고 Component의 예상
-            정답을 독립적으로 기록합니다.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Assign an expected CPE without viewing algorithmic
+            candidates or scores.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline">
             <Link
               to={groundTruthListPath(
@@ -184,7 +187,7 @@ export function GroundTruthEditorPage() {
               )}
             >
               <List aria-hidden="true" />
-              목록
+              Back to Review Queue
             </Link>
           </Button>
           <Button
@@ -198,7 +201,7 @@ export function GroundTruthEditorPage() {
             }
           >
             <ChevronLeft aria-hidden="true" />
-            이전
+            Previous
           </Button>
           <Button
             type="button"
@@ -208,11 +211,11 @@ export function GroundTruthEditorPage() {
               moveTo(navigation?.next_component_id ?? null)
             }
           >
-            다음
+            Next
             <ChevronRight aria-hidden="true" />
           </Button>
         </div>
-      </header>
+      </section>
 
       <GroundTruthComponentContext
         detail={component}
@@ -220,7 +223,7 @@ export function GroundTruthEditorPage() {
         error={componentError}
       />
 
-      <div className="grid grid-cols-[minmax(0,1fr)_390px] items-start gap-5">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
         <CpeDictionarySearch
           preserveQueryKeys={preservedGroundTruthQueryKeys}
           onSelectCandidate={(candidate) => {
@@ -232,7 +235,7 @@ export function GroundTruthEditorPage() {
             setManualCpe(rawCpe)
           }}
         />
-        <aside className="sticky top-5">
+        <aside className="xl:sticky xl:top-5">
           <GroundTruthEditor
             key={componentId}
             componentId={componentId}
@@ -253,11 +256,11 @@ export function GroundTruthEditorPage() {
           />
           {navigation && !navigation.next_component_id ? (
             <p className="mt-2 text-center text-xs text-muted-foreground">
-              현재 필터 기준 마지막 Component입니다.
+              This is the last component in the current review queue.
             </p>
           ) : null}
         </aside>
       </div>
-    </div>
+    </PageContent>
   )
 }

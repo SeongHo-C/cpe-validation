@@ -27,12 +27,12 @@ export function AppShell() {
   )
 
   return (
-    <div className="min-h-screen min-w-[1180px] bg-muted/35">
+    <div className="min-h-screen bg-muted/35">
       <AppSidebar imageCount={imageCount} />
 
       <div className="min-w-0 pl-60">
         <AppHeader apiStatus={apiStatus} />
-        <main className="px-8 py-8">
+        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet context={outletContext} />
         </main>
       </div>

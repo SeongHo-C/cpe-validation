@@ -190,7 +190,7 @@ export function CpeDictionaryDetailDialog({
                       onClick={() => onSelectCandidate(detail)}
                     >
                       <BadgeCheck aria-hidden="true" />
-                      Ground Truth로 선택
+                      Select as Ground Truth
                     </Button>
                   ) : null}
                   {onCopyToManual ? (
@@ -203,7 +203,7 @@ export function CpeDictionaryDetailDialog({
                       }
                     >
                       <Clipboard aria-hidden="true" />
-                      수동 CPE로 복사
+                      Copy to Manual CPE
                     </Button>
                   ) : null}
                   <Button

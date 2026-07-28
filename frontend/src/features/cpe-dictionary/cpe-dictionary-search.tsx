@@ -22,11 +22,13 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
+import { DataPanelHeader } from "@/components/data-panel-header"
+import {
+  formLabelClassName,
+  selectControlClassName,
+} from "@/components/form-control-styles"
 import { Input } from "@/components/ui/input"
 import {
   getCpeDictionaryResults,
@@ -56,9 +58,6 @@ import {
 } from "@/lib/api-client"
 import { formatInteger } from "@/lib/format"
 
-const selectClassName =
-  "h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-
 function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
     return error.detail
@@ -76,7 +75,7 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <label className="space-y-1.5 text-xs font-medium">
+    <label className={formLabelClassName}>
       <span>{label}</span>
       {children}
     </label>
@@ -287,17 +286,14 @@ export function CpeDictionarySearch({
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Search official CPE names</CardTitle>
-          <CardDescription>
-            Enter a keyword or a structured CPE field. Structured
-            fields use case-insensitive exact equality.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card className="gap-0 py-0">
+        <DataPanelHeader
+          title="Search Official CPE Names"
+          description="Enter a keyword or a structured CPE field. Structured fields use case-insensitive exact equality."
+        />
+        <CardContent className="p-4">
           <form
-            className="grid grid-cols-6 gap-3"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-6"
             onSubmit={submitSearch}
           >
             <Field label="Keyword">
@@ -316,7 +312,7 @@ export function CpeDictionarySearch({
             <Field label="Part">
               <select
                 name="part"
-                className={selectClassName}
+                className={`${selectControlClassName} w-full`}
                 value={draft.part}
                 onChange={(event) =>
                   setDraft((current) => ({
@@ -374,7 +370,7 @@ export function CpeDictionarySearch({
             <Field label="Status">
               <select
                 name="deprecated"
-                className={selectClassName}
+                className={`${selectControlClassName} w-full`}
                 value={draft.deprecated}
                 onChange={(event) =>
                   setDraft((current) => ({
@@ -389,7 +385,7 @@ export function CpeDictionarySearch({
                 <option value="all">All records</option>
               </select>
             </Field>
-            <div className="col-span-6 flex gap-2 pt-1">
+            <div className="flex flex-wrap gap-2 pt-1 sm:col-span-2 2xl:col-span-6">
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <LoaderCircle
@@ -435,7 +431,7 @@ export function CpeDictionarySearch({
       ) : null}
 
       {!hasCpeDictionarySearchTerm(submittedQuery) ? (
-        <Card>
+        <Card className="gap-0 py-0">
           <CardContent className="flex min-h-48 flex-col items-center justify-center text-center">
             <Search
               className="size-7 text-muted-foreground"
@@ -453,7 +449,7 @@ export function CpeDictionarySearch({
       ) : null}
 
       {loading && !response ? (
-        <Card aria-busy="true">
+        <Card className="gap-0 py-0" aria-busy="true">
           <CardContent className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground">
             <LoaderCircle
               className="size-4 animate-spin"
@@ -465,7 +461,10 @@ export function CpeDictionarySearch({
       ) : null}
 
       {response ? (
-        <Card className="relative" aria-busy={loading}>
+        <Card
+          className="relative gap-0 py-0"
+          aria-busy={loading}
+        >
           {loading ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/65 backdrop-blur-[1px]">
               <div className="flex items-center gap-2 rounded-lg border bg-card px-4 py-3 text-sm shadow-sm">
@@ -473,20 +472,16 @@ export function CpeDictionarySearch({
                   className="size-4 animate-spin"
                   aria-hidden="true"
                 />
-                불러오는 중...
+                Loading results…
               </div>
             </div>
           ) : null}
-          <CardHeader>
-            <CardTitle>
-              {formatInteger(response.count)} result
-              {response.count === 1 ? "" : "s"}
-            </CardTitle>
-            <CardDescription>
-              Active records are listed first, followed by vendor,
-              product, version, and raw CPE.
-            </CardDescription>
-          </CardHeader>
+          <DataPanelHeader
+            title={`${formatInteger(response.count)} result${
+              response.count === 1 ? "" : "s"
+            }`}
+            description="Active records are listed first, followed by vendor, product, version, and raw CPE."
+          />
           {response.results.length > 0 ? (
             <CpeDictionaryResultsTable
               results={response.results}
@@ -507,14 +502,14 @@ export function CpeDictionarySearch({
               conditions.
             </CardContent>
           )}
-          <CardFooter className="justify-between gap-4">
+          <CardFooter className="flex-wrap justify-between gap-4">
             <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm">
               <span className="shrink-0 text-muted-foreground">
                 Rows per page
               </span>
               <select
                 aria-label="Rows per page"
-                className={`${selectClassName} w-24`}
+                className={`${selectControlClassName} w-24`}
                 value={submittedQuery.page_size}
                 onChange={(event) =>
                   setQueryInUrl({
