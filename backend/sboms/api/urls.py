@@ -9,6 +9,8 @@ from sboms.api.views import (
     DockerImageListAPIView,
     GroundTruthComponentListAPIView,
     GroundTruthComponentNavigationAPIView,
+    GroundTruthDecisionTypeDetailAPIView,
+    GroundTruthDecisionTypeListCreateAPIView,
     HealthAPIView,
 )
 
@@ -46,6 +48,16 @@ urlpatterns = [
         "components/<int:component_id>/cpe-ground-truth/",
         ComponentCpeGroundTruthAPIView.as_view(),
         name="component-cpe-ground-truth",
+    ),
+    path(
+        "ground-truth-decision-types/",
+        GroundTruthDecisionTypeListCreateAPIView.as_view(),
+        name="ground-truth-decision-type-list",
+    ),
+    path(
+        "ground-truth-decision-types/<int:pk>/",
+        GroundTruthDecisionTypeDetailAPIView.as_view(),
+        name="ground-truth-decision-type-detail",
     ),
     path(
         "ground-truth/components/",

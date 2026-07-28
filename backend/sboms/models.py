@@ -1,8 +1,21 @@
+import re
+
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 
 from cpe.cpe23 import parse_cpe23_formatted_string
 from cpe_dictionary.models import CpeDictionarySnapshot, CpeName
+
+
+HANGUL_PATTERN = re.compile(
+    "[\u1100-\u11ff\u3130-\u318f"
+    "\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]"
+)
+
+
+def contains_hangul(value: str) -> bool:
+    return bool(HANGUL_PATTERN.search(value))
 
 
 class DockerImage(models.Model):
@@ -143,6 +156,61 @@ class Component(models.Model):
         return self.name
 
 
+class GroundTruthDecisionType(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("name", "id")
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                name="unique_ground_truth_decision_type_name_ci",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        self.name = self.name.strip() if isinstance(self.name, str) else ""
+        self.description = (
+            self.description.strip()
+            if isinstance(self.description, str)
+            else ""
+        )
+        if not self.name:
+            raise ValidationError(
+                {"name": "Decision Type name must not be blank."}
+            )
+        if contains_hangul(self.name):
+            raise ValidationError(
+                {
+                    "name": (
+                        "Decision Type names must be written in "
+                        "English."
+                    )
+                }
+            )
+        if contains_hangul(self.description):
+            raise ValidationError(
+                {
+                    "description": (
+                        "Decision Type descriptions must be written "
+                        "in English."
+                    )
+                }
+            )
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class ComponentCpeGroundTruth(models.Model):
     component = models.ForeignKey(
         Component,
@@ -165,7 +233,11 @@ class ComponentCpeGroundTruth(models.Model):
         blank=True,
         default="",
     )
-    decision_type = models.CharField(max_length=255)
+    decision_type = models.ForeignKey(
+        GroundTruthDecisionType,
+        on_delete=models.PROTECT,
+        related_name="ground_truths",
+    )
     note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -187,19 +259,6 @@ class ComponentCpeGroundTruth(models.Model):
 
     def clean(self) -> None:
         super().clean()
-        self.decision_type = (
-            self.decision_type.strip()
-            if isinstance(self.decision_type, str)
-            else ""
-        )
-        if not self.decision_type:
-            raise ValidationError(
-                {
-                    "decision_type": (
-                        "Decision type must not be blank."
-                    )
-                }
-            )
         self.manual_ground_truth_cpe = (
             self.manual_ground_truth_cpe.strip()
             if isinstance(self.manual_ground_truth_cpe, str)

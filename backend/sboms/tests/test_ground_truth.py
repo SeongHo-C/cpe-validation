@@ -5,6 +5,7 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.db import connection
+from django.db.models.deletion import ProtectedError
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -16,6 +17,7 @@ from sboms.models import (
     Component,
     ComponentCpeGroundTruth,
     DockerImage,
+    GroundTruthDecisionType,
     SBOMDocument,
 )
 
@@ -125,13 +127,21 @@ class ComponentCpeGroundTruthModelTests(TestCase):
         cls.cpe = create_cpe(cls.snapshot, 1)
         cls.other_cpe = create_cpe(cls.other_snapshot, 2)
         cls.component = create_component()
+        cls.decision_type = GroundTruthDecisionType.objects.create(
+            name="Vendor difference"
+        )
+        cls.other_decision_type = (
+            GroundTruthDecisionType.objects.create(
+                name="Review deferred"
+            )
+        )
 
     def test_saves_ground_truth_with_official_cpe(self) -> None:
         ground_truth = ComponentCpeGroundTruth.objects.create(
             component=self.component,
             snapshot=self.snapshot,
             ground_truth_cpe=self.cpe,
-            decision_type="Vendor difference",
+            decision_type=self.decision_type,
         )
 
         self.assertEqual(ground_truth.ground_truth_cpe, self.cpe)
@@ -141,7 +151,7 @@ class ComponentCpeGroundTruthModelTests(TestCase):
             component=self.component,
             snapshot=self.snapshot,
             ground_truth_cpe=None,
-            decision_type="Review deferred",
+            decision_type=self.decision_type,
             note="Insufficient evidence",
         )
 
@@ -156,7 +166,7 @@ class ComponentCpeGroundTruthModelTests(TestCase):
             component=self.component,
             snapshot=self.snapshot,
             manual_ground_truth_cpe=f"  {manual_cpe}  ",
-            decision_type="Manual version",
+            decision_type=self.decision_type,
         )
 
         self.assertEqual(
@@ -175,7 +185,7 @@ class ComponentCpeGroundTruthModelTests(TestCase):
                 manual_ground_truth_cpe=(
                     "cpe:2.3:a:example:manual:1.0:*:*:*:*:*:*:*"
                 ),
-                decision_type="Conflicting inputs",
+                decision_type=self.decision_type,
             )
 
     def test_rejects_invalid_manual_cpe(self) -> None:
@@ -184,43 +194,21 @@ class ComponentCpeGroundTruthModelTests(TestCase):
                 component=self.component,
                 snapshot=self.snapshot,
                 manual_ground_truth_cpe="not-a-cpe",
-                decision_type="Invalid manual input",
+                decision_type=self.decision_type,
             )
-
-    def test_rejects_empty_or_whitespace_decision_type(self) -> None:
-        for decision_type in ("", "   "):
-            with self.subTest(decision_type=decision_type):
-                with self.assertRaises(ValidationError):
-                    ComponentCpeGroundTruth.objects.create(
-                        component=self.component,
-                        snapshot=self.snapshot,
-                        decision_type=decision_type,
-                    )
-
-    def test_trims_only_decision_type_outer_whitespace(self) -> None:
-        ground_truth = ComponentCpeGroundTruth.objects.create(
-            component=self.component,
-            snapshot=self.snapshot,
-            decision_type="  Vendor Difference  ",
-        )
-
-        self.assertEqual(
-            ground_truth.decision_type,
-            "Vendor Difference",
-        )
 
     def test_rejects_duplicate_component_and_snapshot(self) -> None:
         ComponentCpeGroundTruth.objects.create(
             component=self.component,
             snapshot=self.snapshot,
-            decision_type="First review",
+            decision_type=self.decision_type,
         )
 
         with self.assertRaises(ValidationError):
             ComponentCpeGroundTruth.objects.create(
                 component=self.component,
                 snapshot=self.snapshot,
-                decision_type="Second review",
+                decision_type=self.other_decision_type,
             )
 
     def test_rejects_cpe_from_another_snapshot(self) -> None:
@@ -229,7 +217,7 @@ class ComponentCpeGroundTruthModelTests(TestCase):
                 component=self.component,
                 snapshot=self.snapshot,
                 ground_truth_cpe=self.other_cpe,
-                decision_type="Wrong snapshot",
+                decision_type=self.decision_type,
             )
 
     def test_rejects_nonexistent_component_and_cpe(self) -> None:
@@ -237,7 +225,7 @@ class ComponentCpeGroundTruthModelTests(TestCase):
             component_id=999999,
             snapshot=self.snapshot,
             ground_truth_cpe_id=999999,
-            decision_type="Invalid references",
+            decision_type=self.decision_type,
         )
 
         with self.assertRaises(ValidationError) as raised:
@@ -256,11 +244,291 @@ class ComponentCpeGroundTruthModelTests(TestCase):
             component=self.component,
             snapshot=self.snapshot,
             ground_truth_cpe=self.cpe,
-            decision_type="Product difference",
+            decision_type=self.decision_type,
         )
 
         self.component.refresh_from_db()
         self.assertEqual(self.component.cpe, original_cpe)
+
+
+class GroundTruthDecisionTypeModelTests(TestCase):
+    def test_trims_name_and_description_and_preserves_casing(
+        self,
+    ) -> None:
+        decision_type = GroundTruthDecisionType.objects.create(
+            name="  Vendor Difference  ",
+            description="  Supporting evidence  ",
+        )
+
+        self.assertEqual(decision_type.name, "Vendor Difference")
+        self.assertEqual(
+            decision_type.description,
+            "Supporting evidence",
+        )
+        self.assertTrue(decision_type.is_active)
+
+        decision_type.is_active = False
+        decision_type.save()
+        decision_type.is_active = True
+        decision_type.save()
+        self.assertTrue(decision_type.is_active)
+
+    def test_rejects_blank_and_case_insensitive_duplicate_names(
+        self,
+    ) -> None:
+        GroundTruthDecisionType.objects.create(name="Review")
+
+        for name in ("", "   ", "review", " REVIEW "):
+            with self.subTest(name=name):
+                with self.assertRaises(ValidationError):
+                    GroundTruthDecisionType.objects.create(name=name)
+
+    def test_rejects_hangul_in_name_or_description(self) -> None:
+        for values, expected_field in (
+            ({"name": "한국어 유형"}, "name"),
+            (
+                {
+                    "name": "English name",
+                    "description": "한국어 설명",
+                },
+                "description",
+            ),
+            ({"name": "Jamo ㄱ type"}, "name"),
+        ):
+            with self.subTest(values=values):
+                with self.assertRaises(ValidationError) as raised:
+                    GroundTruthDecisionType.objects.create(**values)
+                self.assertIn(
+                    expected_field,
+                    raised.exception.message_dict,
+                )
+
+    def test_uses_stable_name_then_id_ordering(self) -> None:
+        second = GroundTruthDecisionType.objects.create(name="Zulu")
+        first = GroundTruthDecisionType.objects.create(name="Alpha")
+
+        self.assertEqual(
+            list(
+                GroundTruthDecisionType.objects.filter(
+                    id__in=(first.id, second.id)
+                ).values_list(
+                    "id", flat=True
+                )
+            ),
+            [first.id, second.id],
+        )
+
+    def test_protects_a_referenced_decision_type_from_deletion(
+        self,
+    ) -> None:
+        decision_type = GroundTruthDecisionType.objects.create(
+            name="Protected review"
+        )
+        ComponentCpeGroundTruth.objects.create(
+            component=create_component(),
+            snapshot=create_snapshot("20260725T035002Z"),
+            decision_type=decision_type,
+        )
+
+        with self.assertRaises(ProtectedError):
+            decision_type.delete()
+
+
+class GroundTruthDecisionTypeAPITests(APITestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.active = GroundTruthDecisionType.objects.create(
+            name="Active review",
+            description="Used for active reviews",
+        )
+        cls.inactive = GroundTruthDecisionType.objects.create(
+            name="Archived review",
+            is_active=False,
+        )
+        snapshot = create_snapshot("20260725T035002Z")
+        ComponentCpeGroundTruth.objects.create(
+            component=create_component(),
+            snapshot=snapshot,
+            decision_type=cls.active,
+        )
+
+    @property
+    def list_url(self) -> str:
+        return reverse(
+            "sboms_api:ground-truth-decision-type-list"
+        )
+
+    def test_list_defaults_to_active_with_usage_count(self) -> None:
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_items = {
+            item["id"]: item for item in response.json()
+        }
+        self.assertIn(self.active.id, response_items)
+        self.assertNotIn(self.inactive.id, response_items)
+        self.assertEqual(
+            response_items[self.active.id]["usage_count"],
+            1,
+        )
+
+    def test_list_filters_searches_and_orders_stably(self) -> None:
+        another = GroundTruthDecisionType.objects.create(
+            name="zulu review",
+            description="Searchable description",
+        )
+
+        all_response = self.client.get(
+            self.list_url,
+            {"is_active": "all"},
+        )
+        search_response = self.client.get(
+            self.list_url,
+            {"search": "searchable"},
+        )
+        inactive_response = self.client.get(
+            self.list_url,
+            {"is_active": "false"},
+        )
+
+        all_names = [item["name"] for item in all_response.json()]
+        self.assertEqual(
+            all_names,
+            sorted(all_names, key=str.casefold),
+        )
+        self.assertIn("Active review", all_names)
+        self.assertIn("Archived review", all_names)
+        self.assertIn("zulu review", all_names)
+        self.assertEqual(
+            [item["id"] for item in search_response.json()],
+            [another.id],
+        )
+        self.assertEqual(
+            [item["id"] for item in inactive_response.json()],
+            [self.inactive.id],
+        )
+
+    def test_create_trims_and_rejects_blank_or_duplicate_name(
+        self,
+    ) -> None:
+        created = self.client.post(
+            self.list_url,
+            {
+                "name": "  New Review  ",
+                "description": "  Explanation  ",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            created.status_code,
+            status.HTTP_201_CREATED,
+        )
+        self.assertEqual(created.json()["name"], "New Review")
+        self.assertEqual(
+            created.json()["description"],
+            "Explanation",
+        )
+        for name in ("   ", "ACTIVE REVIEW"):
+            with self.subTest(name=name):
+                rejected = self.client.post(
+                    self.list_url,
+                    {"name": name},
+                    format="json",
+                )
+                self.assertEqual(
+                    rejected.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+
+    def test_create_rejects_hangul_name_and_description(
+        self,
+    ) -> None:
+        for payload, expected_field in (
+            (
+                {
+                    "name": "한국어 유형",
+                    "description": "English description",
+                },
+                "name",
+            ),
+            (
+                {
+                    "name": "English name",
+                    "description": "한국어 설명",
+                },
+                "description",
+            ),
+        ):
+            with self.subTest(payload=payload):
+                response = self.client.post(
+                    self.list_url,
+                    payload,
+                    format="json",
+                )
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+                self.assertIn(expected_field, response.json())
+
+    def test_patch_updates_only_description_and_active_state(
+        self,
+    ) -> None:
+        url = reverse(
+            "sboms_api:ground-truth-decision-type-detail",
+            args=[self.active.id],
+        )
+        updated = self.client.patch(
+            url,
+            {
+                "description": "  Updated  ",
+                "is_active": False,
+            },
+            format="json",
+        )
+        renamed = self.client.patch(
+            url,
+            {"name": "Renamed"},
+            format="json",
+        )
+        deleted = self.client.delete(url)
+
+        self.assertEqual(updated.status_code, status.HTTP_200_OK)
+        self.assertEqual(updated.json()["description"], "Updated")
+        self.assertFalse(updated.json()["is_active"])
+        reactivated = self.client.patch(
+            url,
+            {"is_active": True},
+            format="json",
+        )
+        self.assertEqual(
+            reactivated.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertTrue(reactivated.json()["is_active"])
+        hangul_description = self.client.patch(
+            url,
+            {"description": "한국어 설명"},
+            format="json",
+        )
+        self.assertEqual(
+            hangul_description.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn(
+            "description",
+            hangul_description.json(),
+        )
+        self.assertEqual(
+            renamed.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn("name", renamed.json())
+        self.assertEqual(
+            deleted.status_code,
+            status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
 
 @override_settings(CPE_DICTIONARY_SNAPSHOT_ID=None)
@@ -275,6 +543,20 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         cls.cpe = create_cpe(cls.snapshot, 10)
         cls.other_cpe = create_cpe(cls.other_snapshot, 11)
         cls.component = create_component()
+        cls.decision_type = GroundTruthDecisionType.objects.create(
+            name="Vendor difference"
+        )
+        cls.other_decision_type = (
+            GroundTruthDecisionType.objects.create(
+                name="Review deferred"
+            )
+        )
+        cls.inactive_decision_type = (
+            GroundTruthDecisionType.objects.create(
+                name="Legacy review",
+                is_active=False,
+            )
+        )
 
     @property
     def url(self) -> str:
@@ -301,7 +583,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             component=self.component,
             snapshot=self.snapshot,
             ground_truth_cpe=self.cpe,
-            decision_type="Vendor difference",
+            decision_type=self.decision_type,
             note="Upstream vendor evidence",
         )
 
@@ -323,7 +605,15 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             body["ground_truth_cpe"]["cpe_uuid"],
             str(self.cpe.cpe_name_id),
         )
-        self.assertEqual(body["decision_type"], "Vendor difference")
+        self.assertEqual(
+            body["decision_type"],
+            {
+                "id": self.decision_type.id,
+                "name": "Vendor difference",
+                "description": "",
+                "is_active": True,
+            },
+        )
         self.assertEqual(body["note"], "Upstream vendor evidence")
 
     def test_get_returns_manual_and_no_cpe_sources(self) -> None:
@@ -334,7 +624,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             component=self.component,
             snapshot=self.snapshot,
             manual_ground_truth_cpe=manual_cpe,
-            decision_type="Manual candidate",
+            decision_type=self.decision_type,
         )
 
         manual_body = self.client.get(self.url).json()[
@@ -345,7 +635,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         self.assertIsNone(manual_body["dictionary_cpe"])
 
         ground_truth.manual_ground_truth_cpe = ""
-        ground_truth.decision_type = "No applicable CPE"
+        ground_truth.decision_type = self.other_decision_type
         ground_truth.save()
         none_body = self.client.get(self.url).json()["ground_truth"]
         self.assertEqual(none_body["source"], "NONE")
@@ -359,7 +649,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             self.url,
             {
                 "ground_truth_cpe_id": self.cpe.id,
-                "decision_type": "  Vendor Difference  ",
+                "decision_type_id": self.decision_type.id,
                 "note": "Human review",
             },
             format="json",
@@ -368,7 +658,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         saved = ComponentCpeGroundTruth.objects.get()
         self.assertEqual(saved.ground_truth_cpe, self.cpe)
-        self.assertEqual(saved.decision_type, "Vendor Difference")
+        self.assertEqual(saved.decision_type, self.decision_type)
         self.component.refresh_from_db()
         self.assertEqual(self.component.cpe, original_cpe)
 
@@ -377,7 +667,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             self.url,
             {
                 "ground_truth_cpe_id": None,
-                "decision_type": "Review deferred",
+                "decision_type_id": self.decision_type.id,
                 "note": "Insufficient evidence",
             },
             format="json",
@@ -401,7 +691,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             {
                 "dictionary_cpe_id": None,
                 "manual_cpe": f"  {manual_cpe}  ",
-                "decision_type": "Manual version",
+                "decision_type_id": self.decision_type.id,
             },
             format="json",
         )
@@ -422,7 +712,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             {
                 "dictionary_cpe_id": self.cpe.id,
                 "manual_cpe": None,
-                "decision_type": "Official CPE",
+                "decision_type_id": self.decision_type.id,
             },
             format="json",
         )
@@ -440,14 +730,14 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             component=self.component,
             snapshot=self.snapshot,
             ground_truth_cpe=self.cpe,
-            decision_type="Initial review",
+            decision_type=self.decision_type,
         )
 
         response = self.client.put(
             self.url,
             {
                 "ground_truth_cpe_id": None,
-                "decision_type": "Review deferred",
+                "decision_type_id": self.other_decision_type.id,
                 "note": "Updated evidence",
             },
             format="json",
@@ -460,7 +750,10 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         )
         saved.refresh_from_db()
         self.assertIsNone(saved.ground_truth_cpe)
-        self.assertEqual(saved.decision_type, "Review deferred")
+        self.assertEqual(
+            saved.decision_type,
+            self.other_decision_type,
+        )
         self.assertEqual(saved.note, "Updated evidence")
 
     def test_put_switches_between_dictionary_manual_and_none(
@@ -470,7 +763,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             component=self.component,
             snapshot=self.snapshot,
             ground_truth_cpe=self.cpe,
-            decision_type="Dictionary",
+            decision_type=self.decision_type,
         )
         manual_cpe = (
             "cpe:2.3:a:example:manual:4.0:*:*:*:*:*:*:*"
@@ -481,7 +774,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             {
                 "dictionary_cpe_id": None,
                 "manual_cpe": manual_cpe,
-                "decision_type": "Manual",
+                "decision_type_id": self.decision_type.id,
             },
             format="json",
         )
@@ -495,7 +788,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             {
                 "dictionary_cpe_id": self.cpe.id,
                 "manual_cpe": None,
-                "decision_type": "Dictionary again",
+                "decision_type_id": self.decision_type.id,
             },
             format="json",
         )
@@ -509,7 +802,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             {
                 "dictionary_cpe_id": None,
                 "manual_cpe": None,
-                "decision_type": "No CPE",
+                "decision_type_id": self.decision_type.id,
             },
             format="json",
         )
@@ -529,7 +822,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
                 {
                     "dictionary_cpe_id": None,
                     "manual_cpe": "invalid",
-                    "decision_type": "Invalid",
+                    "decision_type_id": self.decision_type.id,
                 },
                 "manual_cpe",
             ),
@@ -540,7 +833,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
                         "cpe:2.3:a:example:manual:"
                         "1.0:*:*:*:*:*:*:*"
                     ),
-                    "decision_type": "Conflicting",
+                    "decision_type_id": self.decision_type.id,
                 },
                 "manual_cpe",
             ),
@@ -557,21 +850,68 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
                 )
                 self.assertIn(expected_field, response.json())
 
-    def test_put_rejects_empty_decision_type(self) -> None:
-        for decision_type in ("", "   "):
-            with self.subTest(decision_type=decision_type):
+    def test_put_requires_managed_decision_type_id(self) -> None:
+        for payload in (
+            {"ground_truth_cpe_id": None},
+            {
+                "ground_truth_cpe_id": None,
+                "decision_type_id": 999999,
+            },
+            {
+                "ground_truth_cpe_id": None,
+                "decision_type": "Legacy free text",
+            },
+        ):
+            with self.subTest(payload=payload):
                 response = self.client.put(
                     self.url,
-                    {
-                        "ground_truth_cpe_id": None,
-                        "decision_type": decision_type,
-                    },
+                    payload,
                     format="json",
                 )
                 self.assertEqual(
                     response.status_code,
                     status.HTTP_400_BAD_REQUEST,
                 )
+
+    def test_put_rejects_new_inactive_decision_type(self) -> None:
+        response = self.client.put(
+            self.url,
+            {
+                "ground_truth_cpe_id": None,
+                "decision_type_id": self.inactive_decision_type.id,
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn("decision_type_id", response.json())
+
+    def test_put_allows_retaining_existing_inactive_type(self) -> None:
+        ComponentCpeGroundTruth.objects.create(
+            component=self.component,
+            snapshot=self.snapshot,
+            decision_type=self.inactive_decision_type,
+        )
+
+        response = self.client.put(
+            self.url,
+            {
+                "ground_truth_cpe_id": None,
+                "decision_type_id": self.inactive_decision_type.id,
+                "note": "Retained during note edit",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            response.json()["ground_truth"]["decision_type"][
+                "is_active"
+            ]
+        )
 
     def test_missing_component_returns_404(self) -> None:
         response = self.client.get(
@@ -596,7 +936,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
                     self.url,
                     {
                         "ground_truth_cpe_id": cpe_id,
-                        "decision_type": "Review",
+                        "decision_type_id": self.decision_type.id,
                     },
                     format="json",
                 )
@@ -615,7 +955,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             {
                 "snapshot_id": self.other_snapshot.snapshot_id,
                 "ground_truth_cpe_id": None,
-                "decision_type": "Review",
+                "decision_type_id": self.decision_type.id,
             },
             format="json",
         )
@@ -673,6 +1013,17 @@ class GroundTruthComponentListAPITests(APITestCase):
     def setUpTestData(cls) -> None:
         cls.snapshot = create_snapshot("20260725T035002Z")
         cls.dictionary_cpe = create_cpe(cls.snapshot, 100)
+        cls.official_decision_type = (
+            GroundTruthDecisionType.objects.create(
+                name="Official review"
+            )
+        )
+        cls.manual_decision_type = (
+            GroundTruthDecisionType.objects.create(
+                name="Manual review",
+                is_active=False,
+            )
+        )
         cls.unreviewed = create_component()
         document = cls.unreviewed.sbom_document
         cls.official = Component.objects.create(
@@ -704,7 +1055,7 @@ class GroundTruthComponentListAPITests(APITestCase):
             component=cls.official,
             snapshot=cls.snapshot,
             ground_truth_cpe=cls.dictionary_cpe,
-            decision_type="Official review",
+            decision_type=cls.official_decision_type,
         )
         ComponentCpeGroundTruth.objects.create(
             component=cls.manual,
@@ -713,7 +1064,7 @@ class GroundTruthComponentListAPITests(APITestCase):
                 "cpe:2.3:a:example:manual-target:"
                 "2.1:*:*:*:*:*:*:*"
             ),
-            decision_type="Manual review",
+            decision_type=cls.manual_decision_type,
         )
         Component.objects.bulk_create(
             [
@@ -796,8 +1147,11 @@ class GroundTruthComponentListAPITests(APITestCase):
             "MANUAL",
         )
         self.assertEqual(
-            rows[self.manual.id]["decision_type"],
+            rows[self.manual.id]["decision_type"]["name"],
             "Manual review",
+        )
+        self.assertFalse(
+            rows[self.manual.id]["decision_type"]["is_active"]
         )
 
     def test_ground_truth_status_filters(self) -> None:

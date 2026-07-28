@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -6,14 +7,14 @@ from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
 
-class GroundTruthManualCpeMigrationTests(TransactionTestCase):
+class GroundTruthDecisionTypeMigrationTests(TransactionTestCase):
     migrate_from = (
         "sboms",
-        "0002_componentcpegroundtruth",
+        "0003_componentcpegroundtruth_manual_cpe",
     )
     migrate_to = (
         "sboms",
-        "0003_componentcpegroundtruth_manual_cpe",
+        "0004_groundtruthdecisiontype",
     )
 
     def setUp(self) -> None:
@@ -125,12 +126,29 @@ class GroundTruthManualCpeMigrationTests(TransactionTestCase):
             component=component,
             snapshot=snapshot,
             ground_truth_cpe=cpe,
+            decision_type="기존 시험 유형",
+            note="Delete this calibration record",
+        )
+        second_component = Component.objects.create(
+            sbom_document=document,
+            bom_ref="legacy-second",
+            component_type="library",
+            name="legacy second",
+            cpe=cpe.cpe_name,
+        )
+        second_record = GroundTruth.objects.create(
+            component=second_component,
+            snapshot=snapshot,
+            ground_truth_cpe=cpe,
             decision_type="Legacy review",
-            note="Preserve this record",
+            note="Delete this legacy record",
         )
         self.record_id = record.id
+        self.second_record_id = second_record.id
         self.component_id = component.id
+        self.second_component_id = second_component.id
         self.cpe_id = cpe.id
+        self.original_component_cpe = component.cpe
 
         executor = MigrationExecutor(connection)
         executor.migrate([self.migrate_to])
@@ -138,18 +156,113 @@ class GroundTruthManualCpeMigrationTests(TransactionTestCase):
             [self.migrate_to]
         ).apps
 
-    def test_existing_dictionary_ground_truth_is_preserved(
+    def test_existing_ground_truth_and_legacy_values_are_removed(
         self,
     ) -> None:
         GroundTruth = self.apps.get_model(
             "sboms",
             "ComponentCpeGroundTruth",
         )
+        DecisionType = self.apps.get_model(
+            "sboms",
+            "GroundTruthDecisionType",
+        )
 
-        record = GroundTruth.objects.get(pk=self.record_id)
+        self.assertEqual(GroundTruth.objects.count(), 0)
+        self.assertFalse(
+            DecisionType.objects.filter(
+                name__in=("기존 시험 유형", "Legacy review")
+            ).exists()
+        )
 
-        self.assertEqual(record.component_id, self.component_id)
-        self.assertEqual(record.ground_truth_cpe_id, self.cpe_id)
-        self.assertEqual(record.decision_type, "Legacy review")
-        self.assertEqual(record.note, "Preserve this record")
-        self.assertEqual(record.manual_ground_truth_cpe, "")
+    def test_protected_source_data_is_unchanged(self) -> None:
+        Component = self.apps.get_model("sboms", "Component")
+        CpeName = self.apps.get_model(
+            "cpe_dictionary",
+            "CpeName",
+        )
+
+        self.assertEqual(Component.objects.count(), 2)
+        self.assertEqual(CpeName.objects.count(), 1)
+        self.assertEqual(
+            Component.objects.get(pk=self.component_id).cpe,
+            self.original_component_cpe,
+        )
+        self.assertEqual(
+            Component.objects.get(pk=self.second_component_id).cpe,
+            self.original_component_cpe,
+        )
+
+    def test_exact_english_taxonomy_is_created(self) -> None:
+        DecisionType = self.apps.get_model(
+            "sboms",
+            "GroundTruthDecisionType",
+        )
+        expected = {
+            "Official CPE confirmed": (
+                "The exact active CPE Name is present in the "
+                "selected CPE Dictionary snapshot."
+            ),
+            (
+                "Official CPE family confirmed; version not in "
+                "Dictionary"
+            ): (
+                "The canonical part, vendor, and product are "
+                "confirmed, but the exact component version is "
+                "absent from the selected CPE Dictionary snapshot."
+            ),
+            "Distribution package revision normalized": (
+                "A distribution-specific package revision was "
+                "removed while preserving the confirmed upstream "
+                "product version."
+            ),
+            "Deprecated CPE redirected to active CPE": (
+                "A deprecated CPE or alias was resolved to its "
+                "active canonical CPE."
+            ),
+            "Mapped to parent product CPE": (
+                "The component is a subpackage or derived package "
+                "represented by the parent product's CPE."
+            ),
+            "No independent CPE": (
+                "The component is a subpackage, data package, "
+                "compatibility package, or internal unit without "
+                "an independent CPE identity."
+            ),
+            "Direct official CPE not confirmed": (
+                "No directly corresponding official CPE family "
+                "could be confirmed from the available evidence."
+            ),
+        }
+        actual_rows = list(
+            DecisionType.objects.order_by("id").values_list(
+                "name",
+                "description",
+            )
+        )
+        actual = dict(actual_rows)
+
+        self.assertEqual(actual, expected)
+        self.assertEqual(actual_rows, list(expected.items()))
+        self.assertEqual(DecisionType.objects.count(), 7)
+        self.assertFalse(
+            any(
+                re.search(
+                    (
+                        "[\u1100-\u11ff\u3130-\u318f"
+                        "\ua960-\ua97f\uac00-\ud7ff"
+                        "\uffa0-\uffdc]"
+                    ),
+                    f"{name}{description}",
+                )
+                for name, description in actual.items()
+            )
+        )
+        self.assertTrue(
+            all(
+                DecisionType.objects.values_list(
+                    "is_active",
+                    flat=True,
+                )
+            )
+        )

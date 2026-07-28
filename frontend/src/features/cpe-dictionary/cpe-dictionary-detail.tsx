@@ -97,7 +97,7 @@ export function CpeDictionaryDetailDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="cpe-detail-title"
-        className="h-full w-[620px] overflow-y-auto border-l bg-background shadow-2xl"
+        className="h-full w-full max-w-[620px] min-w-0 overflow-x-hidden overflow-y-auto border-l bg-background shadow-2xl"
       >
         <header className="sticky top-0 z-10 flex items-start justify-between border-b bg-background p-5">
           <div>
@@ -144,7 +144,7 @@ export function CpeDictionaryDetailDialog({
           </div>
         ) : null}
         {detail ? (
-          <div className="space-y-7 p-5">
+          <div className="min-w-0 max-w-full space-y-7 p-5">
             <section className="space-y-3">
               <h3 className="font-heading font-semibold">Overview</h3>
               <dl className="grid grid-cols-2 gap-3">
@@ -174,14 +174,17 @@ export function CpeDictionaryDetailDialog({
                   </div>
                 ))}
               </dl>
-              <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="min-w-0 max-w-full overflow-hidden rounded-lg border bg-muted/20 p-3">
                 <p className="text-xs text-muted-foreground">
                   Raw CPE
                 </p>
-                <p className="mt-1 break-all font-mono text-xs leading-5">
+                <p className="mt-1 min-w-0 max-w-full break-all font-mono text-xs leading-5">
                   {detail.cpe_name}
                 </p>
-                <div className="mt-3 flex gap-2">
+                <div
+                  className="mt-3 flex min-w-0 max-w-full flex-wrap items-center gap-2"
+                  data-testid="raw-cpe-actions"
+                >
                   {onSelectCandidate ? (
                     <Button
                       type="button"

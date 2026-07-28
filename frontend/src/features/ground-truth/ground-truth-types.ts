@@ -8,13 +8,21 @@ export type GroundTruthSource = "DICTIONARY" | "MANUAL" | "NONE"
 export type GroundTruthStatus = "UNREVIEWED" | "COMPLETED"
 export type GroundTruthOrdering = "id" | "-id"
 
+export interface GroundTruthDecisionType {
+  id: number
+  name: string
+  description: string
+  is_active: boolean
+  usage_count?: number
+}
+
 export interface ComponentCpeGroundTruthRecord {
   id: number
   source: GroundTruthSource
   dictionary_cpe: CpeDictionaryCandidate | null
   ground_truth_cpe: CpeDictionaryCandidate | null
   manual_cpe: string | null
-  decision_type: string
+  decision_type: GroundTruthDecisionType
   note: string
   created_at: string
   updated_at: string
@@ -29,7 +37,7 @@ export interface ComponentCpeGroundTruthResponse {
 export interface ComponentCpeGroundTruthWrite {
   dictionary_cpe_id: number | null
   manual_cpe: string | null
-  decision_type: string
+  decision_type_id: number
   note: string
 }
 
@@ -37,7 +45,7 @@ export interface GroundTruthComponentSummary
   extends ComponentSummary {
   ground_truth_status: GroundTruthStatus
   ground_truth: ComponentCpeGroundTruthRecord | null
-  decision_type: string | null
+  decision_type: GroundTruthDecisionType | null
 }
 
 export interface GroundTruthListQuery {

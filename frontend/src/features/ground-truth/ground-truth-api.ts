@@ -2,14 +2,59 @@ import type { PaginatedResponse } from "@/features/components/components-types"
 import type {
   ComponentCpeGroundTruthResponse,
   ComponentCpeGroundTruthWrite,
+  GroundTruthDecisionType,
   GroundTruthComponentSummary,
   GroundTruthListQuery,
   GroundTruthNavigation,
 } from "@/features/ground-truth/ground-truth-types"
 import {
   getJson,
+  patchJson,
+  postJson,
   putJson,
 } from "@/lib/api-client"
+
+export function getGroundTruthDecisionTypes(
+  query: {
+    is_active?: boolean | "all"
+    search?: string
+  } = {},
+  signal?: AbortSignal,
+): Promise<GroundTruthDecisionType[]> {
+  const parameters = new URLSearchParams()
+  if (query.is_active !== undefined) {
+    parameters.set("is_active", String(query.is_active))
+  }
+  if (query.search?.trim()) {
+    parameters.set("search", query.search.trim())
+  }
+  const queryString = parameters.toString()
+  return getJson<GroundTruthDecisionType[]>(
+    `/api/ground-truth-decision-types/${
+      queryString ? `?${queryString}` : ""
+    }`,
+    { signal },
+  )
+}
+
+export function createGroundTruthDecisionType(
+  payload: { name: string; description: string },
+): Promise<GroundTruthDecisionType> {
+  return postJson<GroundTruthDecisionType>(
+    "/api/ground-truth-decision-types/",
+    payload,
+  )
+}
+
+export function updateGroundTruthDecisionType(
+  decisionTypeId: number,
+  payload: { description?: string; is_active?: boolean },
+): Promise<GroundTruthDecisionType> {
+  return patchJson<GroundTruthDecisionType>(
+    `/api/ground-truth-decision-types/${decisionTypeId}/`,
+    payload,
+  )
+}
 
 export function buildGroundTruthListApiUrl(
   query: GroundTruthListQuery,

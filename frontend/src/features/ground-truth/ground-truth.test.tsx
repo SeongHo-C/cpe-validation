@@ -23,6 +23,7 @@ import type {
   ComponentCpeGroundTruthRecord,
   ComponentCpeGroundTruthResponse,
   GroundTruthComponentSummary,
+  GroundTruthDecisionType,
   GroundTruthSource,
 } from "@/features/ground-truth/ground-truth-types"
 import {
@@ -36,6 +37,73 @@ const cpeName =
 const cpeUuid = "11111111-1111-4111-8111-111111111111"
 const manualCpe =
   "cpe:2.3:a:haxx:curl:8.15.0:*:*:*:*:*:*:*"
+const initialDecisionTypes: GroundTruthDecisionType[] = [
+  {
+    id: 21,
+    name: "Official CPE confirmed",
+    description:
+      "The exact active CPE Name is present in the selected CPE Dictionary snapshot.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 22,
+    name:
+      "Official CPE family confirmed; version not in Dictionary",
+    description:
+      "The canonical part, vendor, and product are confirmed, but the exact component version is absent from the selected CPE Dictionary snapshot.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 23,
+    name: "Distribution package revision normalized",
+    description:
+      "A distribution-specific package revision was removed while preserving the confirmed upstream product version.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 24,
+    name: "Deprecated CPE redirected to active CPE",
+    description:
+      "A deprecated CPE or alias was resolved to its active canonical CPE.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 25,
+    name: "Mapped to parent product CPE",
+    description:
+      "The component is a subpackage or derived package represented by the parent product's CPE.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 26,
+    name: "No independent CPE",
+    description:
+      "The component is a subpackage, data package, compatibility package, or internal unit without an independent CPE identity.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 27,
+    name: "Direct official CPE not confirmed",
+    description:
+      "No directly corresponding official CPE family could be confirmed from the available evidence.",
+    is_active: true,
+    usage_count: 0,
+  },
+]
+const activeDecisionType = initialDecisionTypes[0]
+const inactiveDecisionType: GroundTruthDecisionType = {
+  id: 28,
+  name: "Archived English review",
+  description: "Preserved inactive English value",
+  is_active: false,
+  usage_count: 1,
+}
 
 const candidate = {
   id: 1,
@@ -119,7 +187,9 @@ function groundTruthRecord(
       source === "DICTIONARY" ? candidate : null,
     manual_cpe: source === "MANUAL" ? manualCpe : null,
     decision_type:
-      source === "NONE" ? "직접 대응 CPE 없음" : "Version review",
+      source === "NONE"
+        ? inactiveDecisionType
+        : activeDecisionType,
     note: source === "MANUAL" ? "Saved note" : "",
     created_at: "2026-07-28T00:00:00Z",
     updated_at: "2026-07-28T00:00:00Z",
@@ -212,12 +282,70 @@ interface FetchOptions {
   delayedList?: boolean
   emptyList?: boolean
   listError?: boolean
+  createDecisionTypeError?: boolean
 }
 
 function installFetch(options: FetchOptions = {}) {
   let resolveSave: ((response: Response) => void) | undefined
+  let decisionTypes = [
+    ...initialDecisionTypes,
+    inactiveDecisionType,
+  ]
   vi.mocked(fetch).mockImplementation((input, init) => {
     const url = new URL(String(input), "http://frontend.test")
+    if (
+      url.pathname === "/api/ground-truth-decision-types/"
+    ) {
+      if (init?.method === "POST") {
+        if (options.createDecisionTypeError) {
+          return Promise.resolve(
+            jsonResponse(
+              { name: ["A Decision Type already exists."] },
+              400,
+            ),
+          )
+        }
+        const payload = JSON.parse(String(init.body)) as {
+          name: string
+          description: string
+        }
+        const created: GroundTruthDecisionType = {
+          id: 29,
+          name: payload.name.trim(),
+          description: payload.description.trim(),
+          is_active: true,
+          usage_count: 0,
+        }
+        decisionTypes = [...decisionTypes, created]
+        return Promise.resolve(jsonResponse(created, 201))
+      }
+      const includeAll =
+        url.searchParams.get("is_active") === "all"
+      return Promise.resolve(
+        jsonResponse(
+          decisionTypes.filter(
+            (decisionType) =>
+              includeAll || decisionType.is_active,
+          ),
+        ),
+      )
+    }
+    const decisionTypeMatch = url.pathname.match(
+      /^\/api\/ground-truth-decision-types\/(\d+)\/$/,
+    )
+    if (decisionTypeMatch && init?.method === "PATCH") {
+      const id = Number(decisionTypeMatch[1])
+      const payload = JSON.parse(String(init.body)) as {
+        is_active?: boolean
+      }
+      const existing = decisionTypes.find((item) => item.id === id)
+      if (!existing) return Promise.resolve(jsonResponse({}, 404))
+      const updated = { ...existing, ...payload }
+      decisionTypes = decisionTypes.map((item) =>
+        item.id === id ? updated : item,
+      )
+      return Promise.resolve(jsonResponse(updated))
+    }
     if (url.pathname === "/api/health/") {
       return Promise.resolve(
         jsonResponse({ status: "ok", database: "ok" }),
@@ -254,7 +382,7 @@ function installFetch(options: FetchOptions = {}) {
       }
       return Promise.resolve(
         jsonResponse({
-          count: options.emptyList ? 0 : 2,
+          count: options.emptyList ? 0 : 3,
           page: Number(url.searchParams.get("page") ?? 1),
           page_size: Number(
             url.searchParams.get("page_size") ?? 50,
@@ -264,7 +392,11 @@ function installFetch(options: FetchOptions = {}) {
           previous: null,
           results: options.emptyList
             ? []
-            : [listRow(101, null), listRow(102, "MANUAL")],
+            : [
+                listRow(101, null),
+                listRow(102, "MANUAL"),
+                listRow(103, "NONE"),
+              ],
         }),
       )
     }
@@ -304,7 +436,7 @@ function installFetch(options: FetchOptions = {}) {
         const payload = JSON.parse(String(init.body)) as {
           dictionary_cpe_id: number | null
           manual_cpe: string | null
-          decision_type: string
+          decision_type_id: number
           note: string
         }
         const source: GroundTruthSource =
@@ -319,7 +451,10 @@ function installFetch(options: FetchOptions = {}) {
           ground_truth: {
             ...groundTruthRecord(source),
             manual_cpe: payload.manual_cpe,
-            decision_type: payload.decision_type.trim(),
+            decision_type:
+              decisionTypes.find(
+                (item) => item.id === payload.decision_type_id,
+              ) ?? activeDecisionType,
             note: payload.note,
           },
         } satisfies ComponentCpeGroundTruthResponse)
@@ -370,7 +505,10 @@ function installFetch(options: FetchOptions = {}) {
         jsonResponse({
           component_id: 101,
           snapshot_id: snapshotId,
-          ground_truth: groundTruthRecord("NONE"),
+          ground_truth: {
+            ...groundTruthRecord("NONE"),
+            decision_type: activeDecisionType,
+          },
         }),
       ),
   }
@@ -389,6 +527,25 @@ function putRequests() {
   return vi.mocked(fetch).mock.calls.filter(([, init]) => {
     return init?.method === "PUT"
   })
+}
+
+function postRequests() {
+  return vi.mocked(fetch).mock.calls.filter(([, init]) => {
+    return init?.method === "POST"
+  })
+}
+
+async function selectDecisionType(
+  user: ReturnType<typeof userEvent.setup>,
+  name = activeDecisionType.name,
+): Promise<void> {
+  const combobox = screen.getByPlaceholderText(
+    "Search or select a decision type...",
+  )
+  await user.click(combobox)
+  await user.click(
+    await screen.findByRole("option", { name }),
+  )
 }
 
 describe("Ground Truth workflow", () => {
@@ -429,6 +586,7 @@ describe("Ground Truth workflow", () => {
       await screen.findAllByText("Not Reviewed"),
     ).not.toHaveLength(0)
     expect(screen.getAllByText("Completed")).not.toHaveLength(0)
+    expect(screen.getAllByText("Inactive")).not.toHaveLength(0)
     expect(
       screen.getByRole("columnheader", {
         name: "Ground Truth Status",
@@ -438,8 +596,8 @@ describe("Ground Truth workflow", () => {
       screen.getByRole("link", { name: "Review" }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("link", { name: "Edit" }),
-    ).toBeInTheDocument()
+      screen.getAllByRole("link", { name: "Edit" }),
+    ).not.toHaveLength(0)
     expect(screen.getByTitle(manualCpe)).toBeInTheDocument()
   })
 
@@ -700,11 +858,15 @@ describe("Ground Truth workflow", () => {
       renderAppAt("/ground-truth/components/101")
       const editor = groundTruthEditor()
 
-      await within(editor).findByDisplayValue(
+      await within(editor).findByText(
         source === "NONE"
-          ? "직접 대응 CPE 없음"
-          : "Version review",
+          ? "Archived English review"
+          : "Official CPE confirmed",
       )
+      if (source === "NONE") {
+        expect(within(editor).getByText("Inactive"))
+          .toBeInTheDocument()
+      }
       if (source === "DICTIONARY") {
         expect(within(editor).getByText(`UUID: ${cpeUuid}`))
           .toBeInTheDocument()
@@ -773,6 +935,412 @@ describe("Ground Truth workflow", () => {
     ).toBeInTheDocument()
   })
 
+  it("keeps all Raw CPE detail actions inside a wrapping group", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101?q=curl")
+    await screen.findByText("1 result")
+    await user.click(
+      screen.getByRole("button", { name: "View details" }),
+    )
+    const dialog = await screen.findByRole("dialog", {
+      name: "CPE Dictionary record",
+    })
+    const actions = within(dialog).getByTestId("raw-cpe-actions")
+
+    expect(actions).toHaveClass("flex-wrap")
+    expect(actions).toHaveClass("max-w-full")
+    for (const name of [
+      "Select as Ground Truth",
+      "Copy to Manual CPE",
+      "Copy raw CPE",
+      "Copy CPE UUID",
+    ]) {
+      expect(
+        within(dialog).getByRole("button", { name }),
+      ).toBeInTheDocument()
+    }
+    const rawCpe = within(dialog).getByText(cpeName)
+    expect(rawCpe).toHaveClass("break-all")
+    expect(rawCpe).toHaveClass("max-w-full")
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Copy raw CPE",
+      }),
+    )
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Copy CPE UUID",
+      }),
+    )
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Copy to Manual CPE",
+      }),
+    )
+    expect(
+      within(groundTruthEditor()).getByDisplayValue(cpeName),
+    ).toBeInTheDocument()
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Select as Ground Truth",
+      }),
+    )
+    expect(
+      within(groundTruthEditor()).getByText(`UUID: ${cpeUuid}`),
+    ).toBeInTheDocument()
+  })
+
+  it("searches and replaces a single Decision Type selection", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    await within(editor).findByText(
+      "No Dictionary CPE selected",
+    )
+    const combobox = within(editor).getByRole("combobox", {
+      name: "Decision Type",
+    })
+
+    await user.click(combobox)
+    await screen.findByRole("option", {
+      name: "Official CPE confirmed",
+    })
+    const initialOptionNames = within(
+      screen.getByRole("listbox"),
+    )
+      .getAllByRole("option")
+      .map((option) => option.textContent?.trim() ?? "")
+    expect(initialOptionNames).toHaveLength(7)
+    expect(initialOptionNames).toEqual(
+      expect.arrayContaining(
+        initialDecisionTypes.map(
+          (decisionType) => decisionType.name,
+        ),
+      ),
+    )
+    expect(
+      initialOptionNames.some((name) =>
+        /[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]/u.test(
+          name,
+        ),
+      ),
+    ).toBe(false)
+    await user.keyboard("{Escape}")
+
+    await user.type(combobox, "Official CPE confirmed")
+    await user.keyboard("{Enter}")
+    expect(within(editor).getByText("Official CPE confirmed"))
+      .toBeInTheDocument()
+
+    await user.click(combobox)
+    await user.clear(combobox)
+    await user.type(combobox, "version not")
+    await user.keyboard("{Enter}")
+    expect(
+      within(editor).getByText(
+        "Official CPE family confirmed; version not in Dictionary",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(editor).queryByText("Official CPE confirmed"),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "Clear Decision Type",
+      }),
+    )
+    expect(
+      within(editor).queryByText(
+        "Official CPE family confirmed; version not in Dictionary",
+      ),
+    ).not.toBeInTheDocument()
+    await user.click(combobox)
+    expect(
+      screen.queryByRole("option", {
+        name: "Archived English review",
+      }),
+    ).not.toBeInTheDocument()
+    await user.keyboard("{Escape}")
+  })
+
+  it("closes the Decision Type dropdown without changing the form state", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    await within(editor).findByText(
+      "No Dictionary CPE selected",
+    )
+    const manual = within(editor).getByPlaceholderText(
+      /cpe:2\.3:a:vendor/,
+    )
+    const combobox = within(editor).getByRole("combobox", {
+      name: "Decision Type",
+    })
+    await user.type(manual, manualCpe)
+
+    await user.click(combobox)
+    expect(combobox).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByRole("listbox")).toBeInTheDocument()
+    await user.click(
+      within(editor).getByText("Expected Ground Truth CPE"),
+    )
+    expect(combobox).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument()
+    expect(manual).toHaveValue(manualCpe)
+
+    await user.click(combobox)
+    expect(combobox).toHaveAttribute("aria-expanded", "true")
+    await user.click(combobox)
+    expect(combobox).toHaveAttribute("aria-expanded", "false")
+
+    await user.click(combobox)
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Official CPE confirmed",
+      }),
+    )
+    expect(combobox).toHaveAttribute("aria-expanded", "false")
+    expect(within(editor).getByText("Official CPE confirmed"))
+      .toBeInTheDocument()
+
+    await user.click(combobox)
+    await user.keyboard("{Escape}")
+    expect(combobox).toHaveAttribute("aria-expanded", "false")
+    expect(within(editor).getByText("Official CPE confirmed"))
+      .toBeInTheDocument()
+    expect(manual).toHaveValue(manualCpe)
+
+    await user.type(combobox, "New outside-click type")
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Create “New outside-click type”",
+      }),
+    )
+    expect(combobox).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument()
+    const dialog = screen.getByRole("dialog", {
+      name: "Add Decision Type",
+    })
+    await user.click(
+      within(dialog).getByRole("button", { name: "Cancel" }),
+    )
+    expect(within(editor).getByText("Official CPE confirmed"))
+      .toBeInTheDocument()
+    expect(manual).toHaveValue(manualCpe)
+
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "Save Ground Truth",
+      }),
+    )
+    expect(
+      await within(editor).findByText("Ground Truth saved."),
+    ).toBeInTheDocument()
+    expect(putRequests()).toHaveLength(1)
+  })
+
+  it("creates a Decision Type and selects it without saving Ground Truth", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    const combobox = await within(editor).findByRole(
+      "combobox",
+      { name: "Decision Type" },
+    )
+
+    await user.type(combobox, "New evidence type")
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Create “New evidence type”",
+      }),
+    )
+    const dialog = screen.getByRole("dialog", {
+      name: "Add Decision Type",
+    })
+    const nameInput = within(dialog).getByLabelText("Name")
+    expect(nameInput).toHaveValue(
+      "New evidence type",
+    )
+    await user.clear(nameInput)
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create" }),
+    )
+    expect(
+      within(dialog).getByText("Name is required."),
+    ).toBeInTheDocument()
+    await user.type(nameInput, "New evidence type")
+    await user.type(
+      within(dialog).getByLabelText("Description"),
+      "Evidence description",
+    )
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create" }),
+    )
+
+    expect(
+      await within(editor).findByText("New evidence type"),
+    ).toBeInTheDocument()
+    expect(putRequests()).toHaveLength(0)
+  })
+
+  it("preserves Decision Type create input after a duplicate error", async () => {
+    const user = userEvent.setup()
+    installFetch({ createDecisionTypeError: true })
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    const combobox = await within(editor).findByRole(
+      "combobox",
+      { name: "Decision Type" },
+    )
+
+    await user.type(combobox, "Duplicate evidence")
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Create “Duplicate evidence”",
+      }),
+    )
+    const dialog = screen.getByRole("dialog", {
+      name: "Add Decision Type",
+    })
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create" }),
+    )
+
+    expect(
+      await within(dialog).findByText(
+        /Decision Type already exists/,
+      ),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByLabelText("Name")).toHaveValue(
+      "Duplicate evidence",
+    )
+  })
+
+  it("rejects Hangul in Decision Type names and descriptions before requesting", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    const combobox = await within(editor).findByRole(
+      "combobox",
+      { name: "Decision Type" },
+    )
+
+    await user.type(combobox, "New English type")
+    await user.click(
+      await screen.findByRole("option", {
+        name: "Create “New English type”",
+      }),
+    )
+    const dialog = screen.getByRole("dialog", {
+      name: "Add Decision Type",
+    })
+    const name = within(dialog).getByLabelText("Name")
+    const description =
+      within(dialog).getByLabelText("Description")
+    await user.clear(name)
+    await user.type(name, "한국어 유형")
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create" }),
+    )
+    expect(
+      within(dialog).getByText(
+        "Decision Type names must be written in English.",
+      ),
+    ).toBeInTheDocument()
+
+    await user.clear(name)
+    await user.type(name, "New English type")
+    await user.type(description, "한국어 설명")
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create" }),
+    )
+    expect(
+      within(dialog).getByText(
+        "Decision Type descriptions must be written in English.",
+      ),
+    ).toBeInTheDocument()
+    expect(postRequests()).toHaveLength(0)
+  })
+
+  it("deactivates and reactivates Decision Types without delete actions", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    await within(editor).findByRole("combobox", {
+      name: "Decision Type",
+    })
+    await selectDecisionType(user)
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "Manage Decision Types",
+      }),
+    )
+    const manageDialog = await screen.findByRole("dialog", {
+      name: "Manage Decision Types",
+    })
+    expect(within(manageDialog).getByText("Active"))
+      .toBeInTheDocument()
+    expect(within(manageDialog).getByText("Inactive"))
+      .toBeInTheDocument()
+    expect(within(manageDialog).queryByText("Delete"))
+      .not.toBeInTheDocument()
+    expect(manageDialog.textContent).not.toMatch(
+      /[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]/u,
+    )
+    const activeRow = within(manageDialog)
+      .getByText("Official CPE confirmed")
+      .closest(".rounded-lg.border")
+    if (!activeRow) throw new Error("Active Decision Type row missing")
+    await user.click(
+      within(activeRow as HTMLElement).getByRole("button", {
+        name: "Deactivate",
+      }),
+    )
+    const confirmation = screen.getByRole("dialog", {
+      name: "Deactivate Decision Type?",
+    })
+    await user.click(
+      within(confirmation).getByRole("button", {
+        name: "Deactivate",
+      }),
+    )
+
+    const selectedValue = within(editor)
+      .getByRole("button", { name: "Clear Decision Type" })
+      .closest(".rounded-lg.border")
+    if (!selectedValue) {
+      throw new Error("Selected Decision Type container missing")
+    }
+    expect(within(selectedValue as HTMLElement).getByText("Inactive"))
+      .toBeInTheDocument()
+    const inactiveRow = within(manageDialog)
+      .getByText("Official CPE confirmed")
+      .closest(".rounded-lg.border")
+    if (!inactiveRow) {
+      throw new Error("Inactive Decision Type row missing")
+    }
+    await user.click(
+      within(inactiveRow as HTMLElement).getByRole("button", {
+        name: "Reactivate",
+      }),
+    )
+    await waitFor(() =>
+      expect(
+        within(manageDialog).getAllByRole("button", {
+          name: "Deactivate",
+        }).length,
+      ).toBeGreaterThan(0),
+    )
+  })
+
   it("shows server validation for invalid manual CPE and preserves input", async () => {
     const user = userEvent.setup()
     installFetch({ invalidManual: true })
@@ -785,12 +1353,7 @@ describe("Ground Truth workflow", () => {
       /cpe:2\.3:a:vendor/,
     )
     await user.type(manual, "invalid")
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "Enter a free-form decision type",
-      ),
-      "Manual review",
-    )
+    await selectDecisionType(user)
     await user.click(
       within(editor).getByRole("button", {
         name: "Save Ground Truth",
@@ -837,10 +1400,12 @@ describe("Ground Truth workflow", () => {
     await within(editor).findByText(
       "No Dictionary CPE selected",
     )
-    const decision = within(editor).getByPlaceholderText(
-      "Enter a free-form decision type",
-    )
-    await user.type(decision, "No CPE")
+    expect(
+      within(editor).queryByPlaceholderText(
+        "Enter a free-form decision type",
+      ),
+    ).not.toBeInTheDocument()
+    await selectDecisionType(user)
     await user.click(
       within(editor).getByRole("button", {
         name: "Save Ground Truth",
@@ -856,6 +1421,7 @@ describe("Ground Truth workflow", () => {
     ).toMatchObject({
       dictionary_cpe_id: null,
       manual_cpe: null,
+      decision_type_id: activeDecisionType.id,
     })
 
     await user.type(
@@ -905,12 +1471,7 @@ describe("Ground Truth workflow", () => {
     await within(editor).findByText(
       "No Dictionary CPE selected",
     )
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "Enter a free-form decision type",
-      ),
-      "Pending save",
-    )
+    await selectDecisionType(user)
     const save = within(editor).getByRole("button", {
       name: "Save Ground Truth",
     })
@@ -933,10 +1494,7 @@ describe("Ground Truth workflow", () => {
     await within(editor).findByText(
       "No Dictionary CPE selected",
     )
-    const decision = within(editor).getByPlaceholderText(
-      "Enter a free-form decision type",
-    )
-    await user.type(decision, "Keep this value")
+    await selectDecisionType(user)
     await user.click(
       within(editor).getByRole("button", {
         name: "Save Ground Truth",
@@ -946,7 +1504,8 @@ describe("Ground Truth workflow", () => {
     expect(
       await within(editor).findByText(/Save rejected/),
     ).toBeInTheDocument()
-    expect(decision).toHaveValue("Keep this value")
+    expect(within(editor).getByText("Official CPE confirmed"))
+      .toBeInTheDocument()
   })
 
   it("saves and moves to the next filtered Component", async () => {
@@ -959,12 +1518,7 @@ describe("Ground Truth workflow", () => {
     await within(editor).findByText(
       "No Dictionary CPE selected",
     )
-    await user.type(
-      within(editor).getByPlaceholderText(
-      "Enter a free-form decision type",
-      ),
-      "Complete and continue",
-    )
+    await selectDecisionType(user)
     await user.click(
       within(editor).getByRole("button", {
         name: "Save and Next",
@@ -991,12 +1545,7 @@ describe("Ground Truth workflow", () => {
     await within(editor).findByText(
       "No Dictionary CPE selected",
     )
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "Enter a free-form decision type",
-      ),
-      "Unsaved",
-    )
+    await selectDecisionType(user, "No independent CPE")
     vi.mocked(confirm).mockReturnValueOnce(false)
     await user.click(
       screen.getByRole("button", { name: "Next" }),
@@ -1013,9 +1562,7 @@ describe("Ground Truth workflow", () => {
       "No Dictionary CPE selected",
     )
     expect(
-      within(editor).getByPlaceholderText(
-        "Enter a free-form decision type",
-      ),
-    ).toHaveValue("")
+      within(editor).queryByText("No independent CPE"),
+    ).not.toBeInTheDocument()
   })
 })

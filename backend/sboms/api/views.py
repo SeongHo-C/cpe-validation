@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from collections import Counter
 
-from django.db import DatabaseError, connection, transaction
+from django.core.exceptions import (
+    ValidationError as DjangoValidationError,
+)
+from django.db import (
+    DatabaseError,
+    IntegrityError,
+    connection,
+    transaction,
+)
 from django.db.models import (
     Count,
     Exists,
@@ -11,6 +19,7 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
@@ -35,6 +44,9 @@ from sboms.api.serializers import (
     DockerImageDetailSerializer,
     DockerImageListSerializer,
     GroundTruthComponentListSerializer,
+    GroundTruthDecisionTypeCreateSerializer,
+    GroundTruthDecisionTypeSerializer,
+    GroundTruthDecisionTypeUpdateSerializer,
 )
 from sboms.exact_matching import (
     CPEExactMatchStatus,
@@ -44,6 +56,7 @@ from sboms.models import (
     Component,
     ComponentCpeGroundTruth,
     DockerImage,
+    GroundTruthDecisionType,
     SBOMDocument,
 )
 
@@ -474,6 +487,106 @@ def _ground_truth_component_queryset(
     return queryset.order_by(ordering), ordering
 
 
+class GroundTruthDecisionTypeListCreateAPIView(
+    generics.ListCreateAPIView
+):
+    pagination_class = None
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "post", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[GroundTruthDecisionType]:
+        queryset = GroundTruthDecisionType.objects.annotate(
+            usage_count=Count("ground_truths")
+        )
+        raw_is_active = self.request.query_params.get("is_active")
+        if raw_is_active is None:
+            queryset = queryset.filter(is_active=True)
+        else:
+            is_active = raw_is_active.lower()
+            if is_active == "true":
+                queryset = queryset.filter(is_active=True)
+            elif is_active == "false":
+                queryset = queryset.filter(is_active=False)
+            elif is_active != "all":
+                raise ValidationError(
+                    {
+                        "detail": (
+                            "is_active must be one of: "
+                            "true, false, all"
+                        )
+                    }
+                )
+        search = self.request.query_params.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search)
+                | Q(description__icontains=search)
+            )
+        return queryset.order_by(Lower("name"), "id")
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return GroundTruthDecisionTypeCreateSerializer
+        return GroundTruthDecisionTypeSerializer
+
+    def create(self, request, *args, **kwargs) -> Response:
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                decision_type = serializer.save()
+        except (DjangoValidationError, IntegrityError) as error:
+            raise ValidationError(
+                {
+                    "name": (
+                        "A Decision Type with this name already "
+                        "exists."
+                    )
+                }
+            ) from error
+        decision_type.usage_count = 0
+        return Response(
+            GroundTruthDecisionTypeSerializer(decision_type).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class GroundTruthDecisionTypeDetailAPIView(
+    generics.RetrieveUpdateAPIView
+):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[GroundTruthDecisionType]:
+        return GroundTruthDecisionType.objects.annotate(
+            usage_count=Count("ground_truths")
+        )
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return GroundTruthDecisionTypeUpdateSerializer
+        return GroundTruthDecisionTypeSerializer
+
+    def patch(self, request, *args, **kwargs) -> Response:
+        decision_type = self.get_object()
+        serializer = self.get_serializer(
+            decision_type,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        decision_type.refresh_from_db()
+        decision_type.usage_count = (
+            decision_type.ground_truths.count()
+        )
+        return Response(
+            GroundTruthDecisionTypeSerializer(decision_type).data
+        )
+
+
 class GroundTruthComponentListAPIView(
     CpeDictionarySnapshotViewMixin,
     generics.ListAPIView,
@@ -503,7 +616,8 @@ class GroundTruthComponentListAPIView(
             record.component_id: record
             for record in (
                 ComponentCpeGroundTruth.objects.select_related(
-                    "ground_truth_cpe"
+                    "ground_truth_cpe",
+                    "decision_type",
                 ).filter(
                     snapshot=snapshot,
                     component_id__in=component_ids,
@@ -644,7 +758,8 @@ class ComponentCpeGroundTruthAPIView(
         snapshot = self.get_cpe_dictionary_snapshot()
         ground_truth = (
             ComponentCpeGroundTruth.objects.select_related(
-                "ground_truth_cpe"
+                "ground_truth_cpe",
+                "decision_type",
             )
             .filter(
                 component=component,
@@ -663,9 +778,22 @@ class ComponentCpeGroundTruthAPIView(
     def put(self, request, component_id: int) -> Response:
         component = self._component(component_id)
         snapshot = self.get_cpe_dictionary_snapshot()
+        current_ground_truth = (
+            ComponentCpeGroundTruth.objects.select_related(
+                "decision_type"
+            )
+            .filter(
+                component=component,
+                snapshot=snapshot,
+            )
+            .first()
+        )
         serializer = ComponentCpeGroundTruthWriteSerializer(
             data=request.data,
-            context={"snapshot": snapshot},
+            context={
+                "snapshot": snapshot,
+                "current_ground_truth": current_ground_truth,
+            },
         )
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
@@ -678,7 +806,8 @@ class ComponentCpeGroundTruthAPIView(
             )
         ground_truth = (
             ComponentCpeGroundTruth.objects.select_related(
-                "ground_truth_cpe"
+                "ground_truth_cpe",
+                "decision_type",
             ).get(pk=ground_truth.pk)
         )
         return Response(

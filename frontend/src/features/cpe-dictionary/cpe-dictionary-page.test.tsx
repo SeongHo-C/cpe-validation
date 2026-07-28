@@ -220,6 +220,22 @@ describe("read-only CPE Dictionary", () => {
         name: "Select as Ground Truth",
       }),
     ).not.toBeInTheDocument()
+    const actions = within(dialog).getByTestId("raw-cpe-actions")
+    expect(actions).toHaveClass("flex-wrap")
+    expect(actions).toHaveClass("max-w-full")
+    const rawCpe = within(dialog).getByText(cpeName)
+    expect(rawCpe).toHaveClass("break-all")
+    expect(rawCpe).toHaveClass("max-w-full")
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Copy raw CPE",
+      }),
+    )
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Copy CPE UUID",
+      }),
+    )
   })
 
   it("keeps results and disables pagination while fetching", async () => {

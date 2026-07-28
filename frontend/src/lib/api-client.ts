@@ -6,6 +6,10 @@ export interface PutJsonOptions {
   signal?: AbortSignal
 }
 
+export interface MutationJsonOptions {
+  signal?: AbortSignal
+}
+
 export class ApiError extends Error {
   readonly status: number
   readonly code?: string
@@ -116,4 +120,47 @@ export async function putJson<T>(
   } catch {
     throw new Error("The API returned an invalid JSON response")
   }
+}
+
+async function mutationJson<T>(
+  method: "POST" | "PATCH",
+  url: string,
+  body: unknown,
+  options: MutationJsonOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    signal: options.signal,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    throw await responseError(response)
+  }
+
+  try {
+    return (await response.json()) as T
+  } catch {
+    throw new Error("The API returned an invalid JSON response")
+  }
+}
+
+export function postJson<T>(
+  url: string,
+  body: unknown,
+  options: MutationJsonOptions = {},
+): Promise<T> {
+  return mutationJson("POST", url, body, options)
+}
+
+export function patchJson<T>(
+  url: string,
+  body: unknown,
+  options: MutationJsonOptions = {},
+): Promise<T> {
+  return mutationJson("PATCH", url, body, options)
 }

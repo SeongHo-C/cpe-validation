@@ -26,13 +26,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import type { CpeDictionaryCandidate } from "@/features/cpe-dictionary/cpe-dictionary-types"
 import {
   getComponentCpeGroundTruth,
   putComponentCpeGroundTruth,
 } from "@/features/ground-truth/ground-truth-api"
-import type { ComponentCpeGroundTruthResponse } from "@/features/ground-truth/ground-truth-types"
+import { GroundTruthDecisionTypeField } from "@/features/ground-truth/ground-truth-decision-type-field"
+import type {
+  ComponentCpeGroundTruthResponse,
+  GroundTruthDecisionType,
+} from "@/features/ground-truth/ground-truth-types"
 import {
   ApiError,
   isAbortError,
@@ -48,13 +51,13 @@ function requestError(error: unknown): string {
 function stateSignature(
   selectedCpe: CpeDictionaryCandidate | null,
   manualCpe: string,
-  decisionType: string,
+  decisionType: GroundTruthDecisionType | null,
   note: string,
 ): string {
   return JSON.stringify({
     dictionary_cpe_id: selectedCpe?.id ?? null,
     manual_cpe: manualCpe,
-    decision_type: decisionType,
+    decision_type_id: decisionType?.id ?? null,
     note,
   })
 }
@@ -80,7 +83,8 @@ export function GroundTruthEditor({
   canMoveNext: boolean
   onSavedAndNext: () => void
 }) {
-  const [decisionType, setDecisionType] = useState("")
+  const [decisionType, setDecisionType] =
+    useState<GroundTruthDecisionType | null>(null)
   const [note, setNote] = useState("")
   const [snapshotId, setSnapshotId] = useState("")
   const [loading, setLoading] = useState(true)
@@ -111,7 +115,7 @@ export function GroundTruthEditor({
 
   useEffect(() => {
     const controller = new AbortController()
-    setDecisionType("")
+    setDecisionType(null)
     setNote("")
     setSnapshotId("")
     setLoading(true)
@@ -131,7 +135,7 @@ export function GroundTruthEditor({
           null
         const restoredManual = groundTruth?.manual_cpe ?? ""
         const restoredDecision =
-          groundTruth?.decision_type ?? ""
+          groundTruth?.decision_type ?? null
         const restoredNote = groundTruth?.note ?? ""
         setSnapshotId(response.snapshot_id)
         setDecisionType(restoredDecision)
@@ -169,7 +173,7 @@ export function GroundTruthEditor({
   const saveGroundTruth = async (
     moveNext: boolean,
   ): Promise<void> => {
-    if (!decisionType.trim()) {
+    if (!decisionType) {
       setSuccess(null)
       setError("Decision Type is required.")
       return
@@ -182,7 +186,7 @@ export function GroundTruthEditor({
         await putComponentCpeGroundTruth(componentId, {
           dictionary_cpe_id: selectedCpe?.id ?? null,
           manual_cpe: manualCpe.trim() || null,
-          decision_type: decisionType,
+          decision_type_id: decisionType.id,
           note,
         })
       const groundTruth = response.ground_truth
@@ -192,7 +196,7 @@ export function GroundTruthEditor({
         null
       const restoredManual = groundTruth?.manual_cpe ?? ""
       const restoredDecision =
-        groundTruth?.decision_type ?? ""
+        groundTruth?.decision_type ?? null
       const restoredNote = groundTruth?.note ?? ""
       setSnapshotId(response.snapshot_id)
       setDecisionType(restoredDecision)
@@ -325,19 +329,14 @@ export function GroundTruthEditor({
               </span>
             </label>
 
-            <label className="block space-y-1.5 text-sm font-medium">
-              <span>
-                Decision Type <span className="text-red-600">*</span>
-              </span>
-              <Input
-                value={decisionType}
-                placeholder="Enter a free-form decision type"
-                onChange={(event) => {
-                  setDecisionType(event.target.value)
-                  setSuccess(null)
-                }}
-              />
-            </label>
+            <GroundTruthDecisionTypeField
+              value={decisionType}
+              onChange={setDecisionType}
+              onInteraction={() => {
+                setError(null)
+                setSuccess(null)
+              }}
+            />
 
             <details className="rounded-lg border bg-muted/20 px-3 py-2">
               <summary className="cursor-pointer text-sm font-medium">

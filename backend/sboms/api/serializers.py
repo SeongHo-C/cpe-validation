@@ -11,7 +11,9 @@ from sboms.models import (
     Component,
     ComponentCpeGroundTruth,
     DockerImage,
+    GroundTruthDecisionType,
     SBOMDocument,
+    contains_hangul,
 )
 
 
@@ -220,6 +222,90 @@ class GroundTruthCpeSerializer(serializers.ModelSerializer):
         )
 
 
+class GroundTruthDecisionTypeSerializer(serializers.ModelSerializer):
+    usage_count = serializers.IntegerField(
+        read_only=True,
+        required=False,
+    )
+
+    class Meta:
+        model = GroundTruthDecisionType
+        fields = (
+            "id",
+            "name",
+            "description",
+            "is_active",
+            "usage_count",
+        )
+
+
+class GroundTruthDecisionTypeCreateSerializer(
+    serializers.ModelSerializer
+):
+    class Meta:
+        model = GroundTruthDecisionType
+        fields = ("name", "description")
+
+    def validate_name(self, value: str) -> str:
+        normalized_name = value.strip()
+        if not normalized_name:
+            raise serializers.ValidationError(
+                "Decision Type name must not be blank."
+            )
+        if GroundTruthDecisionType.objects.filter(
+            name__iexact=normalized_name
+        ).exists():
+            raise serializers.ValidationError(
+                "A Decision Type with this name already exists."
+            )
+        if contains_hangul(normalized_name):
+            raise serializers.ValidationError(
+                "Decision Type names must be written in English."
+            )
+        return normalized_name
+
+    def validate_description(self, value: str) -> str:
+        normalized_description = value.strip()
+        if contains_hangul(normalized_description):
+            raise serializers.ValidationError(
+                (
+                    "Decision Type descriptions must be written "
+                    "in English."
+                )
+            )
+        return normalized_description
+
+
+class GroundTruthDecisionTypeUpdateSerializer(
+    serializers.ModelSerializer
+):
+    class Meta:
+        model = GroundTruthDecisionType
+        fields = ("description", "is_active")
+
+    def validate_description(self, value: str) -> str:
+        normalized_description = value.strip()
+        if contains_hangul(normalized_description):
+            raise serializers.ValidationError(
+                (
+                    "Decision Type descriptions must be written "
+                    "in English."
+                )
+            )
+        return normalized_description
+
+    def validate(self, attributes: dict) -> dict:
+        if "name" in self.initial_data:
+            raise serializers.ValidationError(
+                {
+                    "name": (
+                        "Decision Type names cannot be changed."
+                    )
+                }
+            )
+        return attributes
+
+
 class ComponentCpeGroundTruthSerializer(
     serializers.ModelSerializer
 ):
@@ -230,6 +316,7 @@ class ComponentCpeGroundTruthSerializer(
     )
     ground_truth_cpe = GroundTruthCpeSerializer(read_only=True)
     manual_cpe = serializers.SerializerMethodField()
+    decision_type = GroundTruthDecisionTypeSerializer(read_only=True)
 
     class Meta:
         model = ComponentCpeGroundTruth
@@ -285,10 +372,9 @@ class ComponentCpeGroundTruthWriteSerializer(
         default=None,
         trim_whitespace=True,
     )
-    decision_type = serializers.CharField(
-        max_length=255,
-        allow_blank=False,
-        trim_whitespace=True,
+    decision_type_id = serializers.PrimaryKeyRelatedField(
+        source="decision_type",
+        queryset=GroundTruthDecisionType.objects.all(),
     )
     note = serializers.CharField(
         allow_blank=True,
@@ -298,11 +384,40 @@ class ComponentCpeGroundTruthWriteSerializer(
     )
 
     def validate(self, attributes: dict) -> dict:
+        if "decision_type" in self.initial_data:
+            raise serializers.ValidationError(
+                {
+                    "decision_type": (
+                        "Use decision_type_id to select a managed "
+                        "Decision Type."
+                    )
+                }
+            )
         if "snapshot_id" in self.initial_data:
             raise serializers.ValidationError(
                 {
                     "snapshot_id": (
                         "Dictionary snapshot is selected by the server."
+                    )
+                }
+            )
+        decision_type = attributes["decision_type"]
+        current_ground_truth = self.context.get(
+            "current_ground_truth"
+        )
+        if (
+            not decision_type.is_active
+            and (
+                current_ground_truth is None
+                or current_ground_truth.decision_type_id
+                != decision_type.id
+            )
+        ):
+            raise serializers.ValidationError(
+                {
+                    "decision_type_id": (
+                        "Inactive Decision Types cannot be newly "
+                        "selected."
                     )
                 }
             )
@@ -421,10 +536,12 @@ class GroundTruthComponentListSerializer(
     def get_decision_type(
         self,
         instance: Component,
-    ) -> str | None:
+    ) -> dict | None:
         ground_truth = self._ground_truth(instance)
         return (
-            ground_truth.decision_type
+            GroundTruthDecisionTypeSerializer(
+                ground_truth.decision_type
+            ).data
             if ground_truth is not None
             else None
         )

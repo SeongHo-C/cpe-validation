@@ -454,7 +454,26 @@ export function GroundTruthListPage() {
                         </p>
                       </TableCell>
                       <TableCell>
-                        {component.decision_type ?? "—"}
+                        {component.decision_type ? (
+                          <div className="flex max-w-64 items-center gap-1.5">
+                            <span
+                              className="min-w-0 truncate"
+                              title={component.decision_type.name}
+                            >
+                              {component.decision_type.name}
+                            </span>
+                            {!component.decision_type.is_active ? (
+                              <Badge
+                                className="shrink-0"
+                                variant="outline"
+                              >
+                                Inactive
+                              </Badge>
+                            ) : null}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </TableCell>
                       <TableCell>
                         <Button asChild size="sm" variant="outline">
