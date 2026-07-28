@@ -1,5 +1,6 @@
 import {
   Box,
+  Clipboard,
   TriangleAlert,
 } from "lucide-react"
 
@@ -9,6 +10,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -101,19 +103,51 @@ export function GroundTruthComponentContext({
               `${detail.sbom_document.id} · ${detail.sbom_document.source_path}`,
             ],
             ["Primary CPE", detail.cpe],
-          ].map(([label, value]) => (
-            <div key={label} className="min-w-0">
-              <dt className="text-xs font-medium text-muted-foreground">
-                {label}
-              </dt>
-              <dd
-                className="mt-1 truncate text-sm"
-                title={value || undefined}
+          ].map(([label, value]) => {
+            const isPurl = label === "PURL"
+            return (
+              <div
+                key={label}
+                className={cn(
+                  "min-w-0",
+                  isPurl &&
+                    "col-span-2 max-w-full xl:col-span-4",
+                )}
               >
-                {value || "Not provided"}
-              </dd>
-            </div>
-          ))}
+                <dt className="text-xs font-medium text-muted-foreground">
+                  {label}
+                </dt>
+                {isPurl ? (
+                  <dd className="mt-1 flex min-w-0 max-w-full items-start gap-2">
+                    <code className="min-w-0 max-w-full flex-1 whitespace-normal break-all font-mono text-xs leading-5">
+                      {value || "Not provided"}
+                    </code>
+                    {value ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="shrink-0"
+                        aria-label="Copy PURL"
+                        onClick={() =>
+                          void navigator.clipboard.writeText(value)
+                        }
+                      >
+                        <Clipboard aria-hidden="true" />
+                      </Button>
+                    ) : null}
+                  </dd>
+                ) : (
+                  <dd
+                    className="mt-1 truncate text-sm"
+                    title={value || undefined}
+                  >
+                    {value || "Not provided"}
+                  </dd>
+                )}
+              </div>
+            )
+          })}
           <div>
             <dt className="text-xs font-medium text-muted-foreground">
               Exact Match

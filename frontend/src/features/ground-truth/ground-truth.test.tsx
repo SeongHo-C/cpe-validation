@@ -37,6 +37,8 @@ const cpeName =
 const cpeUuid = "11111111-1111-4111-8111-111111111111"
 const manualCpe =
   "cpe:2.3:a:haxx:curl:8.15.0:*:*:*:*:*:*:*"
+const componentPurl =
+  "pkg:apk/alpine/curl@8.14.1-r1?arch=x86_64&distro=alpine-3.24.1&upstream=curl%408.14.1"
 const initialDecisionTypes: GroundTruthDecisionType[] = [
   {
     id: 21,
@@ -133,7 +135,7 @@ function componentDetail(
     name,
     version: "8.14.1-r1",
     publisher: "Daniel Stenberg",
-    purl: `pkg:apk/alpine/${name}@8.14.1-r1`,
+    purl: componentPurl,
     cpe: cpeName,
     structural_status: "STRUCTURALLY_VALID",
     cpe_fields: {
@@ -282,6 +284,7 @@ function jsonResponse<T>(body: T, status = 200): Response {
 
 interface FetchOptions {
   restoredSource?: GroundTruthSource
+  missingPurl?: boolean
   saveError?: boolean
   invalidManual?: boolean
   delayedSave?: boolean
@@ -486,9 +489,15 @@ function installFetch(options: FetchOptions = {}) {
     )
     if (componentMatch) {
       const id = Number(componentMatch[1])
+      const detail = componentDetail(
+        id,
+        id === 101 ? "curl" : "openssl",
+      )
       return Promise.resolve(
         jsonResponse(
-          componentDetail(id, id === 101 ? "curl" : "openssl"),
+          options.missingPurl
+            ? { ...detail, purl: "" }
+            : detail,
         ),
       )
     }
@@ -526,6 +535,15 @@ function groundTruthEditor(): HTMLElement {
   })
   const card = title.closest("[data-slot='card']")
   if (!card) throw new Error("Ground Truth editor not found")
+  return card as HTMLElement
+}
+
+function componentContext(): HTMLElement {
+  const title = screen.getByText("Component context", {
+    selector: "[data-slot='card-title']",
+  })
+  const card = title.closest("[data-slot='card']")
+  if (!card) throw new Error("Component context not found")
   return card as HTMLElement
 }
 
@@ -865,6 +883,7 @@ describe("Ground Truth workflow", () => {
   })
 
   it("shows Component evidence without ranking or score output", async () => {
+    const user = userEvent.setup()
     installFetch()
     renderAppAt("/ground-truth/components/101")
 
@@ -875,6 +894,38 @@ describe("Ground Truth workflow", () => {
     expect(screen.getByText("apk-db-cataloger"))
       .toBeInTheDocument()
     expect(screen.getByText("Exact Match")).toBeInTheDocument()
+    const context = componentContext()
+    const purl = within(context).getByText(componentPurl)
+    expect(purl).toHaveClass(
+      "min-w-0",
+      "max-w-full",
+      "whitespace-normal",
+      "break-all",
+    )
+    expect(purl).not.toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    )
+    const copyPurl = within(context).getByRole("button", {
+      name: "Copy PURL",
+    })
+    const writeText = vi.spyOn(
+      navigator.clipboard,
+      "writeText",
+    )
+    await user.click(copyPurl)
+    expect(writeText).toHaveBeenCalledWith(componentPurl)
+    for (const metadata of [
+      "curl",
+      "8.14.1-r1",
+      "alpine",
+      "Daniel Stenberg",
+      "docker.io/library/alpine:3.24.1",
+      "11 · pilot/results/sboms/alpine-3.24.1.cdx.json",
+    ]) {
+      expect(within(context).getByText(metadata))
+        .toBeInTheDocument()
+    }
     expect(
       screen.getByRole("link", {
         name: "Back to Review Queue",
@@ -888,6 +939,25 @@ describe("Ground Truth workflow", () => {
     ).toBeInTheDocument()
     expect(screen.queryByText(/BM25|BM25F|fuzzy|rerank/i))
       .not.toBeInTheDocument()
+  })
+
+  it("shows Not provided when Component PURL is absent", async () => {
+    installFetch({ missingPurl: true })
+    renderAppAt("/ground-truth/components/101")
+
+    await screen.findByText("Component context")
+    const context = componentContext()
+    const purlLabel = within(context).getByText("PURL", {
+      selector: "dt",
+    })
+    expect(purlLabel.parentElement).toHaveTextContent(
+      "Not provided",
+    )
+    expect(
+      within(context).queryByRole("button", {
+        name: "Copy PURL",
+      }),
+    ).not.toBeInTheDocument()
   })
 
   for (const source of [
