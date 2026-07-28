@@ -256,13 +256,19 @@ function listRow(
     id,
     id === 101 ? "curl" : "openssl",
   )
+  const groundTruth = source
+    ? {
+        ...groundTruthRecord(source),
+        ...(source === "MANUAL"
+          ? { decision_type: initialDecisionTypes[1] }
+          : {}),
+      }
+    : null
   return {
     ...detail,
     ground_truth_status: source ? "COMPLETED" : "UNREVIEWED",
-    ground_truth: source ? groundTruthRecord(source) : null,
-    decision_type: source
-      ? groundTruthRecord(source).decision_type
-      : null,
+    ground_truth: groundTruth,
+    decision_type: groundTruth?.decision_type ?? null,
   }
 }
 
@@ -592,13 +598,49 @@ describe("Ground Truth workflow", () => {
         name: "Ground Truth Status",
       }),
     ).toBeInTheDocument()
+    const table = screen.getByRole("table", {
+      name: "Ground Truth review components",
+    })
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent),
+    ).toEqual([
+      "Component",
+      "Version",
+      "Original CPE",
+      "Exact Match",
+      "Ground Truth Status",
+      "Ground Truth",
+      "Decision Type",
+      "Action",
+    ])
+    expect(
+      within(table).queryByRole("columnheader", {
+        name: "Image",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(table).queryByText(
+        "docker.io/library/alpine:3.24.1",
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Image")).toBeInTheDocument()
+    expect(within(table).getByText("Not Assigned"))
+      .toBeInTheDocument()
+    expect(within(table).getByText("No CPE Assigned"))
+      .toBeInTheDocument()
     expect(
       screen.getByRole("link", { name: "Review" }),
     ).toBeInTheDocument()
     expect(
       screen.getAllByRole("link", { name: "Edit" }),
     ).not.toHaveLength(0)
-    expect(screen.getByTitle(manualCpe)).toBeInTheDocument()
+    expect(within(table).getByTitle(manualCpe))
+      .toHaveTextContent(manualCpe)
+    expect(
+      within(table).getByTitle(initialDecisionTypes[1].name),
+    ).toHaveTextContent(initialDecisionTypes[1].name)
   })
 
   it("renders list loading, empty, and error states in English", async () => {

@@ -375,15 +375,24 @@ export function GroundTruthListPage() {
                 />
               </div>
             ) : null}
-            <Table className="min-w-[1180px]">
+            <Table className="min-w-[1180px] table-fixed">
               <TableCaption className="sr-only">
                 Ground Truth review components
               </TableCaption>
+              <colgroup>
+                <col className="w-[11%]" />
+                <col className="w-[7%]" />
+                <col className="w-[16%]" />
+                <col className="w-[10%]" />
+                <col className="w-[12%]" />
+                <col className="w-[20%]" />
+                <col className="w-[17%]" />
+                <col className="w-[7%]" />
+              </colgroup>
               <TableHeader className="bg-muted/45">
                 <TableRow>
                   <TableHead>Component</TableHead>
                   <TableHead>Version</TableHead>
-                  <TableHead>Image</TableHead>
                   <TableHead>Original CPE</TableHead>
                   <TableHead>Exact Match</TableHead>
                   <TableHead>Ground Truth Status</TableHead>
@@ -397,17 +406,25 @@ export function GroundTruthListPage() {
                   const value = groundTruthValue(component)
                   return (
                     <TableRow key={component.id}>
-                      <TableCell className="font-medium">
-                        {component.name}
-                      </TableCell>
-                      <TableCell>{component.version || "—"}</TableCell>
-                      <TableCell>
-                        {component.image.repository}:
-                        {component.image.tag}
-                      </TableCell>
-                      <TableCell>
+                      <TableCell className="min-w-0 font-medium">
                         <p
-                          className="max-w-64 truncate font-mono text-xs"
+                          className="truncate"
+                          title={component.name}
+                        >
+                          {component.name}
+                        </p>
+                      </TableCell>
+                      <TableCell className="min-w-0">
+                        <p
+                          className="truncate"
+                          title={component.version || "—"}
+                        >
+                          {component.version || "—"}
+                        </p>
+                      </TableCell>
+                      <TableCell className="min-w-0">
+                        <p
+                          className="w-full truncate font-mono text-xs"
                           title={component.cpe}
                         >
                           {component.cpe}
@@ -417,6 +434,7 @@ export function GroundTruthListPage() {
                         <Badge
                           variant="outline"
                           className={cn(
+                            "shrink-0",
                             dictionaryStatusClassName(
                               component.dictionary_status,
                             ),
@@ -437,6 +455,7 @@ export function GroundTruthListPage() {
                               ? "secondary"
                               : "outline"
                           }
+                          className="shrink-0"
                         >
                           {
                             groundTruthStatusLabels[
@@ -445,17 +464,17 @@ export function GroundTruthListPage() {
                           }
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="min-w-0">
                         <p
-                          className="max-w-72 truncate font-mono text-xs"
+                          className="w-full truncate font-mono text-xs"
                           title={value}
                         >
                           {value}
                         </p>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="min-w-0">
                         {component.decision_type ? (
-                          <div className="flex max-w-64 items-center gap-1.5">
+                          <div className="flex w-full min-w-0 items-center gap-1.5">
                             <span
                               className="min-w-0 truncate"
                               title={component.decision_type.name}
@@ -475,7 +494,7 @@ export function GroundTruthListPage() {
                           "—"
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <Button asChild size="sm" variant="outline">
                           <Link
                             to={groundTruthDetailPath(
