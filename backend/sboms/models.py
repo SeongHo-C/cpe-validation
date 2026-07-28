@@ -1,4 +1,7 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+
+from cpe_dictionary.models import CpeDictionarySnapshot, CpeName
 
 
 class DockerImage(models.Model):
@@ -137,3 +140,84 @@ class Component(models.Model):
         if self.version:
             return f"{self.name} {self.version}"
         return self.name
+
+
+class ComponentCpeGroundTruth(models.Model):
+    component = models.ForeignKey(
+        Component,
+        on_delete=models.PROTECT,
+        related_name="cpe_ground_truths",
+    )
+    snapshot = models.ForeignKey(
+        CpeDictionarySnapshot,
+        on_delete=models.PROTECT,
+        related_name="component_ground_truths",
+    )
+    ground_truth_cpe = models.ForeignKey(
+        CpeName,
+        on_delete=models.PROTECT,
+        related_name="component_ground_truths",
+        null=True,
+        blank=True,
+    )
+    decision_type = models.CharField(max_length=255)
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["component", "snapshot"],
+                name="unique_component_ground_truth_per_snapshot",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        self.decision_type = (
+            self.decision_type.strip()
+            if isinstance(self.decision_type, str)
+            else ""
+        )
+        if not self.decision_type:
+            raise ValidationError(
+                {
+                    "decision_type": (
+                        "Decision type must not be blank."
+                    )
+                }
+            )
+        if (
+            self.ground_truth_cpe_id is not None
+            and self.snapshot_id is not None
+        ):
+            cpe_snapshot_id = (
+                CpeName.objects.filter(
+                    pk=self.ground_truth_cpe_id
+                )
+                .values_list("snapshot_id", flat=True)
+                .first()
+            )
+            if (
+                cpe_snapshot_id is not None
+                and cpe_snapshot_id != self.snapshot_id
+            ):
+                raise ValidationError(
+                    {
+                        "ground_truth_cpe": (
+                            "Ground Truth CPE must belong to the "
+                            "selected Dictionary snapshot."
+                        )
+                    }
+                )
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return (
+            f"Component {self.component_id} Ground Truth "
+            f"({self.snapshot.snapshot_id})"
+        )

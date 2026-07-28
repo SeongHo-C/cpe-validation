@@ -5,8 +5,14 @@ from typing import Any
 from rest_framework import serializers
 
 from cpe.cpe23 import parse_cpe23_formatted_string
+from cpe_dictionary.models import CpeName
 from sboms.exact_matching import match_cpe
-from sboms.models import Component, DockerImage, SBOMDocument
+from sboms.models import (
+    Component,
+    ComponentCpeGroundTruth,
+    DockerImage,
+    SBOMDocument,
+)
 
 
 class ImageReferenceSerializer(serializers.ModelSerializer):
@@ -192,3 +198,88 @@ class ComponentDetailSerializer(ComponentListSerializer):
     bom_ref = serializers.CharField(read_only=True)
     properties = serializers.JSONField(read_only=True)
     sbom_document = ComponentSBOMDocumentSerializer(read_only=True)
+
+
+class GroundTruthCpeSerializer(serializers.ModelSerializer):
+    cpe_uuid = serializers.UUIDField(
+        source="cpe_name_id",
+        read_only=True,
+    )
+
+    class Meta:
+        model = CpeName
+        fields = (
+            "id",
+            "cpe_name",
+            "cpe_uuid",
+            "deprecated",
+            "part",
+            "vendor",
+            "product",
+            "version",
+        )
+
+
+class ComponentCpeGroundTruthSerializer(
+    serializers.ModelSerializer
+):
+    ground_truth_cpe = GroundTruthCpeSerializer(read_only=True)
+
+    class Meta:
+        model = ComponentCpeGroundTruth
+        fields = (
+            "id",
+            "ground_truth_cpe",
+            "decision_type",
+            "note",
+            "created_at",
+            "updated_at",
+        )
+
+
+class ComponentCpeGroundTruthWriteSerializer(
+    serializers.Serializer
+):
+    ground_truth_cpe_id = serializers.PrimaryKeyRelatedField(
+        source="ground_truth_cpe",
+        queryset=CpeName.objects.all(),
+        allow_null=True,
+        required=False,
+        default=None,
+    )
+    decision_type = serializers.CharField(
+        max_length=255,
+        allow_blank=False,
+        trim_whitespace=True,
+    )
+    note = serializers.CharField(
+        allow_blank=True,
+        required=False,
+        default="",
+        trim_whitespace=False,
+    )
+
+    def validate(self, attributes: dict) -> dict:
+        if "snapshot_id" in self.initial_data:
+            raise serializers.ValidationError(
+                {
+                    "snapshot_id": (
+                        "Dictionary snapshot is selected by the server."
+                    )
+                }
+            )
+        ground_truth_cpe = attributes["ground_truth_cpe"]
+        snapshot = self.context["snapshot"]
+        if (
+            ground_truth_cpe is not None
+            and ground_truth_cpe.snapshot_id != snapshot.id
+        ):
+            raise serializers.ValidationError(
+                {
+                    "ground_truth_cpe_id": (
+                        "Ground Truth CPE must belong to the current "
+                        "Dictionary snapshot."
+                    )
+                }
+            )
+        return attributes

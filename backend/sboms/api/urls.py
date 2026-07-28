@@ -1,6 +1,7 @@
 from django.urls import path
 
 from sboms.api.views import (
+    ComponentCpeGroundTruthAPIView,
     ComponentDetailAPIView,
     ComponentListAPIView,
     DashboardSummaryAPIView,
@@ -38,5 +39,10 @@ urlpatterns = [
         "components/<int:pk>/",
         ComponentDetailAPIView.as_view(),
         name="component-detail",
+    ),
+    path(
+        "components/<int:component_id>/cpe-ground-truth/",
+        ComponentCpeGroundTruthAPIView.as_view(),
+        name="component-cpe-ground-truth",
     ),
 ]

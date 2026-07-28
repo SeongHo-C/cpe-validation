@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   Clipboard,
   ExternalLink,
   LoaderCircle,
@@ -45,9 +46,11 @@ async function copyText(value: string) {
 export function CpeDictionaryDetailDialog({
   cpeNameId,
   onClose,
+  onSelectGroundTruth,
 }: {
   cpeNameId: string | null
   onClose: () => void
+  onSelectGroundTruth?: (detail: CpeDictionaryDetail) => void
 }) {
   const [detail, setDetail] =
     useState<CpeDictionaryDetail | null>(null)
@@ -177,6 +180,17 @@ export function CpeDictionaryDetailDialog({
                   {detail.cpe_name}
                 </p>
                 <div className="mt-3 flex gap-2">
+                  {onSelectGroundTruth ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onSelectGroundTruth(detail)}
+                    >
+                      <BadgeCheck aria-hidden="true" />
+                      Ground Truth로 선택
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     variant="outline"

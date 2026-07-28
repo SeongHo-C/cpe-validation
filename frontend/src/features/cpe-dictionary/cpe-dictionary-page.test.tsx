@@ -17,6 +17,7 @@ import {
 import type {
   CpeDictionaryDetail,
   CpeDictionarySearchResponse,
+  ComponentCpeGroundTruthResponse,
 } from "@/features/cpe-dictionary/cpe-dictionary-types"
 import type { ComponentDetail } from "@/features/components/components-types"
 import {
@@ -176,6 +177,34 @@ const componentResponse: ComponentDetail = {
   },
 }
 
+const emptyGroundTruthResponse: ComponentCpeGroundTruthResponse = {
+  component_id: 101,
+  snapshot_id: searchResponse.snapshot.snapshot_id,
+  ground_truth: null,
+}
+
+const savedGroundTruthResponse: ComponentCpeGroundTruthResponse = {
+  component_id: 101,
+  snapshot_id: searchResponse.snapshot.snapshot_id,
+  ground_truth: {
+    id: 501,
+    ground_truth_cpe: {
+      id: 1,
+      cpe_name: cpeName,
+      cpe_uuid: cpeNameId,
+      deprecated: false,
+      part: "a",
+      vendor: "haxx",
+      product: "curl",
+      version: "8.14.1",
+    },
+    decision_type: "vendor correction",
+    note: "Official active CPE selected.",
+    created_at: "2026-07-28T00:00:00Z",
+    updated_at: "2026-07-28T00:00:00Z",
+  },
+}
+
 function jsonResponse<T>(body: T, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
@@ -188,17 +217,77 @@ function installFetch(
   options: {
     empty?: boolean
     searchError?: boolean
+    groundTruth?: ComponentCpeGroundTruthResponse
+    groundTruthError?: boolean
   } = {},
 ) {
-  vi.mocked(fetch).mockImplementation((input) => {
+  vi.mocked(fetch).mockImplementation((input, init) => {
     const url = new URL(String(input), "http://frontend.test")
     if (url.pathname === "/api/health/") {
       return Promise.resolve(
         jsonResponse({ status: "ok", database: "ok" }),
       )
     }
-    if (url.pathname === "/api/components/101/") {
-      return Promise.resolve(jsonResponse(componentResponse))
+    const componentMatch = url.pathname.match(
+      /^\/api\/components\/(\d+)\/$/,
+    )
+    if (componentMatch) {
+      const componentId = Number(componentMatch[1])
+      return Promise.resolve(
+        jsonResponse({
+          ...componentResponse,
+          id: componentId,
+          name: componentId === 101 ? "curl" : "openssl",
+        }),
+      )
+    }
+    const groundTruthMatch = url.pathname.match(
+      /^\/api\/components\/(\d+)\/cpe-ground-truth\/$/,
+    )
+    if (groundTruthMatch) {
+      const componentId = Number(groundTruthMatch[1])
+      if (init?.method === "PUT") {
+        if (options.groundTruthError) {
+          return Promise.resolve(
+            jsonResponse(
+              {
+                decision_type: [
+                  "The server rejected this decision.",
+                ],
+              },
+              400,
+            ),
+          )
+        }
+        const payload = JSON.parse(String(init.body)) as {
+          ground_truth_cpe_id: number | null
+          decision_type: string
+          note: string
+        }
+        return Promise.resolve(
+          jsonResponse({
+            component_id: componentId,
+            snapshot_id: searchResponse.snapshot.snapshot_id,
+            ground_truth: {
+              id: 501,
+              ground_truth_cpe:
+                payload.ground_truth_cpe_id === null
+                  ? null
+                  : savedGroundTruthResponse.ground_truth
+                      ?.ground_truth_cpe ?? null,
+              decision_type: payload.decision_type.trim(),
+              note: payload.note,
+              created_at: "2026-07-28T00:00:00Z",
+              updated_at: "2026-07-28T00:01:00Z",
+            },
+          } satisfies ComponentCpeGroundTruthResponse),
+        )
+      }
+      const response =
+        options.groundTruth ?? emptyGroundTruthResponse
+      return Promise.resolve(
+        jsonResponse({ ...response, component_id: componentId }),
+      )
     }
     if (url.pathname === "/api/cpe-dictionary/snapshot/") {
       return Promise.resolve(jsonResponse(searchResponse.snapshot))
@@ -248,10 +337,32 @@ function dictionaryRequests(): URL[] {
     .filter((url) => url.pathname === "/api/cpe-dictionary/")
 }
 
+function groundTruthRequests(method?: "GET" | "PUT") {
+  return vi
+    .mocked(fetch)
+    .mock.calls.filter(([input, init]) => {
+      const url = new URL(String(input), "http://frontend.test")
+      return (
+        /\/api\/components\/\d+\/cpe-ground-truth\/$/.test(
+          url.pathname,
+        ) && (!method || init?.method === method)
+      )
+    })
+}
+
 function currentParameters(): URLSearchParams {
   const location =
     screen.getByTestId("route-location").textContent ?? ""
   return new URL(location, "http://frontend.test").searchParams
+}
+
+function groundTruthEditor(): HTMLElement {
+  const title = screen.getByText("예상 Ground Truth", {
+    selector: "[data-slot='card-title']",
+  })
+  const card = title.closest("[data-slot='card']")
+  if (!card) throw new Error("Ground Truth editor was not rendered")
+  return card as HTMLElement
 }
 
 describe("CPE Dictionary Workbench", () => {
@@ -554,5 +665,274 @@ describe("CPE Dictionary Workbench", () => {
     expect(screen.getByLabelText("Keyword")).toHaveValue(
       "Daniel Stenberg",
     )
+  })
+
+  it("loads and restores a saved Component Ground Truth", async () => {
+    installFetch({ groundTruth: savedGroundTruthResponse })
+    const firstRender = renderAppAt(
+      "/cpe-dictionary?component_id=101",
+    )
+
+    expect(
+      await screen.findByText("Official active CPE selected."),
+    ).toBeInTheDocument()
+    let editor = groundTruthEditor()
+    expect(
+      within(editor).getByPlaceholderText(
+        "새로운 판정 유형을 자유롭게 입력",
+      ),
+    ).toHaveValue("vendor correction")
+    expect(within(editor).getByText(`UUID: ${cpeNameId}`))
+      .toBeInTheDocument()
+
+    firstRender.unmount()
+    renderAppAt("/cpe-dictionary?component_id=101")
+    expect(
+      await screen.findByText("Official active CPE selected."),
+    ).toBeInTheDocument()
+    editor = groundTruthEditor()
+    expect(
+      within(editor).getByPlaceholderText(
+        "새로운 판정 유형을 자유롭게 입력",
+      ),
+    ).toHaveValue("vendor correction")
+    expect(groundTruthRequests("GET")).toHaveLength(2)
+  })
+
+  it("selects and clears a Ground Truth candidate from search results", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt(
+      "/cpe-dictionary?component_id=101&q=curl",
+    )
+
+    await screen.findByText("26 results")
+    expect(
+      await screen.findByText("선택된 Ground Truth CPE 없음"),
+    ).toBeInTheDocument()
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "Ground Truth로 선택",
+      })[0],
+    )
+
+    const editor = groundTruthEditor()
+    expect(within(editor).getByText(`UUID: ${cpeNameId}`))
+      .toBeInTheDocument()
+    expect(groundTruthRequests("PUT")).toHaveLength(0)
+
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "CPE 선택 해제",
+      }),
+    )
+    expect(
+      within(editor).getByText("선택된 Ground Truth CPE 없음"),
+    ).toBeInTheDocument()
+  })
+
+  it("selects a Ground Truth candidate from Dictionary details", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt(
+      "/cpe-dictionary?component_id=101&q=curl",
+    )
+
+    await screen.findByText("26 results")
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "View details",
+      })[0],
+    )
+    const dialog = await screen.findByRole("dialog")
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Ground Truth로 선택",
+      }),
+    )
+
+    expect(
+      within(groundTruthEditor()).getByText(`UUID: ${cpeNameId}`),
+    ).toBeInTheDocument()
+    expect(groundTruthRequests("PUT")).toHaveLength(0)
+  })
+
+  it("requires a non-empty free-text decision before saving", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/cpe-dictionary?component_id=101")
+    const editor = groundTruthEditor()
+    await within(editor).findByText(
+      "선택된 Ground Truth CPE 없음",
+    )
+
+    await user.type(
+      within(editor).getByPlaceholderText(
+        "새로운 판정 유형을 자유롭게 입력",
+      ),
+      "   ",
+    )
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "검토 결과 저장",
+      }),
+    )
+
+    expect(
+      within(editor).getByText("판정 유형은 필수 입력입니다."),
+    ).toBeInTheDocument()
+    expect(groundTruthRequests("PUT")).toHaveLength(0)
+  })
+
+  it("saves a decision with no selected official CPE", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/cpe-dictionary?component_id=101")
+    const editor = groundTruthEditor()
+    await within(editor).findByText(
+      "선택된 Ground Truth CPE 없음",
+    )
+
+    await user.type(
+      within(editor).getByPlaceholderText(
+        "새로운 판정 유형을 자유롭게 입력",
+      ),
+      "no applicable official CPE",
+    )
+    await user.type(
+      within(editor).getByPlaceholderText(
+        "판정 근거와 추가 검토 내용을 입력",
+      ),
+      "No corresponding product exists in the snapshot.",
+    )
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "검토 결과 저장",
+      }),
+    )
+
+    expect(
+      await within(editor).findByText(
+        "검토 결과가 저장되었습니다.",
+      ),
+    ).toBeInTheDocument()
+    const [, init] = groundTruthRequests("PUT")[0]
+    expect(JSON.parse(String(init?.body))).toEqual({
+      ground_truth_cpe_id: null,
+      decision_type: "no applicable official CPE",
+      note: "No corresponding product exists in the snapshot.",
+    })
+  })
+
+  it("saves a selected official CPE without changing the Component source CPE", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt(
+      "/cpe-dictionary?component_id=101&q=curl",
+    )
+    await screen.findByText("26 results")
+    await screen.findByText("선택된 Ground Truth CPE 없음")
+
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "Ground Truth로 선택",
+      })[0],
+    )
+    const editor = groundTruthEditor()
+    await user.type(
+      within(editor).getByPlaceholderText(
+        "새로운 판정 유형을 자유롭게 입력",
+      ),
+      "official candidate selected",
+    )
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "검토 결과 저장",
+      }),
+    )
+
+    expect(
+      await within(editor).findByText(
+        "검토 결과가 저장되었습니다.",
+      ),
+    ).toBeInTheDocument()
+    const [, init] = groundTruthRequests("PUT")[0]
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      ground_truth_cpe_id: 1,
+      decision_type: "official candidate selected",
+    })
+    expect(componentResponse.cpe).toBe(cpeName)
+  })
+
+  it("keeps entered review data visible when saving fails", async () => {
+    const user = userEvent.setup()
+    installFetch({ groundTruthError: true })
+    renderAppAt("/cpe-dictionary?component_id=101")
+    const editor = groundTruthEditor()
+    await within(editor).findByText(
+      "선택된 Ground Truth CPE 없음",
+    )
+    const decision = within(editor).getByPlaceholderText(
+      "새로운 판정 유형을 자유롭게 입력",
+    )
+    const note = within(editor).getByPlaceholderText(
+      "판정 근거와 추가 검토 내용을 입력",
+    )
+
+    await user.type(decision, "manual mismatch")
+    await user.type(note, "Keep this evidence after failure.")
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "검토 결과 저장",
+      }),
+    )
+
+    expect(
+      await within(editor).findByText(
+        /The server rejected this decision/,
+      ),
+    ).toBeInTheDocument()
+    expect(decision).toHaveValue("manual mismatch")
+    expect(note).toHaveValue("Keep this evidence after failure.")
+  })
+
+  it("resets unsaved review state when the Component changes", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    const { router } = renderAppWithHistory([
+      "/cpe-dictionary?component_id=101",
+    ])
+    let editor = groundTruthEditor()
+    await within(editor).findByText(
+      "선택된 Ground Truth CPE 없음",
+    )
+    await user.type(
+      within(editor).getByPlaceholderText(
+        "새로운 판정 유형을 자유롭게 입력",
+      ),
+      "unsaved decision",
+    )
+
+    await act(async () => {
+      await router.navigate(
+        "/cpe-dictionary?component_id=102",
+      )
+    })
+
+    await waitFor(() =>
+      expect(
+        currentParameters().get("component_id"),
+      ).toBe("102"),
+    )
+    editor = groundTruthEditor()
+    await within(editor).findByText(
+      "선택된 Ground Truth CPE 없음",
+    )
+    expect(
+      within(editor).getByPlaceholderText(
+        "새로운 판정 유형을 자유롭게 입력",
+      ),
+    ).toHaveValue("")
+    expect(groundTruthRequests("GET")).toHaveLength(2)
   })
 })

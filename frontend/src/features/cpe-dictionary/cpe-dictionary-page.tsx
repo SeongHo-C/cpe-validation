@@ -42,11 +42,15 @@ import {
   writeCpeDictionaryUrlQuery,
 } from "@/features/cpe-dictionary/cpe-dictionary-query"
 import { CpeDictionaryResultsTable } from "@/features/cpe-dictionary/cpe-dictionary-table"
+import { CpeGroundTruthEditor } from "@/features/cpe-dictionary/cpe-ground-truth-editor"
 import type {
+  CpeDictionaryDetail,
   CpeDictionaryPageSize,
   CpeDictionaryQuery,
+  CpeDictionaryResult,
   CpeDictionarySearchResponse,
   CpeDictionarySnapshot,
+  CpeGroundTruthCandidate,
 } from "@/features/cpe-dictionary/cpe-dictionary-types"
 import { getComponentDetail } from "@/features/components/components-api"
 import { ComponentsPagination } from "@/features/components/components-pagination"
@@ -84,6 +88,36 @@ function Field({
   )
 }
 
+function candidateFromResult(
+  result: CpeDictionaryResult,
+): CpeGroundTruthCandidate {
+  return {
+    id: result.id,
+    cpe_name: result.cpe_name,
+    cpe_uuid: result.cpe_name_id,
+    deprecated: result.deprecated,
+    part: result.part,
+    vendor: result.vendor,
+    product: result.product,
+    version: result.version,
+  }
+}
+
+function candidateFromDetail(
+  detail: CpeDictionaryDetail,
+): CpeGroundTruthCandidate {
+  return {
+    id: detail.id,
+    cpe_name: detail.cpe_name,
+    cpe_uuid: detail.cpe_name_id,
+    deprecated: detail.deprecated,
+    part: detail.part,
+    vendor: detail.vendor,
+    product: detail.product,
+    version: detail.version,
+  }
+}
+
 export function CpeDictionaryPage() {
   const [searchParameters, setSearchParameters] =
     useSearchParams()
@@ -114,6 +148,8 @@ export function CpeDictionaryPage() {
   const [selectedCpeNameId, setSelectedCpeNameId] = useState<
     string | null
   >(null)
+  const [groundTruthCandidate, setGroundTruthCandidate] =
+    useState<CpeGroundTruthCandidate | null>(null)
   const [snapshot, setSnapshot] =
     useState<CpeDictionarySnapshot | null>(null)
   const [snapshotError, setSnapshotError] = useState<string | null>(
@@ -129,6 +165,10 @@ export function CpeDictionaryPage() {
   useEffect(() => {
     setDraft(submittedQuery)
   }, [submittedQuery])
+
+  useEffect(() => {
+    setGroundTruthCandidate(null)
+  }, [componentId])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -316,6 +356,15 @@ export function CpeDictionaryPage() {
         />
       ) : null}
 
+      {componentId && !invalidComponentId ? (
+        <CpeGroundTruthEditor
+          key={componentId}
+          componentId={componentId}
+          selectedCpe={groundTruthCandidate}
+          onSelectedCpeChange={setGroundTruthCandidate}
+        />
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Search official CPE names</CardTitle>
@@ -497,6 +546,14 @@ export function CpeDictionaryPage() {
             <CpeDictionaryResultsTable
               results={response.results}
               onViewDetails={viewDetails}
+              onSelectGroundTruth={
+                componentId
+                  ? (result) =>
+                      setGroundTruthCandidate(
+                        candidateFromResult(result),
+                      )
+                  : undefined
+              }
             />
           ) : (
             <CardContent className="flex min-h-40 items-center justify-center text-sm text-muted-foreground">
@@ -543,6 +600,14 @@ export function CpeDictionaryPage() {
       <CpeDictionaryDetailDialog
         cpeNameId={selectedCpeNameId}
         onClose={() => setSelectedCpeNameId(null)}
+        onSelectGroundTruth={
+          componentId
+            ? (detail) =>
+                setGroundTruthCandidate(
+                  candidateFromDetail(detail),
+                )
+            : undefined
+        }
       />
     </div>
   )

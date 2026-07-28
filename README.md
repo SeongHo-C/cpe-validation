@@ -9,8 +9,9 @@ CPE 2.3 formatted strings, and imports a verified official NVD CPE Dictionary
 snapshot. It also compares Primary CPEs with that snapshot by exact,
 case-sensitive raw-string equality.
 
-Semantic review, candidate ranking, and Ground Truth decisions remain later
-work.
+The Workbench supports snapshot-specific, human-reviewed expected Ground
+Truth annotations. Candidate ranking, approval workflows, and semantic
+automation remain later work.
 
 ## Research Scope
 
@@ -37,8 +38,10 @@ therefore a reproducible structural signal, not Ground Truth.
    Dictionary snapshot.
 8. Browse the image and Primary CPE Component inventory through a read-only
    Django REST Framework API and React UI.
-9. Search and inspect the selected official Dictionary snapshot in a
-   read-only CPE Dictionary Workbench.
+9. Search and inspect the selected official Dictionary snapshot through a
+   read-only Dictionary surface in the Workbench.
+10. Record an expected Ground Truth CPE, free-text decision type, and review
+    note for a Component without changing its imported Primary CPE.
 
 ## Repository Structure
 
@@ -215,13 +218,16 @@ The API is mounted at `/api/` and currently provides:
 - dashboard summary;
 - paginated Primary CPE Component list and detail;
 - raw-string Dictionary status and snapshot provenance for Component detail;
-- paginated CPE Dictionary search and CPE record detail.
+- paginated CPE Dictionary search and CPE record detail;
+- Component- and snapshot-specific expected Ground Truth retrieval and
+  upsert.
 
-The DRF endpoints are read-only. The Component endpoint supports image,
-Primary CPE presence, Dictionary status, search, ordering, page, and page-size
-parameters. List rows contain `dictionary_status` but omit per-record
-Dictionary provenance; Component detail provides the selected snapshot and
-matched NVD CPE record.
+The inventory, Component, and CPE Dictionary endpoints are read-only. The
+Component list endpoint supports image, Primary CPE presence, Dictionary
+status, search, ordering, page, and page-size parameters. List rows contain
+`dictionary_status` but omit per-record Dictionary provenance; Component
+detail provides the selected snapshot and matched NVD CPE record. The
+dedicated Ground Truth endpoint is the only write API in this workflow.
 
 Filter the list before pagination with:
 
@@ -249,8 +255,21 @@ vendor, product, version, and stored title JSON case-insensitively. Structured
 vendor, product, and version filters use case-insensitive exact equality;
 there is no alias or version normalization. A keyword or structured search
 term is required, the default status is active, and page sizes are limited to
-25, 50, or 100. Both endpoints use the same explicit-or-unique COMPLETE
-snapshot contract as exact matching and permit GET only.
+25, 50, or 100. All Dictionary endpoints use the same explicit-or-unique
+COMPLETE snapshot contract as exact matching and permit GET only.
+
+The Component Ground Truth endpoint is:
+
+```text
+GET /api/components/<component_id>/cpe-ground-truth/
+PUT /api/components/<component_id>/cpe-ground-truth/
+```
+
+The server selects the current COMPLETE snapshot. `PUT` creates or updates
+the single annotation for that Component and snapshot. An optional selected
+`CpeName` must belong to the same snapshot; `decision_type` is required
+free text with outer whitespace removed, and `note` is optional. The imported
+`Component.cpe` value is never replaced or modified.
 
 ## Frontend
 
@@ -260,7 +279,8 @@ The desktop-oriented React UI provides:
 - `/components` for the server-filtered Primary CPE queue and read-only
   Component evidence panel;
 - `/cpe-dictionary` for read-only official Dictionary search and record
-  inspection.
+  inspection plus Component-specific expected Ground Truth entry when
+  `component_id` is present.
 
 The Components route supports `image_id`, `search`, `ordering`, `page`,
 `page_size`, `dictionary_status`, and `component_id` query parameters. Its
@@ -281,10 +301,14 @@ state are stored in the URL; no request is made before a user submits or
 restores a prior URL search. The record drawer exposes all CPE 2.3 fields,
 titles, references, raw-string and UUID copy controls.
 
-Search results are exploration evidence, not Ground Truth. The Workbench has
-no save, select, confirm, replacement, or other write action. Candidate
-ranking, BM25, fuzzy matching, aliases, normalization, AI, and automatic CPE
-replacement remain outside this implementation.
+Search results remain exploration evidence until a reviewer explicitly
+selects a candidate, enters a free-text decision type, and saves. A reviewer
+may also save a decision without selecting an official CPE. Saved values are
+restored for the Component and current snapshot; choosing a search result or
+detail record alone does not write to the database. Candidate ranking, BM25,
+fuzzy matching, aliases, normalization, AI, automatic CPE replacement,
+controlled decision taxonomies, approval, and revision history remain outside
+this implementation.
 
 ## CPE Profiling
 
@@ -425,7 +449,9 @@ level, the counts are 6, 0, 1,763, and 85,642 respectively for
   ranking or semantic matching.
 - Dictionary membership is not a semantic correctness decision or Ground
   Truth.
-- Semantic review and Ground Truth storage are later research stages.
+- Stored Ground Truth is a single expected human annotation per Component
+  and snapshot; there is no reviewer identity, approval state, or revision
+  history.
 - Candidate generation and ranking are outside the current implementation.
 - Authentication, review history, exports, and frontend containerization are
   not implemented.

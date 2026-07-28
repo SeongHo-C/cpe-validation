@@ -5,6 +5,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table"
 import {
+  BadgeCheck,
   Clipboard,
   FileSearch,
 } from "lucide-react"
@@ -26,9 +27,11 @@ import type { CpeDictionaryResult } from "@/features/cpe-dictionary/cpe-dictiona
 export function CpeDictionaryResultsTable({
   results,
   onViewDetails,
+  onSelectGroundTruth,
 }: {
   results: CpeDictionaryResult[]
   onViewDetails: (cpeNameId: string) => void
+  onSelectGroundTruth?: (record: CpeDictionaryResult) => void
 }) {
   const columns = useMemo<ColumnDef<CpeDictionaryResult>[]>(
     () => [
@@ -101,6 +104,19 @@ export function CpeDictionaryResultsTable({
               <FileSearch aria-hidden="true" />
               View details
             </Button>
+            {onSelectGroundTruth ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  onSelectGroundTruth(row.original)
+                }
+              >
+                <BadgeCheck aria-hidden="true" />
+                Ground Truth로 선택
+              </Button>
+            ) : null}
             <Button
               type="button"
               size="icon-sm"
@@ -118,7 +134,7 @@ export function CpeDictionaryResultsTable({
         ),
       },
     ],
-    [onViewDetails],
+    [onSelectGroundTruth, onViewDetails],
   )
   const table = useReactTable({
     data: results,

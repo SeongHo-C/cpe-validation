@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from django.db import DatabaseError, connection
+from django.db import DatabaseError, connection, transaction
 from django.db.models import (
     Count,
     Exists,
@@ -11,32 +11,40 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from cpe.cpe23 import (
+    CPE23StructuralStatus,
+    parse_cpe23_formatted_string,
+)
+from cpe_dictionary.api.snapshot import (
+    CpeDictionarySnapshotViewMixin,
+)
+from cpe_dictionary.models import CpeDictionarySnapshot, CpeName
 from sboms.api.pagination import StandardPageNumberPagination
 from sboms.api.serializers import (
+    ComponentCpeGroundTruthSerializer,
+    ComponentCpeGroundTruthWriteSerializer,
     ComponentDetailSerializer,
     ComponentListSerializer,
     DockerImageDetailSerializer,
     DockerImageListSerializer,
 )
-from cpe.cpe23 import (
-    CPE23StructuralStatus,
-    parse_cpe23_formatted_string,
-)
-from cpe_dictionary.models import CpeDictionarySnapshot, CpeName
-from cpe_dictionary.api.snapshot import (
-    CpeDictionarySnapshotViewMixin,
-)
 from sboms.exact_matching import (
     CPEExactMatchStatus,
     match_cpes,
 )
-from sboms.models import Component, DockerImage, SBOMDocument
+from sboms.models import (
+    Component,
+    ComponentCpeGroundTruth,
+    DockerImage,
+    SBOMDocument,
+)
 
 
 DEFAULT_COMPONENT_ORDERING = (
@@ -399,3 +407,87 @@ class ComponentDetailAPIView(
             "cpe_dictionary_snapshot"
         ] = self.get_cpe_dictionary_snapshot()
         return context
+
+
+class ComponentCpeGroundTruthAPIView(
+    CpeDictionarySnapshotViewMixin,
+    APIView,
+):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "put", "head", "options"]
+
+    @staticmethod
+    def _response_body(
+        component: Component,
+        snapshot: CpeDictionarySnapshot,
+        ground_truth: ComponentCpeGroundTruth | None,
+    ) -> dict:
+        return {
+            "component_id": component.id,
+            "snapshot_id": snapshot.snapshot_id,
+            "ground_truth": (
+                ComponentCpeGroundTruthSerializer(
+                    ground_truth
+                ).data
+                if ground_truth is not None
+                else None
+            ),
+        }
+
+    @staticmethod
+    def _component(component_id: int) -> Component:
+        return get_object_or_404(
+            Component.objects.only("id"),
+            pk=component_id,
+        )
+
+    def get(self, request, component_id: int) -> Response:
+        component = self._component(component_id)
+        snapshot = self.get_cpe_dictionary_snapshot()
+        ground_truth = (
+            ComponentCpeGroundTruth.objects.select_related(
+                "ground_truth_cpe"
+            )
+            .filter(
+                component=component,
+                snapshot=snapshot,
+            )
+            .first()
+        )
+        return Response(
+            self._response_body(
+                component,
+                snapshot,
+                ground_truth,
+            )
+        )
+
+    def put(self, request, component_id: int) -> Response:
+        component = self._component(component_id)
+        snapshot = self.get_cpe_dictionary_snapshot()
+        serializer = ComponentCpeGroundTruthWriteSerializer(
+            data=request.data,
+            context={"snapshot": snapshot},
+        )
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            ground_truth, _ = (
+                ComponentCpeGroundTruth.objects.update_or_create(
+                    component=component,
+                    snapshot=snapshot,
+                    defaults=serializer.validated_data,
+                )
+            )
+        ground_truth = (
+            ComponentCpeGroundTruth.objects.select_related(
+                "ground_truth_cpe"
+            ).get(pk=ground_truth.pk)
+        )
+        return Response(
+            self._response_body(
+                component,
+                snapshot,
+                ground_truth,
+            )
+        )
