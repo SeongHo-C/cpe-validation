@@ -118,12 +118,14 @@ export function CpeDictionarySearch({
   onSelectCandidate,
   onCopyToManual,
   preserveQueryKeys = emptyPreservedQueryKeys,
+  showSnapshotSummary = true,
 }: {
   onSelectCandidate?: (
     candidate: CpeDictionaryCandidate,
   ) => void
   onCopyToManual?: (rawCpe: string) => void
   preserveQueryKeys?: readonly string[]
+  showSnapshotSummary?: boolean
 }) {
   const [searchParameters, setSearchParameters] =
     useSearchParams()
@@ -255,36 +257,38 @@ export function CpeDictionarySearch({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <div className="max-w-sm rounded-lg border bg-card px-4 py-3 text-right">
-          <p className="text-xs font-medium text-muted-foreground">
-            CPE Dictionary Snapshot
-          </p>
-          <p className="mt-1 font-mono text-sm font-semibold">
-            {response?.snapshot.snapshot_id ??
-              snapshot?.snapshot_id ??
-              "Unavailable"}
-          </p>
-          {response || snapshot ? (
-            <p
-              className="mt-1 max-w-72 truncate font-mono text-[10px] text-muted-foreground"
-              title={
-                response?.snapshot.manifest_sha256 ??
-                snapshot?.manifest_sha256
-              }
-            >
-              Manifest SHA-256:{" "}
-              {response?.snapshot.manifest_sha256 ??
-                snapshot?.manifest_sha256}
+      {showSnapshotSummary ? (
+        <div className="flex justify-end">
+          <div className="max-w-sm rounded-lg border bg-card px-4 py-3 text-right">
+            <p className="text-xs font-medium text-muted-foreground">
+              CPE Dictionary Snapshot
             </p>
-          ) : null}
-          {snapshotError ? (
-            <p className="mt-1 text-xs text-red-700">
-              {snapshotError}
+            <p className="mt-1 font-mono text-sm font-semibold">
+              {response?.snapshot.snapshot_id ??
+                snapshot?.snapshot_id ??
+                "Unavailable"}
             </p>
-          ) : null}
+            {response || snapshot ? (
+              <p
+                className="mt-1 max-w-72 truncate font-mono text-[10px] text-muted-foreground"
+                title={
+                  response?.snapshot.manifest_sha256 ??
+                  snapshot?.manifest_sha256
+                }
+              >
+                Manifest SHA-256:{" "}
+                {response?.snapshot.manifest_sha256 ??
+                  snapshot?.manifest_sha256}
+              </p>
+            ) : null}
+            {snapshotError ? (
+              <p className="mt-1 text-xs text-red-700">
+                {snapshotError}
+              </p>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <Card className="gap-0 py-0">
         <DataPanelHeader

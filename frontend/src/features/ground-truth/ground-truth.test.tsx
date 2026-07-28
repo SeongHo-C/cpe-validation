@@ -894,7 +894,48 @@ describe("Ground Truth workflow", () => {
     expect(screen.getByText("apk-db-cataloger"))
       .toBeInTheDocument()
     expect(screen.getByText("Exact Match")).toBeInTheDocument()
+    expect(
+      screen.queryByText("CPE Dictionary Snapshot"),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/Manifest SHA-256:/))
+      .not.toBeInTheDocument()
+    expect(
+      await screen.findByText(new RegExp(`Snapshot: ${snapshotId}`)),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("Search Official CPE Names"),
+    ).toBeInTheDocument()
     const context = componentContext()
+    const summaryRow = within(context).getByTestId(
+      "component-context-summary-row",
+    )
+    for (const label of [
+      "Name",
+      "Version",
+      "Group",
+      "Publisher",
+    ]) {
+      expect(within(summaryRow).getByText(label))
+        .toBeInTheDocument()
+    }
+    const identityRow = within(context).getByTestId(
+      "component-context-identity-row",
+    )
+    for (const label of ["Type", "PURL", "Primary CPE"]) {
+      expect(within(identityRow).getByText(label))
+        .toBeInTheDocument()
+    }
+    const sourceRow = within(context).getByTestId(
+      "component-context-source-row",
+    )
+    for (const label of [
+      "Docker image",
+      "SBOM document",
+      "Exact Match",
+    ]) {
+      expect(within(sourceRow).getByText(label))
+        .toBeInTheDocument()
+    }
     const purl = within(context).getByText(componentPurl)
     expect(purl).toHaveClass(
       "min-w-0",
@@ -915,6 +956,17 @@ describe("Ground Truth workflow", () => {
     )
     await user.click(copyPurl)
     expect(writeText).toHaveBeenCalledWith(componentPurl)
+    const primaryCpe = within(identityRow).getByText(cpeName)
+    expect(primaryCpe).toHaveClass(
+      "min-w-0",
+      "max-w-full",
+      "whitespace-normal",
+      "break-all",
+    )
+    expect(primaryCpe).not.toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    )
     for (const metadata of [
       "curl",
       "8.14.1-r1",
@@ -926,6 +978,16 @@ describe("Ground Truth workflow", () => {
       expect(within(context).getByText(metadata))
         .toBeInTheDocument()
     }
+    const properties = within(context)
+      .getByText(/Relevant package properties/)
+      .closest("details")
+    expect(properties).not.toHaveAttribute("open")
+    await user.click(
+      within(context).getByText(
+        /Relevant package properties/,
+      ),
+    )
+    expect(properties).toHaveAttribute("open")
     expect(
       screen.getByRole("link", {
         name: "Back to Review Queue",
