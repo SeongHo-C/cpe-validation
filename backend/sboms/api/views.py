@@ -34,6 +34,7 @@ from sboms.api.serializers import (
     ComponentListSerializer,
     DockerImageDetailSerializer,
     DockerImageListSerializer,
+    GroundTruthComponentListSerializer,
 )
 from sboms.exact_matching import (
     CPEExactMatchStatus,
@@ -386,6 +387,202 @@ class ComponentListAPIView(
         if page is not None:
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
+
+
+def _ground_truth_component_queryset(
+    parameters,
+    snapshot: CpeDictionarySnapshot,
+) -> tuple[QuerySet[Component], str]:
+    queryset = (
+        Component.objects.select_related(
+            "sbom_document",
+            "sbom_document__docker_image",
+        )
+        .exclude(cpe="")
+        .exclude(cpe__isnull=True)
+    )
+    ground_truth_records = ComponentCpeGroundTruth.objects.filter(
+        component_id=OuterRef("pk"),
+        snapshot=snapshot,
+    )
+    raw_ground_truth_status = parameters.get(
+        "ground_truth_status"
+    )
+    if raw_ground_truth_status in (None, "", "ALL"):
+        pass
+    elif raw_ground_truth_status == "UNREVIEWED":
+        queryset = queryset.filter(~Exists(ground_truth_records))
+    elif raw_ground_truth_status == "COMPLETED":
+        queryset = queryset.filter(Exists(ground_truth_records))
+    else:
+        raise ValidationError(
+            {
+                "code": "invalid_ground_truth_status",
+                "detail": (
+                    "ground_truth_status must be one of: "
+                    "UNREVIEWED, COMPLETED"
+                ),
+            }
+        )
+
+    dictionary_status = (
+        ComponentListAPIView._parse_dictionary_status(
+            parameters.get("dictionary_status")
+        )
+    )
+    if dictionary_status is not None:
+        if dictionary_status == CPEExactMatchStatus.NOT_PRESENT:
+            return queryset.none(), "id"
+        queryset = ComponentListAPIView._filter_dictionary_status(
+            queryset,
+            dictionary_status,
+            snapshot,
+        )
+
+    raw_image_id = parameters.get("image_id")
+    if raw_image_id is not None:
+        try:
+            image_id = int(raw_image_id)
+        except (TypeError, ValueError) as error:
+            raise ValidationError(
+                {"detail": "image_id must be a positive integer"}
+            ) from error
+        if image_id < 1:
+            raise ValidationError(
+                {"detail": "image_id must be a positive integer"}
+            )
+        queryset = queryset.filter(
+            sbom_document__docker_image_id=image_id
+        )
+
+    search = parameters.get("search", "").strip()
+    if search:
+        queryset = queryset.filter(
+            Q(name__icontains=search)
+            | Q(version__icontains=search)
+            | Q(publisher__icontains=search)
+            | Q(purl__icontains=search)
+            | Q(cpe__icontains=search)
+            | Q(bom_ref__icontains=search)
+        )
+
+    ordering = parameters.get("ordering", "id")
+    if ordering not in {"id", "-id"}:
+        raise ValidationError(
+            {"detail": "ordering must be one of: id, -id"}
+        )
+    return queryset.order_by(ordering), ordering
+
+
+class GroundTruthComponentListAPIView(
+    CpeDictionarySnapshotViewMixin,
+    generics.ListAPIView,
+):
+    serializer_class = GroundTruthComponentListSerializer
+    pagination_class = StandardPageNumberPagination
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[Component]:
+        queryset, _ = _ground_truth_component_queryset(
+            self.request.query_params,
+            self.get_cpe_dictionary_snapshot(),
+        )
+        return queryset
+
+    def list(self, request, *args, **kwargs) -> Response:
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        components = list(page if page is not None else queryset)
+        snapshot = self.get_cpe_dictionary_snapshot()
+        component_ids = [
+            component.id for component in components
+        ]
+        ground_truth_records = {
+            record.component_id: record
+            for record in (
+                ComponentCpeGroundTruth.objects.select_related(
+                    "ground_truth_cpe"
+                ).filter(
+                    snapshot=snapshot,
+                    component_id__in=component_ids,
+                )
+            )
+        }
+        serializer_context = self.get_serializer_context()
+        serializer_context.update(
+            {
+                "cpe_dictionary_matches": match_cpes(
+                    (
+                        component.cpe
+                        for component in components
+                    ),
+                    snapshot,
+                ),
+                "ground_truth_records": ground_truth_records,
+            }
+        )
+        serializer = self.get_serializer(
+            components,
+            many=True,
+            context=serializer_context,
+        )
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+
+class GroundTruthComponentNavigationAPIView(
+    CpeDictionarySnapshotViewMixin,
+    APIView,
+):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "head", "options"]
+
+    def get(self, request, component_id: int) -> Response:
+        get_object_or_404(
+            Component.objects.exclude(cpe=""),
+            pk=component_id,
+        )
+        queryset, ordering = _ground_truth_component_queryset(
+            request.query_params,
+            self.get_cpe_dictionary_snapshot(),
+        )
+        if ordering == "id":
+            previous_id = (
+                queryset.filter(id__lt=component_id)
+                .order_by("-id")
+                .values_list("id", flat=True)
+                .first()
+            )
+            next_id = (
+                queryset.filter(id__gt=component_id)
+                .order_by("id")
+                .values_list("id", flat=True)
+                .first()
+            )
+        else:
+            previous_id = (
+                queryset.filter(id__gt=component_id)
+                .order_by("id")
+                .values_list("id", flat=True)
+                .first()
+            )
+            next_id = (
+                queryset.filter(id__lt=component_id)
+                .order_by("-id")
+                .values_list("id", flat=True)
+                .first()
+            )
+        return Response(
+            {
+                "component_id": component_id,
+                "previous_component_id": previous_id,
+                "next_component_id": next_id,
+            }
+        )
 
 
 class ComponentDetailAPIView(

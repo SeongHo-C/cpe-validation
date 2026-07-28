@@ -40,8 +40,9 @@ therefore a reproducible structural signal, not Ground Truth.
    Django REST Framework API and React UI.
 9. Search and inspect the selected official Dictionary snapshot through a
    read-only Dictionary surface in the Workbench.
-10. Record an expected Ground Truth CPE, free-text decision type, and review
-    note for a Component without changing its imported Primary CPE.
+10. Build snapshot-specific expected Ground Truth independently from future
+    candidate-generation algorithms, using an official Dictionary CPE, a
+    structurally valid manual CPE 2.3 string, or no CPE.
 
 ## Repository Structure
 
@@ -220,7 +221,8 @@ The API is mounted at `/api/` and currently provides:
 - raw-string Dictionary status and snapshot provenance for Component detail;
 - paginated CPE Dictionary search and CPE record detail;
 - Component- and snapshot-specific expected Ground Truth retrieval and
-  upsert.
+  upsert;
+- a filtered, paginated Ground Truth review queue.
 
 The inventory, Component, and CPE Dictionary endpoints are read-only. The
 Component list endpoint supports image, Primary CPE presence, Dictionary
@@ -268,8 +270,22 @@ PUT /api/components/<component_id>/cpe-ground-truth/
 The server selects the current COMPLETE snapshot. `PUT` creates or updates
 the single annotation for that Component and snapshot. An optional selected
 `CpeName` must belong to the same snapshot; `decision_type` is required
-free text with outer whitespace removed, and `note` is optional. The imported
-`Component.cpe` value is never replaced or modified.
+free text with outer whitespace removed, and `note` is optional. A manual
+`manual_cpe` may be stored instead of a Dictionary record when it passes the
+existing CPE 2.3 structural parser. Dictionary and manual values are mutually
+exclusive. The imported `Component.cpe` value is never replaced or modified.
+
+The review queue and filtered navigation endpoints are:
+
+```text
+GET /api/ground-truth/components/
+GET /api/ground-truth/components/<component_id>/navigation/
+```
+
+The queue defaults to Components with a non-empty Primary CPE. It supports
+image, Ground Truth record presence, exact-match status, keyword, stable ID
+ordering, page, and page-size parameters. Review status is derived from
+record existence rather than stored as a workflow field.
 
 ## Frontend
 
@@ -278,9 +294,11 @@ The desktop-oriented React UI provides:
 - `/images` for the Docker image inventory and Primary CPE coverage;
 - `/components` for the server-filtered Primary CPE queue and read-only
   Component evidence panel;
-- `/cpe-dictionary` for read-only official Dictionary search and record
-  inspection plus Component-specific expected Ground Truth entry when
-  `component_id` is present.
+- `/ground-truth` for the independent human review queue;
+- `/ground-truth/components/<component_id>` for Component evidence,
+  Dictionary lookup, and expected Ground Truth entry;
+- `/cpe-dictionary` for independent read-only official Dictionary search and
+  record inspection.
 
 The Components route supports `image_id`, `search`, `ordering`, `page`,
 `page_size`, `dictionary_status`, and `component_id` query parameters. Its
@@ -293,22 +311,22 @@ selected NVD snapshot, not semantic correctness. The application uses
 `BrowserRouter`; a production static host would need an SPA fallback for
 frontend routes.
 
-Component detail links to
-`/cpe-dictionary?component_id=<id>`. The Workbench reuses the Component Detail
-API to show image, SBOM, Primary CPE, Dictionary status, PURL, and package
-properties without creating search-context data. Search form and pagination
-state are stored in the URL; no request is made before a user submits or
-restores a prior URL search. The record drawer exposes all CPE 2.3 fields,
-titles, references, raw-string and UUID copy controls.
+The Ground Truth list keeps filters and pagination in the URL and distinguishes
+raw-string exact-match evidence from whether a human annotation exists. Its
+editor restores the list queue for previous, next, and save-then-next
+navigation. Component evidence and the write panel remain visible with a
+desktop sticky layout. Dictionary selection changes only local editor state
+until explicit save; the reviewer can instead copy and edit a raw CPE as a
+manual structurally validated value, or save no CPE. Notes remain optional
+and collapsed by default.
 
-Search results remain exploration evidence until a reviewer explicitly
-selects a candidate, enters a free-text decision type, and saves. A reviewer
-may also save a decision without selecting an official CPE. Saved values are
-restored for the Component and current snapshot; choosing a search result or
-detail record alone does not write to the database. Candidate ranking, BM25,
-fuzzy matching, aliases, normalization, AI, automatic CPE replacement,
-controlled decision taxonomies, approval, and revision history remain outside
-this implementation.
+The generic Dictionary route has no Component or Ground Truth state. Its
+search form and pagination state remain in the URL, and background page
+fetches retain prior results behind a loading overlay. The record drawer
+exposes all CPE 2.3 fields, titles, references, raw-string and UUID copy
+controls. Candidate ranking, BM25, fuzzy matching, aliases, normalization,
+AI, automatic CPE replacement, controlled decision taxonomies, approval, and
+revision history remain outside this implementation.
 
 ## CPE Profiling
 

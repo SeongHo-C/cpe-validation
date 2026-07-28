@@ -76,10 +76,8 @@ export function hasCpeDictionarySearchTerm(
 
 export function writeCpeDictionaryUrlQuery(
   query: CpeDictionaryQuery,
-  componentId?: string,
 ): URLSearchParams {
   const parameters = new URLSearchParams()
-  if (componentId) parameters.set("component_id", componentId)
   for (const field of [
     "q",
     "part",

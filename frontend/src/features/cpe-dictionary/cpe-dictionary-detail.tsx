@@ -46,11 +46,13 @@ async function copyText(value: string) {
 export function CpeDictionaryDetailDialog({
   cpeNameId,
   onClose,
-  onSelectGroundTruth,
+  onSelectCandidate,
+  onCopyToManual,
 }: {
   cpeNameId: string | null
   onClose: () => void
-  onSelectGroundTruth?: (detail: CpeDictionaryDetail) => void
+  onSelectCandidate?: (detail: CpeDictionaryDetail) => void
+  onCopyToManual?: (rawCpe: string) => void
 }) {
   const [detail, setDetail] =
     useState<CpeDictionaryDetail | null>(null)
@@ -180,15 +182,28 @@ export function CpeDictionaryDetailDialog({
                   {detail.cpe_name}
                 </p>
                 <div className="mt-3 flex gap-2">
-                  {onSelectGroundTruth ? (
+                  {onSelectCandidate ? (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => onSelectGroundTruth(detail)}
+                      onClick={() => onSelectCandidate(detail)}
                     >
                       <BadgeCheck aria-hidden="true" />
                       Ground Truth로 선택
+                    </Button>
+                  ) : null}
+                  {onCopyToManual ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        onCopyToManual(detail.cpe_name)
+                      }
+                    >
+                      <Clipboard aria-hidden="true" />
+                      수동 CPE로 복사
                     </Button>
                   ) : null}
                   <Button

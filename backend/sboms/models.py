@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from cpe.cpe23 import parse_cpe23_formatted_string
 from cpe_dictionary.models import CpeDictionarySnapshot, CpeName
 
 
@@ -160,6 +161,10 @@ class ComponentCpeGroundTruth(models.Model):
         null=True,
         blank=True,
     )
+    manual_ground_truth_cpe = models.TextField(
+        blank=True,
+        default="",
+    )
     decision_type = models.CharField(max_length=255)
     note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -170,6 +175,13 @@ class ComponentCpeGroundTruth(models.Model):
             models.UniqueConstraint(
                 fields=["component", "snapshot"],
                 name="unique_component_ground_truth_per_snapshot",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(ground_truth_cpe__isnull=True)
+                    | models.Q(manual_ground_truth_cpe="")
+                ),
+                name="ground_truth_has_one_cpe_source",
             ),
         ]
 
@@ -188,6 +200,35 @@ class ComponentCpeGroundTruth(models.Model):
                     )
                 }
             )
+        self.manual_ground_truth_cpe = (
+            self.manual_ground_truth_cpe.strip()
+            if isinstance(self.manual_ground_truth_cpe, str)
+            else ""
+        )
+        if (
+            self.ground_truth_cpe_id is not None
+            and self.manual_ground_truth_cpe
+        ):
+            raise ValidationError(
+                {
+                    "manual_ground_truth_cpe": (
+                        "Dictionary and manual Ground Truth CPEs "
+                        "cannot both be set."
+                    )
+                }
+            )
+        if self.manual_ground_truth_cpe:
+            parse_result = parse_cpe23_formatted_string(
+                self.manual_ground_truth_cpe
+            )
+            if not parse_result.is_structurally_valid:
+                raise ValidationError(
+                    {
+                        "manual_ground_truth_cpe": (
+                            parse_result.error_message
+                        )
+                    }
+                )
         if (
             self.ground_truth_cpe_id is not None
             and self.snapshot_id is not None

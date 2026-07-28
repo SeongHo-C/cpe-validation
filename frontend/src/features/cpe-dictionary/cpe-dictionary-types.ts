@@ -85,7 +85,7 @@ export interface CpeDictionaryDetail {
   references: CpeReference[]
 }
 
-export interface CpeGroundTruthCandidate {
+export interface CpeDictionaryCandidate {
   id: number
   cpe_name: string
   cpe_uuid: string
@@ -94,25 +94,4 @@ export interface CpeGroundTruthCandidate {
   vendor: string
   product: string
   version: string
-}
-
-export interface ComponentCpeGroundTruthRecord {
-  id: number
-  ground_truth_cpe: CpeGroundTruthCandidate | null
-  decision_type: string
-  note: string
-  created_at: string
-  updated_at: string
-}
-
-export interface ComponentCpeGroundTruthResponse {
-  component_id: number
-  snapshot_id: string
-  ground_truth: ComponentCpeGroundTruthRecord | null
-}
-
-export interface ComponentCpeGroundTruthWrite {
-  ground_truth_cpe_id: number | null
-  decision_type: string
-  note: string
 }

@@ -27,11 +27,13 @@ import type { CpeDictionaryResult } from "@/features/cpe-dictionary/cpe-dictiona
 export function CpeDictionaryResultsTable({
   results,
   onViewDetails,
-  onSelectGroundTruth,
+  onSelectCandidate,
+  onCopyToManual,
 }: {
   results: CpeDictionaryResult[]
   onViewDetails: (cpeNameId: string) => void
-  onSelectGroundTruth?: (record: CpeDictionaryResult) => void
+  onSelectCandidate?: (record: CpeDictionaryResult) => void
+  onCopyToManual?: (rawCpe: string) => void
 }) {
   const columns = useMemo<ColumnDef<CpeDictionaryResult>[]>(
     () => [
@@ -104,17 +106,30 @@ export function CpeDictionaryResultsTable({
               <FileSearch aria-hidden="true" />
               View details
             </Button>
-            {onSelectGroundTruth ? (
+            {onSelectCandidate ? (
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
                 onClick={() =>
-                  onSelectGroundTruth(row.original)
+                  onSelectCandidate(row.original)
                 }
               >
                 <BadgeCheck aria-hidden="true" />
                 Ground Truth로 선택
+              </Button>
+            ) : null}
+            {onCopyToManual ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  onCopyToManual(row.original.cpe_name)
+                }
+              >
+                <Clipboard aria-hidden="true" />
+                수동 CPE로 복사
               </Button>
             ) : null}
             <Button
@@ -134,7 +149,7 @@ export function CpeDictionaryResultsTable({
         ),
       },
     ],
-    [onSelectGroundTruth, onViewDetails],
+    [onCopyToManual, onSelectCandidate, onViewDetails],
   )
   const table = useReactTable({
     data: results,

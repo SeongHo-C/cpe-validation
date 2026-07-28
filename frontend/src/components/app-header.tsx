@@ -19,14 +19,27 @@ const routeMetadata = {
     title: "Primary CPE Components",
     description: "Components selected for CPE validation",
   },
+  "/ground-truth": {
+    eyebrow: "Reference Dataset",
+    title: "Ground Truth",
+    description: "Independent human-authored CPE answers",
+  },
+  "/cpe-dictionary": {
+    eyebrow: "Official Reference",
+    title: "CPE Dictionary",
+    description: "Read-only NVD CPE Dictionary exploration",
+  },
 } as const
 
 export function AppHeader({ apiStatus }: AppHeaderProps) {
   const location = useLocation()
-  const metadata =
-    routeMetadata[
-      location.pathname as keyof typeof routeMetadata
-    ] ?? routeMetadata["/images"]
+  const metadata = location.pathname.startsWith(
+    "/ground-truth/components/",
+  )
+    ? routeMetadata["/ground-truth"]
+    : (routeMetadata[
+        location.pathname as keyof typeof routeMetadata
+      ] ?? routeMetadata["/images"])
 
   return (
     <header className="border-b bg-card">

@@ -1,6 +1,7 @@
 import {
   BookOpenText,
   Boxes,
+  ClipboardCheck,
   Layers3,
   ShieldCheck,
 } from "lucide-react"
@@ -24,6 +25,11 @@ const navigationItems = [
     label: "Components",
     to: "/components",
     icon: Layers3,
+  },
+  {
+    label: "Ground Truth",
+    to: "/ground-truth",
+    icon: ClipboardCheck,
   },
   {
     label: "CPE Dictionary",

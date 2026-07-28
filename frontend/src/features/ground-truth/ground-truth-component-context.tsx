@@ -1,6 +1,5 @@
 import {
   Box,
-  Search,
   TriangleAlert,
 } from "lucide-react"
 
@@ -10,7 +9,6 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -25,8 +23,6 @@ import {
 } from "@/features/components/dictionary-status"
 import { cn } from "@/lib/utils"
 
-type FillField = "q" | "product"
-
 const relevantPropertyTerms = [
   "source",
   "upstream",
@@ -40,31 +36,14 @@ const relevantPropertyTerms = [
   "path",
 ]
 
-function purlPackageName(purl: string): string | null {
-  if (!purl.startsWith("pkg:")) return null
-  const path = purl
-    .slice(4)
-    .split(/[?#]/, 1)[0]
-    ?.split("@", 1)[0]
-  const encodedName = path?.split("/").at(-1)
-  if (!encodedName) return null
-  try {
-    return decodeURIComponent(encodedName)
-  } catch {
-    return null
-  }
-}
-
-export function CpeDictionaryComponentContext({
+export function GroundTruthComponentContext({
   detail,
   loading,
   error,
-  onFill,
 }: {
   detail: ComponentDetail | null
   loading: boolean
   error: string | null
-  onFill: (field: FillField, value: string) => void
 }) {
   if (loading) {
     return (
@@ -86,43 +65,11 @@ export function CpeDictionaryComponentContext({
   }
   if (!detail) return null
 
-  const purlName = purlPackageName(detail.purl)
   const relevantProperties = detail.properties.filter((property) =>
     relevantPropertyTerms.some((term) =>
       property.name.toLowerCase().includes(term),
     ),
   )
-  const conveniences = [
-    detail.name
-      ? {
-          label: "Use component name",
-          field: "q" as const,
-          value: detail.name,
-        }
-      : null,
-    detail.cpe_fields?.product
-      ? {
-          label: "Use existing CPE product",
-          field: "product" as const,
-          value: detail.cpe_fields.product,
-        }
-      : null,
-    purlName
-      ? {
-          label: "Use PURL package name",
-          field: "q" as const,
-          value: purlName,
-        }
-      : null,
-    detail.publisher
-      ? {
-          label: "Use publisher",
-          field: "q" as const,
-          value: detail.publisher,
-        }
-      : null,
-  ].filter((item) => item !== null)
-
   return (
     <Card>
       <CardHeader>
@@ -169,7 +116,7 @@ export function CpeDictionaryComponentContext({
           ))}
           <div>
             <dt className="text-xs font-medium text-muted-foreground">
-              Dictionary status
+              Exact Match
             </dt>
             <dd className="mt-1">
               <Badge
@@ -185,23 +132,6 @@ export function CpeDictionaryComponentContext({
             </dd>
           </div>
         </dl>
-
-        {conveniences.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {conveniences.map((item) => (
-              <Button
-                key={item.label}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onFill(item.field, item.value)}
-              >
-                <Search aria-hidden="true" />
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        ) : null}
 
         {relevantProperties.length > 0 ? (
           <details className="rounded-lg border bg-muted/20 px-3 py-2">

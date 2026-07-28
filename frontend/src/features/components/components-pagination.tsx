@@ -23,6 +23,18 @@ export function ComponentsPagination({
   const hasPages = totalPages > 0
   const isFirstPage = !hasPages || page <= 1
   const isLastPage = !hasPages || page >= totalPages
+  const firstVisiblePage = Math.max(
+    1,
+    Math.min(page - 2, totalPages - 4),
+  )
+  const visiblePages = hasPages
+    ? Array.from(
+        {
+          length: Math.min(5, totalPages),
+        },
+        (_, index) => firstVisiblePage + index,
+      )
+    : []
 
   return (
     <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -57,6 +69,24 @@ export function ComponentsPagination({
           <ChevronLeft aria-hidden="true" />
           <span className="hidden sm:inline">Previous</span>
         </Button>
+        {visiblePages.map((pageNumber) => (
+          <Button
+            key={pageNumber}
+            type="button"
+            variant={
+              pageNumber === page ? "default" : "outline"
+            }
+            size="sm"
+            aria-label={`Page ${pageNumber}`}
+            aria-current={
+              pageNumber === page ? "page" : undefined
+            }
+            disabled={disabled || pageNumber === page}
+            onClick={() => onPageChange(pageNumber)}
+          >
+            {pageNumber}
+          </Button>
+        ))}
         <Button
           type="button"
           variant="outline"

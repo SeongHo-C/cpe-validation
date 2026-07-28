@@ -703,7 +703,7 @@ describe("Component Detail panel", () => {
       await waitForDetail()
 
       const dictionarySection = screen
-        .getByRole("heading", { name: "Dictionary Status" })
+        .getByRole("heading", { name: "Exact Match" })
         .closest("section")
       expect(dictionarySection).not.toBeNull()
       expect(
@@ -725,7 +725,7 @@ describe("Component Detail panel", () => {
       ).toBeInTheDocument()
       expect(
         screen.getAllByRole("heading", {
-          name: "Dictionary Status",
+          name: "Exact Match",
         }),
       ).toHaveLength(1)
       if (cpeNameId) {
@@ -773,19 +773,23 @@ describe("Component Detail panel", () => {
     ).toBeInTheDocument()
   })
 
-  it("links Dictionary validation to the read-only Workbench", async () => {
+  it("keeps exact-match evidence without Ground Truth actions", async () => {
     installSuccessfulFetch()
     renderAppAt("/components?component_id=101")
     await waitForDetail()
 
     expect(
-      screen.getByRole("link", {
+      screen.queryByRole("link", {
         name: "Search CPE Dictionary",
       }),
-    ).toHaveAttribute(
-      "href",
-      "/cpe-dictionary?component_id=101",
-    )
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("예상 Ground Truth"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", { name: "Exact Match" }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("SBOM Source")).toBeInTheDocument()
   })
 
   it("closes Detail when sorting, page size, or page changes", async () => {

@@ -17,9 +17,7 @@ import {
 import type {
   CpeDictionaryDetail,
   CpeDictionarySearchResponse,
-  ComponentCpeGroundTruthResponse,
 } from "@/features/cpe-dictionary/cpe-dictionary-types"
-import type { ComponentDetail } from "@/features/components/components-types"
 import {
   renderAppAt,
   renderAppWithHistory,
@@ -67,142 +65,18 @@ const searchResponse: CpeDictionarySearchResponse = {
       title: "curl command line tool",
       snapshot_id: "20260725T035002Z",
     },
-    {
-      id: 2,
-      cpe_name_id: "22222222-2222-4222-8222-222222222222",
-      cpe_name:
-        "cpe:2.3:a:oldvendor:curl:7.0:*:*:*:*:*:*:*",
-      part: "a",
-      vendor: "oldvendor",
-      product: "curl",
-      version: "7.0",
-      update: "*",
-      edition: "*",
-      language: "*",
-      sw_edition: "*",
-      target_sw: "*",
-      target_hw: "*",
-      other: "*",
-      deprecated: true,
-      title: "Old curl",
-      snapshot_id: "20260725T035002Z",
-    },
   ],
 }
 
 const detailResponse: CpeDictionaryDetail = {
-  id: 1,
-  cpe_name_id: cpeNameId,
-  cpe_name: cpeName,
-  snapshot_id: "20260725T035002Z",
+  ...searchResponse.results[0],
   snapshot_manifest_sha256: "d".repeat(64),
-  deprecated: false,
   deprecated_by: [],
   deprecates: [],
   created_at_nvd: "2020-01-01T00:00:00Z",
   last_modified_at_nvd: "2026-01-01T00:00:00Z",
-  part: "a",
-  vendor: "haxx",
-  product: "curl",
-  version: "8.14.1",
-  update: "*",
-  edition: "*",
-  language: "*",
-  sw_edition: "*",
-  target_sw: "*",
-  target_hw: "*",
-  other: "*",
-  titles: [
-    { lang: "en", title: "curl command line tool" },
-    { lang: "fr", title: "curl français" },
-  ],
-  references: [
-    { url: "https://curl.se/", type: "Vendor" },
-  ],
-}
-
-const componentResponse: ComponentDetail = {
-  id: 101,
-  image: {
-    id: 1,
-    repository: "docker.io/library/alpine",
-    tag: "3.24.1",
-  },
-  sbom_document_id: 11,
-  component_type: "library",
-  group: "alpine",
-  name: "curl",
-  version: "8.14.1-r1",
-  publisher: "Daniel Stenberg",
-  purl: "pkg:apk/alpine/curl@8.14.1-r1",
-  cpe: cpeName,
-  structural_status: "STRUCTURALLY_VALID",
-  cpe_fields: {
-    part: "a",
-    vendor: "haxx",
-    product: "curl",
-    version: "8.14.1",
-    update: "*",
-    edition: "*",
-    language: "*",
-    sw_edition: "*",
-    target_sw: "*",
-    target_hw: "*",
-    other: "*",
-  },
-  dictionary_status: "OFFICIAL_ACTIVE",
-  bom_ref: "pkg:apk/alpine/curl@8.14.1-r1",
-  properties: [
-    {
-      name: "syft:package:foundBy",
-      value: "apk-db-cataloger",
-    },
-    { name: "syft:location:0:path", value: "/lib/apk/db" },
-  ],
-  sbom_document: {
-    id: 11,
-    source_path: "pilot/results/sboms/alpine-3.24.1.cdx.json",
-    spec_version: "1.7",
-    generator_name: "syft",
-    generator_version: "1.49.0",
-    source_type: "registry",
-    scope: "squashed",
-  },
-  structural_error_message: null,
-  dictionary_match: {
-    snapshot_id: "20260725T035002Z",
-    cpe_name_id: cpeNameId,
-    matched_cpe_name: cpeName,
-    deprecated: false,
-  },
-}
-
-const emptyGroundTruthResponse: ComponentCpeGroundTruthResponse = {
-  component_id: 101,
-  snapshot_id: searchResponse.snapshot.snapshot_id,
-  ground_truth: null,
-}
-
-const savedGroundTruthResponse: ComponentCpeGroundTruthResponse = {
-  component_id: 101,
-  snapshot_id: searchResponse.snapshot.snapshot_id,
-  ground_truth: {
-    id: 501,
-    ground_truth_cpe: {
-      id: 1,
-      cpe_name: cpeName,
-      cpe_uuid: cpeNameId,
-      deprecated: false,
-      part: "a",
-      vendor: "haxx",
-      product: "curl",
-      version: "8.14.1",
-    },
-    decision_type: "vendor correction",
-    note: "Official active CPE selected.",
-    created_at: "2026-07-28T00:00:00Z",
-    updated_at: "2026-07-28T00:00:00Z",
-  },
+  titles: [{ lang: "en", title: "curl command line tool" }],
+  references: [{ url: "https://curl.se/", type: "Vendor" }],
 }
 
 function jsonResponse<T>(body: T, status = 200): Response {
@@ -213,97 +87,18 @@ function jsonResponse<T>(body: T, status = 200): Response {
   } as unknown as Response
 }
 
-function installFetch(
-  options: {
-    empty?: boolean
-    searchError?: boolean
-    groundTruth?: ComponentCpeGroundTruthResponse
-    groundTruthError?: boolean
-  } = {},
-) {
-  vi.mocked(fetch).mockImplementation((input, init) => {
+function installFetch() {
+  vi.mocked(fetch).mockImplementation((input) => {
     const url = new URL(String(input), "http://frontend.test")
     if (url.pathname === "/api/health/") {
       return Promise.resolve(
         jsonResponse({ status: "ok", database: "ok" }),
       )
     }
-    const componentMatch = url.pathname.match(
-      /^\/api\/components\/(\d+)\/$/,
-    )
-    if (componentMatch) {
-      const componentId = Number(componentMatch[1])
-      return Promise.resolve(
-        jsonResponse({
-          ...componentResponse,
-          id: componentId,
-          name: componentId === 101 ? "curl" : "openssl",
-        }),
-      )
-    }
-    const groundTruthMatch = url.pathname.match(
-      /^\/api\/components\/(\d+)\/cpe-ground-truth\/$/,
-    )
-    if (groundTruthMatch) {
-      const componentId = Number(groundTruthMatch[1])
-      if (init?.method === "PUT") {
-        if (options.groundTruthError) {
-          return Promise.resolve(
-            jsonResponse(
-              {
-                decision_type: [
-                  "The server rejected this decision.",
-                ],
-              },
-              400,
-            ),
-          )
-        }
-        const payload = JSON.parse(String(init.body)) as {
-          ground_truth_cpe_id: number | null
-          decision_type: string
-          note: string
-        }
-        return Promise.resolve(
-          jsonResponse({
-            component_id: componentId,
-            snapshot_id: searchResponse.snapshot.snapshot_id,
-            ground_truth: {
-              id: 501,
-              ground_truth_cpe:
-                payload.ground_truth_cpe_id === null
-                  ? null
-                  : savedGroundTruthResponse.ground_truth
-                      ?.ground_truth_cpe ?? null,
-              decision_type: payload.decision_type.trim(),
-              note: payload.note,
-              created_at: "2026-07-28T00:00:00Z",
-              updated_at: "2026-07-28T00:01:00Z",
-            },
-          } satisfies ComponentCpeGroundTruthResponse),
-        )
-      }
-      const response =
-        options.groundTruth ?? emptyGroundTruthResponse
-      return Promise.resolve(
-        jsonResponse({ ...response, component_id: componentId }),
-      )
-    }
     if (url.pathname === "/api/cpe-dictionary/snapshot/") {
       return Promise.resolve(jsonResponse(searchResponse.snapshot))
     }
     if (url.pathname === "/api/cpe-dictionary/") {
-      if (options.searchError) {
-        return Promise.resolve(
-          jsonResponse(
-            {
-              code: "invalid_search_query",
-              detail: "q must contain at least two characters.",
-            },
-            400,
-          ),
-        )
-      }
       const page = Number(url.searchParams.get("page") ?? 1)
       const pageSize = Number(
         url.searchParams.get("page_size") ?? 25,
@@ -311,8 +106,6 @@ function installFetch(
       return Promise.resolve(
         jsonResponse({
           ...searchResponse,
-          count: options.empty ? 0 : searchResponse.count,
-          results: options.empty ? [] : searchResponse.results,
           page,
           page_size: pageSize,
         }),
@@ -337,35 +130,13 @@ function dictionaryRequests(): URL[] {
     .filter((url) => url.pathname === "/api/cpe-dictionary/")
 }
 
-function groundTruthRequests(method?: "GET" | "PUT") {
-  return vi
-    .mocked(fetch)
-    .mock.calls.filter(([input, init]) => {
-      const url = new URL(String(input), "http://frontend.test")
-      return (
-        /\/api\/components\/\d+\/cpe-ground-truth\/$/.test(
-          url.pathname,
-        ) && (!method || init?.method === method)
-      )
-    })
-}
-
 function currentParameters(): URLSearchParams {
   const location =
     screen.getByTestId("route-location").textContent ?? ""
   return new URL(location, "http://frontend.test").searchParams
 }
 
-function groundTruthEditor(): HTMLElement {
-  const title = screen.getByText("예상 Ground Truth", {
-    selector: "[data-slot='card-title']",
-  })
-  const card = title.closest("[data-slot='card']")
-  if (!card) throw new Error("Ground Truth editor was not rendered")
-  return card as HTMLElement
-}
-
-describe("CPE Dictionary Workbench", () => {
+describe("read-only CPE Dictionary", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn())
     Object.defineProperty(navigator, "clipboard", {
@@ -378,194 +149,45 @@ describe("CPE Dictionary Workbench", () => {
     vi.unstubAllGlobals()
   })
 
-  it("renders the route and sidebar without an initial search", async () => {
+  it("renders the generic route without Ground Truth UI", async () => {
     installFetch()
-    renderAppAt("/cpe-dictionary")
+    renderAppAt("/cpe-dictionary?component_id=101")
 
     expect(
       screen.getByRole("heading", { name: "CPE Dictionary" }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("link", { name: "CPE Dictionary" }),
-    ).toHaveAttribute("href", "/cpe-dictionary")
+      screen.queryByText("예상 Ground Truth"),
+    ).not.toBeInTheDocument()
     expect(
-      screen.getByText("Search the selected Dictionary snapshot"),
-    ).toBeInTheDocument()
+      screen.queryByText("Component context"),
+    ).not.toBeInTheDocument()
     expect(
       await screen.findByText("20260725T035002Z"),
     ).toBeInTheDocument()
-    await waitFor(() =>
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/health/",
-        expect.anything(),
-      ),
-    )
-    expect(dictionaryRequests()).toHaveLength(0)
   })
 
-  it("submits keyword only on Search and syncs the URL", async () => {
+  it("submits keyword and structured filters into URL state", async () => {
     const user = userEvent.setup()
     installFetch()
     renderAppAt("/cpe-dictionary")
 
     await user.type(screen.getByLabelText("Keyword"), "curl")
-    expect(dictionaryRequests()).toHaveLength(0)
-    await user.click(screen.getByRole("button", { name: "Search" }))
-
-    expect(
-      await screen.findByText("26 results"),
-    ).toBeInTheDocument()
-    expect(dictionaryRequests()).toHaveLength(1)
-    expect(dictionaryRequests()[0].searchParams.get("q")).toBe(
-      "curl",
-    )
-    expect(currentParameters().get("q")).toBe("curl")
-    expect(currentParameters().get("deprecated")).toBe("active")
-  })
-
-  it("supports Enter and structured filters without normalization", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt("/cpe-dictionary")
-
     await user.selectOptions(screen.getByLabelText("Part"), "a")
     await user.type(screen.getByLabelText("Vendor"), "HAXX")
-    await user.type(screen.getByLabelText("Product"), "curl")
-    await user.type(screen.getByLabelText("Version"), "8.14.1-r1")
-    await user.selectOptions(
-      screen.getByLabelText("Status"),
-      "all",
-    )
-    screen.getByLabelText("Version").focus()
-    await user.keyboard("{Enter}")
+    await user.click(screen.getByRole("button", { name: "Search" }))
 
-    await screen.findByText("26 results")
-    const request = dictionaryRequests()[0]
-    expect(request.searchParams.get("part")).toBe("a")
-    expect(request.searchParams.get("vendor")).toBe("HAXX")
-    expect(request.searchParams.get("product")).toBe("curl")
-    expect(request.searchParams.get("version")).toBe("8.14.1-r1")
-    expect(request.searchParams.get("deprecated")).toBe("all")
+    expect(await screen.findByText("26 results")).toBeInTheDocument()
+    expect(currentParameters().get("q")).toBe("curl")
+    expect(currentParameters().get("part")).toBe("a")
+    expect(currentParameters().get("vendor")).toBe("HAXX")
   })
 
-  it("resets the URL, form, and results", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt("/cpe-dictionary?q=curl&deprecated=all")
-    await screen.findByText("26 results")
-
-    await user.click(screen.getByRole("button", { name: "Reset" }))
-
-    expect(screen.getByLabelText("Keyword")).toHaveValue("")
-    expect(currentParameters().get("q")).toBeNull()
-    expect(
-      screen.getByText("Search the selected Dictionary snapshot"),
-    ).toBeInTheDocument()
-  })
-
-  it("shows a loading state, API errors, and empty results", async () => {
-    let resolveSearch:
-      | ((response: Response) => void)
-      | undefined
-    vi.mocked(fetch).mockImplementation((input) => {
-      const url = new URL(String(input), "http://frontend.test")
-      if (url.pathname === "/api/health/") {
-        return Promise.resolve(
-          jsonResponse({ status: "ok", database: "ok" }),
-        )
-      }
-      if (url.pathname === "/api/cpe-dictionary/snapshot/") {
-        return Promise.resolve(jsonResponse(searchResponse.snapshot))
-      }
-      return new Promise<Response>((resolve) => {
-        resolveSearch = resolve
-      })
-    })
-    renderAppAt("/cpe-dictionary?q=curl")
-    expect(
-      await screen.findByText(
-        "Searching the selected Dictionary snapshot…",
-      ),
-    ).toBeInTheDocument()
-    await act(async () => {
-      resolveSearch?.(jsonResponse({ ...searchResponse, results: [] }))
-    })
-    expect(
-      await screen.findByText(
-        "No CPE Dictionary records match these exact search conditions.",
-      ),
-    ).toBeInTheDocument()
-
-    vi.mocked(fetch).mockReset()
-    installFetch({ searchError: true })
-    renderAppAt("/cpe-dictionary?q=x")
-    expect(
-      await screen.findByText("Dictionary search failed"),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(/invalid_search_query/),
-    ).toBeInTheDocument()
-  })
-
-  it("renders statuses, protects long CPE overflow, and copies a row", async () => {
-    const user = userEvent.setup()
-    const copySpy = vi.spyOn(navigator.clipboard, "writeText")
-    installFetch()
-    renderAppAt("/cpe-dictionary?q=curl&deprecated=all")
-    await screen.findByText("26 results")
-
-    expect(screen.getAllByText("Active")).not.toHaveLength(0)
-    expect(screen.getAllByText("Deprecated")).not.toHaveLength(0)
-    const rawCpe = screen.getByTitle(cpeName)
-    expect(rawCpe).toHaveClass("truncate")
-    await user.click(
-      screen.getByRole("button", {
-        name: `Copy CPE ${cpeName}`,
-      }),
-    )
-    expect(copySpy).toHaveBeenCalledWith(
-      cpeName,
-    )
-  })
-
-  it("changes page and page size through server-side URL state", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt("/cpe-dictionary?q=curl")
-    await screen.findByText("26 results")
-
-    expect(
-      screen.getByText("Rows per page").closest("label"),
-    ).toHaveClass(
-      "flex",
-      "shrink-0",
-      "items-center",
-      "gap-2",
-      "whitespace-nowrap",
-    )
-    await user.click(
-      screen.getByRole("button", { name: "Next page" }),
-    )
-    await waitFor(() =>
-      expect(currentParameters().get("page")).toBe("2"),
-    )
-    await user.selectOptions(
-      screen.getByLabelText("Rows per page"),
-      "100",
-    )
-    await waitFor(() =>
-      expect(currentParameters().get("page_size")).toBe("100"),
-    )
-    expect(currentParameters().get("page")).toBe("1")
-    expect(dictionaryRequests().at(-1)?.searchParams.get("page_size"))
-      .toBe("100")
-  })
-
-  it("restores URL state on refresh and browser history navigation", async () => {
+  it("restores URL search state through history navigation", async () => {
     installFetch()
     const { router } = renderAppWithHistory([
-      "/cpe-dictionary?q=openssl&deprecated=all",
-      "/cpe-dictionary?q=curl&deprecated=active",
+      "/cpe-dictionary?q=openssl",
+      "/cpe-dictionary?q=curl",
     ])
     await screen.findByText("26 results")
     expect(screen.getByLabelText("Keyword")).toHaveValue("curl")
@@ -578,361 +200,117 @@ describe("CPE Dictionary Workbench", () => {
         "openssl",
       ),
     )
-    expect(currentParameters().get("deprecated")).toBe("all")
   })
 
-  it("opens read-only details with titles, references, and copy actions", async () => {
+  it("opens read-only detail and copy controls", async () => {
     const user = userEvent.setup()
-    const copySpy = vi.spyOn(navigator.clipboard, "writeText")
     installFetch()
     renderAppAt("/cpe-dictionary?q=curl")
     await screen.findByText("26 results")
 
     await user.click(
-      screen.getAllByRole("button", {
-        name: "View details",
-      })[0],
+      screen.getByRole("button", { name: "View details" }),
     )
     const dialog = await screen.findByRole("dialog")
     expect(
-      within(dialog).getByText("curl français"),
+      within(dialog).getByText("https://curl.se/"),
     ).toBeInTheDocument()
-    const reference = within(dialog).getByRole("link", {
-      name: /https:\/\/curl\.se\//,
-    })
-    expect(reference).toHaveAttribute("target", "_blank")
-    expect(reference).toHaveAttribute(
-      "rel",
-      "noopener noreferrer",
-    )
-    await user.click(
-      within(dialog).getByRole("button", {
-        name: "Copy raw CPE",
+    expect(
+      within(dialog).queryByRole("button", {
+        name: "Ground Truth로 선택",
       }),
-    )
-    await user.click(
-      within(dialog).getByRole("button", {
-        name: "Copy CPE UUID",
-      }),
-    )
-    expect(copySpy).toHaveBeenCalledWith(
-      cpeName,
-    )
-    expect(copySpy).toHaveBeenCalledWith(
-      cpeNameId,
-    )
-    for (const prohibited of [
-      "Select",
-      "Confirm",
-      "Replace",
-      "Save",
-    ]) {
-      expect(
-        within(dialog).queryByRole("button", {
-          name: prohibited,
-        }),
-      ).not.toBeInTheDocument()
-    }
+    ).not.toBeInTheDocument()
   })
 
-  it("loads Component context and fills convenience searches without submitting", async () => {
+  it("keeps results and disables pagination while fetching", async () => {
     const user = userEvent.setup()
     installFetch()
-    renderAppAt("/cpe-dictionary?component_id=101")
-
-    expect(
-      await screen.findByText("Component context"),
-    ).toBeInTheDocument()
-    expect(screen.getByText("Daniel Stenberg")).toBeInTheDocument()
-    expect(screen.getByText("alpine")).toBeInTheDocument()
-    expect(
-      screen.getByText("apk-db-cataloger"),
-    ).toBeInTheDocument()
-    expect(dictionaryRequests()).toHaveLength(0)
+    renderAppAt("/cpe-dictionary?q=curl")
+    await screen.findByText("26 results")
+    const original = vi.mocked(fetch).getMockImplementation()
+    let resolveNext: ((response: Response) => void) | undefined
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      const url = new URL(String(input), "http://frontend.test")
+      if (
+        url.pathname === "/api/cpe-dictionary/" &&
+        url.searchParams.get("page") === "2"
+      ) {
+        return new Promise<Response>((resolve) => {
+          resolveNext = resolve
+        })
+      }
+      return original!(input, init)
+    })
 
     await user.click(
-      screen.getByRole("button", {
-        name: "Use existing CPE product",
-      }),
-    )
-    expect(screen.getByLabelText("Product")).toHaveValue("curl")
-    expect(dictionaryRequests()).toHaveLength(0)
-    await user.click(
-      screen.getByRole("button", {
-        name: "Use publisher",
-      }),
-    )
-    expect(screen.getByLabelText("Keyword")).toHaveValue(
-      "Daniel Stenberg",
-    )
-  })
-
-  it("loads and restores a saved Component Ground Truth", async () => {
-    installFetch({ groundTruth: savedGroundTruthResponse })
-    const firstRender = renderAppAt(
-      "/cpe-dictionary?component_id=101",
+      screen.getByRole("button", { name: "Next page" }),
     )
 
-    expect(
-      await screen.findByText("Official active CPE selected."),
-    ).toBeInTheDocument()
-    let editor = groundTruthEditor()
-    expect(
-      within(editor).getByPlaceholderText(
-        "새로운 판정 유형을 자유롭게 입력",
-      ),
-    ).toHaveValue("vendor correction")
-    expect(within(editor).getByText(`UUID: ${cpeNameId}`))
+    expect(await screen.findByText("불러오는 중..."))
       .toBeInTheDocument()
-
-    firstRender.unmount()
-    renderAppAt("/cpe-dictionary?component_id=101")
+    expect(screen.getByTitle(cpeName)).toBeInTheDocument()
     expect(
-      await screen.findByText("Official active CPE selected."),
-    ).toBeInTheDocument()
-    editor = groundTruthEditor()
+      screen.getByRole("button", { name: "Next page" }),
+    ).toBeDisabled()
     expect(
-      within(editor).getByPlaceholderText(
-        "새로운 판정 유형을 자유롭게 입력",
+      dictionaryRequests().filter(
+        (url) => url.searchParams.get("page") === "2",
       ),
-    ).toHaveValue("vendor correction")
-    expect(groundTruthRequests("GET")).toHaveLength(2)
-  })
-
-  it("selects and clears a Ground Truth candidate from search results", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt(
-      "/cpe-dictionary?component_id=101&q=curl",
-    )
-
-    await screen.findByText("26 results")
-    expect(
-      await screen.findByText("선택된 Ground Truth CPE 없음"),
-    ).toBeInTheDocument()
-    await user.click(
-      screen.getAllByRole("button", {
-        name: "Ground Truth로 선택",
-      })[0],
-    )
-
-    const editor = groundTruthEditor()
-    expect(within(editor).getByText(`UUID: ${cpeNameId}`))
-      .toBeInTheDocument()
-    expect(groundTruthRequests("PUT")).toHaveLength(0)
-
-    await user.click(
-      within(editor).getByRole("button", {
-        name: "CPE 선택 해제",
-      }),
-    )
-    expect(
-      within(editor).getByText("선택된 Ground Truth CPE 없음"),
-    ).toBeInTheDocument()
-  })
-
-  it("selects a Ground Truth candidate from Dictionary details", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt(
-      "/cpe-dictionary?component_id=101&q=curl",
-    )
-
-    await screen.findByText("26 results")
-    await user.click(
-      screen.getAllByRole("button", {
-        name: "View details",
-      })[0],
-    )
-    const dialog = await screen.findByRole("dialog")
-    await user.click(
-      within(dialog).getByRole("button", {
-        name: "Ground Truth로 선택",
-      }),
-    )
-
-    expect(
-      within(groundTruthEditor()).getByText(`UUID: ${cpeNameId}`),
-    ).toBeInTheDocument()
-    expect(groundTruthRequests("PUT")).toHaveLength(0)
-  })
-
-  it("requires a non-empty free-text decision before saving", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt("/cpe-dictionary?component_id=101")
-    const editor = groundTruthEditor()
-    await within(editor).findByText(
-      "선택된 Ground Truth CPE 없음",
-    )
-
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "새로운 판정 유형을 자유롭게 입력",
-      ),
-      "   ",
-    )
-    await user.click(
-      within(editor).getByRole("button", {
-        name: "검토 결과 저장",
-      }),
-    )
-
-    expect(
-      within(editor).getByText("판정 유형은 필수 입력입니다."),
-    ).toBeInTheDocument()
-    expect(groundTruthRequests("PUT")).toHaveLength(0)
-  })
-
-  it("saves a decision with no selected official CPE", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt("/cpe-dictionary?component_id=101")
-    const editor = groundTruthEditor()
-    await within(editor).findByText(
-      "선택된 Ground Truth CPE 없음",
-    )
-
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "새로운 판정 유형을 자유롭게 입력",
-      ),
-      "no applicable official CPE",
-    )
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "판정 근거와 추가 검토 내용을 입력",
-      ),
-      "No corresponding product exists in the snapshot.",
-    )
-    await user.click(
-      within(editor).getByRole("button", {
-        name: "검토 결과 저장",
-      }),
-    )
-
-    expect(
-      await within(editor).findByText(
-        "검토 결과가 저장되었습니다.",
-      ),
-    ).toBeInTheDocument()
-    const [, init] = groundTruthRequests("PUT")[0]
-    expect(JSON.parse(String(init?.body))).toEqual({
-      ground_truth_cpe_id: null,
-      decision_type: "no applicable official CPE",
-      note: "No corresponding product exists in the snapshot.",
-    })
-  })
-
-  it("saves a selected official CPE without changing the Component source CPE", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    renderAppAt(
-      "/cpe-dictionary?component_id=101&q=curl",
-    )
-    await screen.findByText("26 results")
-    await screen.findByText("선택된 Ground Truth CPE 없음")
-
-    await user.click(
-      screen.getAllByRole("button", {
-        name: "Ground Truth로 선택",
-      })[0],
-    )
-    const editor = groundTruthEditor()
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "새로운 판정 유형을 자유롭게 입력",
-      ),
-      "official candidate selected",
-    )
-    await user.click(
-      within(editor).getByRole("button", {
-        name: "검토 결과 저장",
-      }),
-    )
-
-    expect(
-      await within(editor).findByText(
-        "검토 결과가 저장되었습니다.",
-      ),
-    ).toBeInTheDocument()
-    const [, init] = groundTruthRequests("PUT")[0]
-    expect(JSON.parse(String(init?.body))).toMatchObject({
-      ground_truth_cpe_id: 1,
-      decision_type: "official candidate selected",
-    })
-    expect(componentResponse.cpe).toBe(cpeName)
-  })
-
-  it("keeps entered review data visible when saving fails", async () => {
-    const user = userEvent.setup()
-    installFetch({ groundTruthError: true })
-    renderAppAt("/cpe-dictionary?component_id=101")
-    const editor = groundTruthEditor()
-    await within(editor).findByText(
-      "선택된 Ground Truth CPE 없음",
-    )
-    const decision = within(editor).getByPlaceholderText(
-      "새로운 판정 유형을 자유롭게 입력",
-    )
-    const note = within(editor).getByPlaceholderText(
-      "판정 근거와 추가 검토 내용을 입력",
-    )
-
-    await user.type(decision, "manual mismatch")
-    await user.type(note, "Keep this evidence after failure.")
-    await user.click(
-      within(editor).getByRole("button", {
-        name: "검토 결과 저장",
-      }),
-    )
-
-    expect(
-      await within(editor).findByText(
-        /The server rejected this decision/,
-      ),
-    ).toBeInTheDocument()
-    expect(decision).toHaveValue("manual mismatch")
-    expect(note).toHaveValue("Keep this evidence after failure.")
-  })
-
-  it("resets unsaved review state when the Component changes", async () => {
-    const user = userEvent.setup()
-    installFetch()
-    const { router } = renderAppWithHistory([
-      "/cpe-dictionary?component_id=101",
-    ])
-    let editor = groundTruthEditor()
-    await within(editor).findByText(
-      "선택된 Ground Truth CPE 없음",
-    )
-    await user.type(
-      within(editor).getByPlaceholderText(
-        "새로운 판정 유형을 자유롭게 입력",
-      ),
-      "unsaved decision",
-    )
+    ).toHaveLength(1)
 
     await act(async () => {
-      await router.navigate(
-        "/cpe-dictionary?component_id=102",
+      resolveNext?.(
+        jsonResponse({
+          ...searchResponse,
+          page: 2,
+          results: [
+            {
+              ...searchResponse.results[0],
+              id: 2,
+              cpe_name_id:
+                "22222222-2222-4222-8222-222222222222",
+              cpe_name:
+                "cpe:2.3:a:haxx:curl:8.15.0:*:*:*:*:*:*:*",
+              version: "8.15.0",
+            },
+          ],
+        }),
       )
     })
-
-    await waitFor(() =>
-      expect(
-        currentParameters().get("component_id"),
-      ).toBe("102"),
-    )
-    editor = groundTruthEditor()
-    await within(editor).findByText(
-      "선택된 Ground Truth CPE 없음",
-    )
     expect(
-      within(editor).getByPlaceholderText(
-        "새로운 판정 유형을 자유롭게 입력",
+      await screen.findByTitle(
+        "cpe:2.3:a:haxx:curl:8.15.0:*:*:*:*:*:*:*",
       ),
-    ).toHaveValue("")
-    expect(groundTruthRequests("GET")).toHaveLength(2)
+    ).toBeInTheDocument()
+  })
+
+  it("keeps prior results when pagination fails", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/cpe-dictionary?q=curl")
+    await screen.findByText("26 results")
+    const original = vi.mocked(fetch).getMockImplementation()
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      const url = new URL(String(input), "http://frontend.test")
+      if (
+        url.pathname === "/api/cpe-dictionary/" &&
+        url.searchParams.get("page") === "2"
+      ) {
+        return Promise.resolve(
+          jsonResponse({ detail: "Temporary failure" }, 503),
+        )
+      }
+      return original!(input, init)
+    })
+
+    await user.click(
+      screen.getByRole("button", { name: "Next page" }),
+    )
+
+    expect(
+      await screen.findByText("Dictionary search failed"),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Temporary failure")).toBeInTheDocument()
+    expect(screen.getByTitle(cpeName)).toBeInTheDocument()
   })
 })
