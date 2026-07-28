@@ -31,6 +31,7 @@ const componentSummary: ComponentSummary = {
   },
   sbom_document_id: 11,
   component_type: "library",
+  group: "alpine",
   name: "curl",
   version: "8.14.1-r1",
   publisher: "Daniel Stenberg",
@@ -770,6 +771,21 @@ describe("Component Detail panel", () => {
     expect(
       await screen.findByText("Select a component"),
     ).toBeInTheDocument()
+  })
+
+  it("links Dictionary validation to the read-only Workbench", async () => {
+    installSuccessfulFetch()
+    renderAppAt("/components?component_id=101")
+    await waitForDetail()
+
+    expect(
+      screen.getByRole("link", {
+        name: "Search CPE Dictionary",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/cpe-dictionary?component_id=101",
+    )
   })
 
   it("closes Detail when sorting, page size, or page changes", async () => {

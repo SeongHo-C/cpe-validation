@@ -178,6 +178,7 @@ class ComponentListSerializer(
     )
     sbom_document_id = serializers.IntegerField(read_only=True)
     component_type = serializers.CharField(read_only=True)
+    group = serializers.CharField(read_only=True)
     name = serializers.CharField(read_only=True)
     version = serializers.CharField(read_only=True)
     publisher = serializers.CharField(read_only=True)

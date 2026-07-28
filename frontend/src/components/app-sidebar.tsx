@@ -1,12 +1,11 @@
 import {
+  BookOpenText,
   Boxes,
   Layers3,
-  ScanSearch,
   ShieldCheck,
 } from "lucide-react"
 import { NavLink } from "react-router-dom"
 
-import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
@@ -26,14 +25,12 @@ const navigationItems = [
     to: "/components",
     icon: Layers3,
   },
-] as const
-
-const futureNavigationItems = [
   {
-    label: "Workbench",
-    icon: ScanSearch,
+    label: "CPE Dictionary",
+    to: "/cpe-dictionary",
+    icon: BookOpenText,
   },
-]
+] as const
 
 export function AppNavigation({
   imageCount,
@@ -79,26 +76,6 @@ export function AppNavigation({
               <Icon className="size-4" aria-hidden="true" />
               {item.label}
             </NavLink>
-          )
-        })}
-
-        {futureNavigationItems.map((item) => {
-          const Icon = item.icon
-          return (
-            <div
-              key={item.label}
-              aria-disabled="true"
-              className="flex h-9 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm text-muted-foreground/65"
-            >
-              <Icon className="size-4" aria-hidden="true" />
-              <span>{item.label}</span>
-              <Badge
-                variant="secondary"
-                className="ml-auto h-5 px-1.5 text-[10px]"
-              >
-                Next
-              </Badge>
-            </div>
           )
         })}
       </nav>

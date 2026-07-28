@@ -37,6 +37,8 @@ therefore a reproducible structural signal, not Ground Truth.
    Dictionary snapshot.
 8. Browse the image and Primary CPE Component inventory through a read-only
    Django REST Framework API and React UI.
+9. Search and inspect the selected official Dictionary snapshot in a
+   read-only CPE Dictionary Workbench.
 
 ## Repository Structure
 
@@ -212,7 +214,8 @@ The API is mounted at `/api/` and currently provides:
 - pilot image list and detail;
 - dashboard summary;
 - paginated Primary CPE Component list and detail;
-- raw-string Dictionary status and snapshot provenance for Component detail.
+- raw-string Dictionary status and snapshot provenance for Component detail;
+- paginated CPE Dictionary search and CPE record detail.
 
 The DRF endpoints are read-only. The Component endpoint supports image,
 Primary CPE presence, Dictionary status, search, ordering, page, and page-size
@@ -232,13 +235,32 @@ Supported values are `OFFICIAL_ACTIVE`, `OFFICIAL_DEPRECATED`,
 CPE scope; explicitly contradictory `has_cpe` and `dictionary_status` values
 return HTTP 400.
 
+The Dictionary endpoints are:
+
+```text
+GET /api/cpe-dictionary/
+GET /api/cpe-dictionary/snapshot/
+GET /api/cpe-dictionary/<cpe_name_id>/
+```
+
+Search accepts `q`, `part`, `vendor`, `product`, `version`, optional exact
+`cpe_name`, `deprecated`, `page`, and `page_size`. `q` searches raw CPE,
+vendor, product, version, and stored title JSON case-insensitively. Structured
+vendor, product, and version filters use case-insensitive exact equality;
+there is no alias or version normalization. A keyword or structured search
+term is required, the default status is active, and page sizes are limited to
+25, 50, or 100. Both endpoints use the same explicit-or-unique COMPLETE
+snapshot contract as exact matching and permit GET only.
+
 ## Frontend
 
 The desktop-oriented React UI provides:
 
 - `/images` for the Docker image inventory and Primary CPE coverage;
 - `/components` for the server-filtered Primary CPE queue and read-only
-  Component evidence panel.
+  Component evidence panel;
+- `/cpe-dictionary` for read-only official Dictionary search and record
+  inspection.
 
 The Components route supports `image_id`, `search`, `ordering`, `page`,
 `page_size`, `dictionary_status`, and `component_id` query parameters. Its
@@ -251,9 +273,18 @@ selected NVD snapshot, not semantic correctness. The application uses
 `BrowserRouter`; a production static host would need an SPA fallback for
 frontend routes.
 
-The Validation Workbench remains disabled. The current detail API returns the
-exact-match status, snapshot ID, matched NVD CPE UUID, matched raw CPE, and
-deprecation flag where a Dictionary record exists.
+Component detail links to
+`/cpe-dictionary?component_id=<id>`. The Workbench reuses the Component Detail
+API to show image, SBOM, Primary CPE, Dictionary status, PURL, and package
+properties without creating search-context data. Search form and pagination
+state are stored in the URL; no request is made before a user submits or
+restores a prior URL search. The record drawer exposes all CPE 2.3 fields,
+titles, references, raw-string and UUID copy controls.
+
+Search results are exploration evidence, not Ground Truth. The Workbench has
+no save, select, confirm, replacement, or other write action. Candidate
+ranking, BM25, fuzzy matching, aliases, normalization, AI, and automatic CPE
+replacement remain outside this implementation.
 
 ## CPE Profiling
 
@@ -390,7 +421,8 @@ level, the counts are 6, 0, 1,763, and 85,642 respectively for
 
 ## Limitations
 
-- Dictionary search and candidate lookup are not implemented.
+- Dictionary search is deterministic field/keyword lookup, not candidate
+  ranking or semantic matching.
 - Dictionary membership is not a semantic correctness decision or Ground
   Truth.
 - Semantic review and Ground Truth storage are later research stages.

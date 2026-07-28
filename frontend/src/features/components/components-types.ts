@@ -29,6 +29,7 @@ export interface ComponentSummary {
   image: ComponentImageReference
   sbom_document_id: number
   component_type: string
+  group: string
   name: string
   version: string
   publisher: string

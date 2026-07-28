@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import Counter
 
-from django.conf import settings
 from django.db import DatabaseError, connection
 from django.db.models import (
     Count,
@@ -13,7 +12,7 @@ from django.db.models import (
     QuerySet,
 )
 from rest_framework import generics, status
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -29,15 +28,13 @@ from cpe.cpe23 import (
     CPE23StructuralStatus,
     parse_cpe23_formatted_string,
 )
-from cpe_dictionary.models import (
-    CpeDictionarySnapshot,
-    CpeName,
+from cpe_dictionary.models import CpeDictionarySnapshot, CpeName
+from cpe_dictionary.api.snapshot import (
+    CpeDictionarySnapshotViewMixin,
 )
 from sboms.exact_matching import (
     CPEExactMatchStatus,
-    CpeDictionarySnapshotSelectionError,
     match_cpes,
-    select_cpe_dictionary_snapshot,
 )
 from sboms.models import Component, DockerImage, SBOMDocument
 
@@ -58,43 +55,6 @@ COMPONENT_ORDERING_FIELDS = {
     "repository": "sbom_document__docker_image__repository",
     "tag": "sbom_document__docker_image__tag",
 }
-
-
-class CpeDictionarySnapshotAPIException(APIException):
-    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    default_code = "cpe_dictionary_snapshot_unavailable"
-
-    def __init__(
-        self,
-        selection_error: CpeDictionarySnapshotSelectionError,
-    ) -> None:
-        super().__init__(
-            {
-                "code": selection_error.error_code,
-                "detail": str(selection_error),
-            },
-            code=selection_error.error_code,
-        )
-
-
-class CpeDictionarySnapshotViewMixin:
-    _cpe_dictionary_snapshot: CpeDictionarySnapshot | None = None
-
-    def get_cpe_dictionary_snapshot(
-        self,
-    ) -> CpeDictionarySnapshot:
-        if self._cpe_dictionary_snapshot is None:
-            try:
-                self._cpe_dictionary_snapshot = (
-                    select_cpe_dictionary_snapshot(
-                        settings.CPE_DICTIONARY_SNAPSHOT_ID
-                    )
-                )
-            except CpeDictionarySnapshotSelectionError as error:
-                raise CpeDictionarySnapshotAPIException(
-                    error
-                ) from error
-        return self._cpe_dictionary_snapshot
 
 
 def _annotated_image_queryset() -> QuerySet[DockerImage]:

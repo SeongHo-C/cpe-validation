@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import type {
   ComponentDetail,
   ComponentProperty,
@@ -6,6 +7,7 @@ import type {
 } from "@/features/components/components-types"
 import { formatInteger } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { Link } from "react-router-dom"
 
 const cpeFieldNames = [
   "part",
@@ -396,6 +398,13 @@ export function ComponentDetailContent({
             Dictionary exact match is automated evidence and does not
             establish semantic correctness for this component.
           </p>
+          <Button asChild type="button" variant="outline">
+            <Link
+              to={`/cpe-dictionary?component_id=${detail.id}`}
+            >
+              Search CPE Dictionary
+            </Link>
+          </Button>
         </div>
       </DetailSection>
 

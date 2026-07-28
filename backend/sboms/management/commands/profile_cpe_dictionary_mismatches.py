@@ -8,14 +8,14 @@ from django.core.management.base import (
     CommandParser,
 )
 
+from cpe_dictionary.snapshot_selection import (
+    CpeDictionarySnapshotSelectionError,
+    select_cpe_dictionary_snapshot,
+)
 from sboms.cpe_mismatch_profiling import (
     CPEMismatchProfilingError,
     build_cpe_mismatch_profile_analysis,
     write_cpe_mismatch_profile_analysis,
-)
-from sboms.exact_matching import (
-    CpeDictionarySnapshotSelectionError,
-    select_cpe_dictionary_snapshot,
 )
 
 

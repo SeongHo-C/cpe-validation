@@ -33,6 +33,7 @@ const componentFixture: ComponentSummary = {
   },
   sbom_document_id: 11,
   component_type: "library",
+  group: "alpine",
   name: "curl",
   version: "8.14.1-r1",
   publisher: "Daniel Stenberg",
@@ -210,7 +211,7 @@ describe("Components routing and page", () => {
     ).toHaveAttribute("href", "/images")
   })
 
-  it("marks route navigation and keeps Workbench disabled", async () => {
+  it("marks route navigation and exposes the Dictionary Workbench", async () => {
     installSuccessfulFetch()
     const view = renderAppAt("/images")
     const imagesLink = screen.getByRole("link", { name: "Images" })
@@ -222,8 +223,8 @@ describe("Components routing and page", () => {
       screen.getByRole("link", { name: "Components" }),
     ).toHaveAttribute("aria-current", "page")
     expect(
-      screen.getByText("Workbench").closest("[aria-disabled]"),
-    ).toHaveAttribute("aria-disabled", "true")
+      screen.getByRole("link", { name: "CPE Dictionary" }),
+    ).toHaveAttribute("href", "/cpe-dictionary")
   })
 
   it("requests the default Primary CPE queue safely", async () => {

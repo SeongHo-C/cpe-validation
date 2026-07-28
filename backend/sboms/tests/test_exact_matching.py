@@ -12,14 +12,16 @@ from cpe_dictionary.models import (
     CpeDictionarySnapshot,
     CpeName,
 )
+from cpe_dictionary.snapshot_selection import (
+    CpeDictionarySnapshotAmbiguousError,
+    CpeDictionarySnapshotUnavailableError,
+    select_cpe_dictionary_snapshot,
+)
 from sboms.exact_matching import (
     CPEExactMatchIntegrityError,
     CPEExactMatchStatus,
-    CpeDictionarySnapshotAmbiguousError,
-    CpeDictionarySnapshotUnavailableError,
     match_cpe,
     match_cpes,
-    select_cpe_dictionary_snapshot,
 )
 
 
