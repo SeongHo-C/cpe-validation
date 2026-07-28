@@ -906,36 +906,25 @@ describe("Ground Truth workflow", () => {
       screen.getByText("Search Official CPE Names"),
     ).toBeInTheDocument()
     const context = componentContext()
-    const summaryRow = within(context).getByTestId(
-      "component-context-summary-row",
+    const metadataGrid = within(context).getByTestId(
+      "component-context-metadata-grid",
     )
-    for (const label of [
+    expect(
+      Array.from(metadataGrid.querySelectorAll("dt")).map(
+        (label) => label.textContent,
+      ),
+    ).toEqual([
       "Name",
       "Version",
       "Group",
       "Publisher",
-    ]) {
-      expect(within(summaryRow).getByText(label))
-        .toBeInTheDocument()
-    }
-    const identityRow = within(context).getByTestId(
-      "component-context-identity-row",
-    )
-    for (const label of ["Type", "PURL", "Primary CPE"]) {
-      expect(within(identityRow).getByText(label))
-        .toBeInTheDocument()
-    }
-    const sourceRow = within(context).getByTestId(
-      "component-context-source-row",
-    )
-    for (const label of [
+      "Type",
       "Docker image",
       "SBOM document",
       "Exact Match",
-    ]) {
-      expect(within(sourceRow).getByText(label))
-        .toBeInTheDocument()
-    }
+      "Primary CPE",
+      "PURL",
+    ])
     const purl = within(context).getByText(componentPurl)
     expect(purl).toHaveClass(
       "min-w-0",
@@ -947,16 +936,12 @@ describe("Ground Truth workflow", () => {
       "truncate",
       "whitespace-nowrap",
     )
-    const copyPurl = within(context).getByRole("button", {
-      name: "Copy PURL",
-    })
-    const writeText = vi.spyOn(
-      navigator.clipboard,
-      "writeText",
-    )
-    await user.click(copyPurl)
-    expect(writeText).toHaveBeenCalledWith(componentPurl)
-    const primaryCpe = within(identityRow).getByText(cpeName)
+    expect(
+      within(context).queryByRole("button", {
+        name: "Copy PURL",
+      }),
+    ).not.toBeInTheDocument()
+    const primaryCpe = within(metadataGrid).getByText(cpeName)
     expect(primaryCpe).toHaveClass(
       "min-w-0",
       "max-w-full",
@@ -1015,11 +1000,6 @@ describe("Ground Truth workflow", () => {
     expect(purlLabel.parentElement).toHaveTextContent(
       "Not provided",
     )
-    expect(
-      within(context).queryByRole("button", {
-        name: "Copy PURL",
-      }),
-    ).not.toBeInTheDocument()
   })
 
   for (const source of [
