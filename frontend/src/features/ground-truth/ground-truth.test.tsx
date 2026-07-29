@@ -625,13 +625,22 @@ describe("Ground Truth outcome and correction workflow", () => {
       "Component",
       "Version",
       "Original CPE",
-      "Exact Match",
       "Ground Truth Status",
       "Ground Truth",
       "Resolution Outcome",
       "Correction Types",
       "Action",
     ])
+    expect(
+      within(table).queryByRole("columnheader", {
+        name: "Exact Match",
+      }),
+    ).not.toBeInTheDocument()
+    expect(within(table).queryByText("Not in Dictionary"))
+      .not.toBeInTheDocument()
+    for (const row of within(table).getAllByRole("row").slice(1)) {
+      expect(within(row).getAllByRole("cell")).toHaveLength(8)
+    }
     expect(
       within(table).queryByRole("columnheader", {
         name: "Decision Type",
@@ -649,6 +658,13 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(screen.getByLabelText("Correction Type"))
       .toBeInTheDocument()
     expect(screen.getByLabelText("Image")).toBeInTheDocument()
+    expect(screen.getByLabelText("Exact Match"))
+      .toBeInTheDocument()
+    expect(
+      screen.getByRole("option", {
+        name: "Primary CPE Not Present",
+      }),
+    ).toBeInTheDocument()
   })
 
   it("keeps new filters in URL state and resets them", async () => {
@@ -665,6 +681,10 @@ describe("Ground Truth outcome and correction workflow", () => {
       screen.getByLabelText("Correction Type"),
       "vendor_corrected",
     )
+    await user.selectOptions(
+      screen.getByLabelText("Exact Match"),
+      "NOT_IN_DICTIONARY",
+    )
 
     await waitFor(() => {
       const location =
@@ -678,6 +698,9 @@ describe("Ground Truth outcome and correction workflow", () => {
       )
       expect(query.get("correction_type")).toBe(
         "vendor_corrected",
+      )
+      expect(query.get("dictionary_status")).toBe(
+        "NOT_IN_DICTIONARY",
       )
     })
 
@@ -694,6 +717,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(screen.getByLabelText("Correction Type")).toHaveValue(
       "",
     )
+    expect(screen.getByLabelText("Exact Match")).toHaveValue("")
   })
 
   it("preserves outcome and correction filters in review navigation", async () => {
@@ -1168,6 +1192,10 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(screen.getByText("Search Official CPE Names"))
       .toBeInTheDocument()
     const context = componentContext()
+    expect(within(context).getByText("Exact Match"))
+      .toBeInTheDocument()
+    expect(within(context).getByText("Not in Dictionary"))
+      .toBeInTheDocument()
     expect(within(context).getByText(componentPurl)).toHaveClass(
       "whitespace-normal",
       "break-all",

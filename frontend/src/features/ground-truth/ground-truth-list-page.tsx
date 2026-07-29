@@ -45,7 +45,6 @@ import { ComponentsPagination } from "@/features/components/components-paginatio
 import type { DictionaryStatus } from "@/features/components/components-types"
 import {
   dictionaryStatuses,
-  dictionaryStatusClassName,
   dictionaryStatusLabels,
 } from "@/features/components/dictionary-status"
 import {
@@ -77,7 +76,6 @@ import {
   ApiError,
   isAbortError,
 } from "@/lib/api-client"
-import { cn } from "@/lib/utils"
 
 function groundTruthValue(
   component: GroundTruthComponentSummary,
@@ -317,13 +315,11 @@ export function GroundTruthListPage() {
                     <option value="">
                       All Exact Match Results
                     </option>
-                    {dictionaryStatuses
-                      .filter((status) => status !== "NOT_PRESENT")
-                      .map((status) => (
-                        <option key={status} value={status}>
-                          {dictionaryStatusLabels[status]}
-                        </option>
-                      ))}
+                    {dictionaryStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {dictionaryStatusLabels[status]}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label
@@ -457,19 +453,18 @@ export function GroundTruthListPage() {
                 />
               </div>
             ) : null}
-            <Table className="min-w-[1450px] table-fixed">
+            <Table className="min-w-[1320px] table-fixed">
               <TableCaption className="sr-only">
                 Ground Truth review components
               </TableCaption>
               <colgroup>
                 <col className="w-[8%]" />
                 <col className="w-[6%]" />
-                <col className="w-[15%]" />
-                <col className="w-[9%]" />
+                <col className="w-[18%]" />
                 <col className="w-[10%]" />
-                <col className="w-[16%]" />
-                <col className="w-[14%]" />
+                <col className="w-[19%]" />
                 <col className="w-[15%]" />
+                <col className="w-[17%]" />
                 <col className="w-[7%]" />
               </colgroup>
               <TableHeader className="bg-muted/45">
@@ -477,7 +472,6 @@ export function GroundTruthListPage() {
                   <TableHead>Component</TableHead>
                   <TableHead>Version</TableHead>
                   <TableHead>Original CPE</TableHead>
-                  <TableHead>Exact Match</TableHead>
                   <TableHead>Ground Truth Status</TableHead>
                   <TableHead>Ground Truth</TableHead>
                   <TableHead>Resolution Outcome</TableHead>
@@ -513,23 +507,6 @@ export function GroundTruthListPage() {
                         >
                           {component.cpe}
                         </p>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "shrink-0",
-                            dictionaryStatusClassName(
-                              component.dictionary_status,
-                            ),
-                          )}
-                        >
-                          {
-                            dictionaryStatusLabels[
-                              component.dictionary_status
-                            ]
-                          }
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge
