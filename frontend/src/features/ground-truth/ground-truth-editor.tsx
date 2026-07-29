@@ -31,10 +31,14 @@ import {
   getComponentCpeGroundTruth,
   putComponentCpeGroundTruth,
 } from "@/features/ground-truth/ground-truth-api"
-import { GroundTruthDecisionTypeField } from "@/features/ground-truth/ground-truth-decision-type-field"
+import { GroundTruthCorrectionTypeField } from "@/features/ground-truth/ground-truth-correction-type-field"
+import {
+  expectedResolutionOutcome,
+  resolutionAllowsCorrections,
+} from "@/features/ground-truth/ground-truth-resolution-outcome"
 import type {
   ComponentCpeGroundTruthResponse,
-  GroundTruthDecisionType,
+  GroundTruthCorrectionType,
 } from "@/features/ground-truth/ground-truth-types"
 import {
   ApiError,
@@ -51,19 +55,22 @@ function requestError(error: unknown): string {
 function stateSignature(
   selectedCpe: CpeDictionaryCandidate | null,
   manualCpe: string,
-  decisionType: GroundTruthDecisionType | null,
+  correctionTypes: GroundTruthCorrectionType[],
   note: string,
 ): string {
   return JSON.stringify({
     dictionary_cpe_id: selectedCpe?.id ?? null,
     manual_cpe: manualCpe,
-    decision_type_id: decisionType?.id ?? null,
+    correction_type_ids: correctionTypes
+      .map((correctionType) => correctionType.id)
+      .sort((left, right) => left - right),
     note,
   })
 }
 
 export function GroundTruthEditor({
   componentId,
+  originalCpe,
   selectedCpe,
   manualCpe,
   onSelectedCpeChange,
@@ -73,6 +80,7 @@ export function GroundTruthEditor({
   onSavedAndNext,
 }: {
   componentId: number
+  originalCpe: string
   selectedCpe: CpeDictionaryCandidate | null
   manualCpe: string
   onSelectedCpeChange: (
@@ -83,8 +91,12 @@ export function GroundTruthEditor({
   canMoveNext: boolean
   onSavedAndNext: () => void
 }) {
-  const [decisionType, setDecisionType] =
-    useState<GroundTruthDecisionType | null>(null)
+  const [correctionTypes, setCorrectionTypes] = useState<
+    GroundTruthCorrectionType[]
+  >([])
+  const [correctionNotice, setCorrectionNotice] = useState<
+    string | null
+  >(null)
   const [note, setNote] = useState("")
   const [snapshotId, setSnapshotId] = useState("")
   const [loading, setLoading] = useState(true)
@@ -100,10 +112,22 @@ export function GroundTruthEditor({
       stateSignature(
         selectedCpe,
         manualCpe,
-        decisionType,
+        correctionTypes,
         note,
       ),
-    [decisionType, manualCpe, note, selectedCpe],
+    [correctionTypes, manualCpe, note, selectedCpe],
+  )
+  const resolutionOutcome = useMemo(
+    () =>
+      expectedResolutionOutcome(
+        originalCpe,
+        selectedCpe,
+        manualCpe,
+      ),
+    [manualCpe, originalCpe, selectedCpe],
+  )
+  const correctionsAllowed = resolutionAllowsCorrections(
+    resolutionOutcome.code,
   )
 
   useEffect(() => {
@@ -114,8 +138,22 @@ export function GroundTruthEditor({
   }, [currentSignature, onDirtyChange, savedSignature])
 
   useEffect(() => {
+    if (correctionsAllowed) {
+      setCorrectionNotice(null)
+      return
+    }
+    if (correctionTypes.length) {
+      setCorrectionTypes([])
+      setCorrectionNotice(
+        "Correction Types were cleared because this Resolution Outcome does not allow them.",
+      )
+    }
+  }, [correctionTypes.length, correctionsAllowed])
+
+  useEffect(() => {
     const controller = new AbortController()
-    setDecisionType(null)
+    setCorrectionTypes([])
+    setCorrectionNotice(null)
     setNote("")
     setSnapshotId("")
     setLoading(true)
@@ -134,11 +172,11 @@ export function GroundTruthEditor({
           groundTruth?.ground_truth_cpe ??
           null
         const restoredManual = groundTruth?.manual_cpe ?? ""
-        const restoredDecision =
-          groundTruth?.decision_type ?? null
+        const restoredCorrectionTypes =
+          groundTruth?.correction_types ?? []
         const restoredNote = groundTruth?.note ?? ""
         setSnapshotId(response.snapshot_id)
-        setDecisionType(restoredDecision)
+        setCorrectionTypes(restoredCorrectionTypes)
         setNote(restoredNote)
         onSelectedCpeChange(restoredCandidate)
         onManualCpeChange(restoredManual)
@@ -146,7 +184,7 @@ export function GroundTruthEditor({
           stateSignature(
             restoredCandidate,
             restoredManual,
-            restoredDecision,
+            restoredCorrectionTypes,
             restoredNote,
           ),
         )
@@ -173,11 +211,6 @@ export function GroundTruthEditor({
   const saveGroundTruth = async (
     moveNext: boolean,
   ): Promise<void> => {
-    if (!decisionType) {
-      setSuccess(null)
-      setError("Decision Type is required.")
-      return
-    }
     setSaving(true)
     setError(null)
     setSuccess(null)
@@ -186,7 +219,9 @@ export function GroundTruthEditor({
         await putComponentCpeGroundTruth(componentId, {
           dictionary_cpe_id: selectedCpe?.id ?? null,
           manual_cpe: manualCpe.trim() || null,
-          decision_type_id: decisionType.id,
+          correction_type_ids: correctionTypes.map(
+            (correctionType) => correctionType.id,
+          ),
           note,
         })
       const groundTruth = response.ground_truth
@@ -195,11 +230,11 @@ export function GroundTruthEditor({
         groundTruth?.ground_truth_cpe ??
         null
       const restoredManual = groundTruth?.manual_cpe ?? ""
-      const restoredDecision =
-        groundTruth?.decision_type ?? null
+      const restoredCorrectionTypes =
+        groundTruth?.correction_types ?? []
       const restoredNote = groundTruth?.note ?? ""
       setSnapshotId(response.snapshot_id)
-      setDecisionType(restoredDecision)
+      setCorrectionTypes(restoredCorrectionTypes)
       setNote(restoredNote)
       onSelectedCpeChange(restoredCandidate)
       onManualCpeChange(restoredManual)
@@ -207,7 +242,7 @@ export function GroundTruthEditor({
         stateSignature(
           restoredCandidate,
           restoredManual,
-          restoredDecision,
+          restoredCorrectionTypes,
           restoredNote,
         ),
       )
@@ -329,14 +364,38 @@ export function GroundTruthEditor({
               </span>
             </label>
 
-            <GroundTruthDecisionTypeField
-              value={decisionType}
-              onChange={setDecisionType}
+            <section className="rounded-lg border bg-muted/20 p-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Resolution Outcome
+              </p>
+              <Badge className="mt-2" variant="secondary">
+                {resolutionOutcome.label}
+              </Badge>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Calculated from the Ground Truth result and confirmed
+                by the server when saved.
+              </p>
+            </section>
+
+            <GroundTruthCorrectionTypeField
+              value={correctionTypes}
+              onChange={setCorrectionTypes}
+              disabled={!correctionsAllowed}
+              disabledMessage={
+                !correctionsAllowed
+                  ? "Correction Types are unavailable for this Resolution Outcome."
+                  : undefined
+              }
               onInteraction={() => {
                 setError(null)
                 setSuccess(null)
               }}
             />
+            {correctionNotice ? (
+              <p className="text-xs text-amber-700">
+                {correctionNotice}
+              </p>
+            ) : null}
 
             <details className="rounded-lg border bg-muted/20 px-3 py-2">
               <summary className="cursor-pointer text-sm font-medium">

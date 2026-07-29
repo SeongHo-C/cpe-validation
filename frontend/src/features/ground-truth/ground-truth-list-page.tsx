@@ -48,7 +48,10 @@ import {
   dictionaryStatusClassName,
   dictionaryStatusLabels,
 } from "@/features/components/dictionary-status"
-import { getGroundTruthComponents } from "@/features/ground-truth/ground-truth-api"
+import {
+  getGroundTruthComponents,
+  getGroundTruthCorrectionTypes,
+} from "@/features/ground-truth/ground-truth-api"
 import {
   DEFAULT_GROUND_TRUTH_QUERY,
   groundTruthDetailPath,
@@ -56,11 +59,17 @@ import {
   writeGroundTruthListQuery,
 } from "@/features/ground-truth/ground-truth-query"
 import type {
+  GroundTruthCorrectionType,
   GroundTruthComponentSummary,
   GroundTruthListQuery,
   GroundTruthOrdering,
+  GroundTruthResolutionOutcomeCode,
   GroundTruthStatus,
 } from "@/features/ground-truth/ground-truth-types"
+import {
+  resolutionOutcomeCodes,
+  resolutionOutcomeLabels,
+} from "@/features/ground-truth/ground-truth-resolution-outcome"
 import { groundTruthStatusLabels } from "@/features/ground-truth/ground-truth-status"
 import { getDockerImages } from "@/features/images/images-api"
 import type { DockerImageSummary } from "@/features/images/images-types"
@@ -115,6 +124,9 @@ export function GroundTruthListPage() {
     results: GroundTruthComponentSummary[]
   } | null>(null)
   const [images, setImages] = useState<DockerImageSummary[]>([])
+  const [correctionTypes, setCorrectionTypes] = useState<
+    GroundTruthCorrectionType[]
+  >([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -136,6 +148,17 @@ export function GroundTruthListPage() {
     getDockerImages(controller.signal)
       .then(setImages)
       .catch(() => setImages([]))
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    getGroundTruthCorrectionTypes(
+      { is_active: "all" },
+      controller.signal,
+    )
+      .then(setCorrectionTypes)
+      .catch(() => setCorrectionTypes([]))
     return () => controller.abort()
   }, [])
 
@@ -168,6 +191,8 @@ export function GroundTruthListPage() {
     query.image_id !== undefined ||
     query.ground_truth_status !== undefined ||
     query.dictionary_status !== undefined ||
+    query.resolution_outcome !== undefined ||
+    query.correction_type !== undefined ||
     query.search !== undefined ||
     query.ordering !== DEFAULT_GROUND_TRUTH_QUERY.ordering ||
     query.page !== DEFAULT_GROUND_TRUTH_QUERY.page ||
@@ -301,6 +326,63 @@ export function GroundTruthListPage() {
                       ))}
                   </select>
                 </label>
+                <label
+                  className={`${formLabelClassName} sm:w-full lg:w-[250px]`}
+                >
+                  <span className="block">Resolution Outcome</span>
+                  <select
+                    aria-label="Resolution Outcome"
+                    className={`${selectControlClassName} w-full`}
+                    value={query.resolution_outcome ?? ""}
+                    onChange={(event) =>
+                      setQuery({
+                        resolution_outcome:
+                          (event.target.value ||
+                            undefined) as
+                            | GroundTruthResolutionOutcomeCode
+                            | undefined,
+                        page: 1,
+                      })
+                    }
+                  >
+                    <option value="">All Resolution Outcomes</option>
+                    {resolutionOutcomeCodes.map((code) => (
+                      <option key={code} value={code}>
+                        {resolutionOutcomeLabels[code]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label
+                  className={`${formLabelClassName} sm:w-full lg:w-[240px]`}
+                >
+                  <span className="block">Correction Type</span>
+                  <select
+                    aria-label="Correction Type"
+                    className={`${selectControlClassName} w-full`}
+                    value={query.correction_type ?? ""}
+                    onChange={(event) =>
+                      setQuery({
+                        correction_type:
+                          event.target.value || undefined,
+                        page: 1,
+                      })
+                    }
+                  >
+                    <option value="">All Correction Types</option>
+                    {correctionTypes.map((correctionType) => (
+                      <option
+                        key={correctionType.id}
+                        value={correctionType.code}
+                      >
+                        {correctionType.name}
+                        {!correctionType.is_active
+                          ? " (Inactive)"
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end xl:ml-auto xl:shrink-0">
@@ -375,18 +457,19 @@ export function GroundTruthListPage() {
                 />
               </div>
             ) : null}
-            <Table className="min-w-[1180px] table-fixed">
+            <Table className="min-w-[1450px] table-fixed">
               <TableCaption className="sr-only">
                 Ground Truth review components
               </TableCaption>
               <colgroup>
-                <col className="w-[11%]" />
-                <col className="w-[7%]" />
-                <col className="w-[16%]" />
+                <col className="w-[8%]" />
+                <col className="w-[6%]" />
+                <col className="w-[15%]" />
+                <col className="w-[9%]" />
                 <col className="w-[10%]" />
-                <col className="w-[12%]" />
-                <col className="w-[20%]" />
-                <col className="w-[17%]" />
+                <col className="w-[16%]" />
+                <col className="w-[14%]" />
+                <col className="w-[15%]" />
                 <col className="w-[7%]" />
               </colgroup>
               <TableHeader className="bg-muted/45">
@@ -397,7 +480,8 @@ export function GroundTruthListPage() {
                   <TableHead>Exact Match</TableHead>
                   <TableHead>Ground Truth Status</TableHead>
                   <TableHead>Ground Truth</TableHead>
-                  <TableHead>Decision Type</TableHead>
+                  <TableHead>Resolution Outcome</TableHead>
+                  <TableHead>Correction Types</TableHead>
                   <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -473,25 +557,41 @@ export function GroundTruthListPage() {
                         </p>
                       </TableCell>
                       <TableCell className="min-w-0">
-                        {component.decision_type ? (
-                          <div className="flex w-full min-w-0 items-center gap-1.5">
-                            <span
-                              className="min-w-0 truncate"
-                              title={component.decision_type.name}
-                            >
-                              {component.decision_type.name}
-                            </span>
-                            {!component.decision_type.is_active ? (
-                              <Badge
-                                className="shrink-0"
-                                variant="outline"
-                              >
-                                Inactive
-                              </Badge>
-                            ) : null}
-                          </div>
+                        {component.resolution_outcome ? (
+                          <Badge
+                            className="max-w-full truncate"
+                            title={
+                              component.resolution_outcome.label
+                            }
+                            variant="secondary"
+                          >
+                            {component.resolution_outcome.label}
+                          </Badge>
                         ) : (
                           "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="min-w-0">
+                        {component.correction_types.length ? (
+                          <div className="flex min-w-0 flex-wrap gap-1">
+                            {component.correction_types.map(
+                              (correctionType) => (
+                                <Badge
+                                  className="max-w-full"
+                                  key={correctionType.id}
+                                  title={correctionType.name}
+                                  variant="outline"
+                                >
+                                  {correctionType.name}
+                                  {!correctionType.is_active
+                                    ? " · Inactive"
+                                    : ""}
+                                </Badge>
+                              ),
+                            )}
+                          </div>
+                        ) : (
+                          "None"
                         )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">

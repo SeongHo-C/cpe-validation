@@ -1,6 +1,7 @@
 import {
   isDictionaryStatus,
 } from "@/features/components/dictionary-status"
+import { isResolutionOutcomeCode } from "@/features/ground-truth/ground-truth-resolution-outcome"
 import type {
   GroundTruthListQuery,
   GroundTruthOrdering,
@@ -38,6 +39,9 @@ export function parseGroundTruthListQuery(
   const rawDictionaryStatus = parameters.get(
     "dictionary_status",
   )
+  const rawResolutionOutcome = parameters.get(
+    "resolution_outcome",
+  )
 
   return {
     image_id: positiveInteger(parameters.get("image_id")),
@@ -45,6 +49,13 @@ export function parseGroundTruthListQuery(
     dictionary_status: isDictionaryStatus(rawDictionaryStatus)
       ? rawDictionaryStatus
       : undefined,
+    resolution_outcome: isResolutionOutcomeCode(
+      rawResolutionOutcome,
+    )
+      ? rawResolutionOutcome
+      : undefined,
+    correction_type:
+      parameters.get("correction_type")?.trim() || undefined,
     search: parameters.get("search")?.trim() || undefined,
     ordering,
     page: positiveInteger(parameters.get("page")) ?? 1,
@@ -76,6 +87,15 @@ export function writeGroundTruthListQuery(
       "dictionary_status",
       query.dictionary_status,
     )
+  }
+  if (query.resolution_outcome) {
+    parameters.set(
+      "resolution_outcome",
+      query.resolution_outcome,
+    )
+  }
+  if (query.correction_type) {
+    parameters.set("correction_type", query.correction_type)
   }
   if (query.search?.trim()) {
     parameters.set("search", query.search.trim())

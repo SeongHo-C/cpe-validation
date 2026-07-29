@@ -11,9 +11,12 @@ from sboms.models import (
     Component,
     ComponentCpeGroundTruth,
     DockerImage,
-    GroundTruthDecisionType,
+    GroundTruthCorrectionType,
+    GroundTruthResolutionOutcome,
     SBOMDocument,
+    CORRECTION_TYPE_CODE_PATTERN,
     contains_hangul,
+    derive_resolution_outcome,
 )
 
 
@@ -222,16 +225,19 @@ class GroundTruthCpeSerializer(serializers.ModelSerializer):
         )
 
 
-class GroundTruthDecisionTypeSerializer(serializers.ModelSerializer):
+class GroundTruthCorrectionTypeSerializer(
+    serializers.ModelSerializer
+):
     usage_count = serializers.IntegerField(
         read_only=True,
         required=False,
     )
 
     class Meta:
-        model = GroundTruthDecisionType
+        model = GroundTruthCorrectionType
         fields = (
             "id",
+            "code",
             "name",
             "description",
             "is_active",
@@ -239,28 +245,48 @@ class GroundTruthDecisionTypeSerializer(serializers.ModelSerializer):
         )
 
 
-class GroundTruthDecisionTypeCreateSerializer(
+class GroundTruthCorrectionTypeCreateSerializer(
     serializers.ModelSerializer
 ):
     class Meta:
-        model = GroundTruthDecisionType
-        fields = ("name", "description")
+        model = GroundTruthCorrectionType
+        fields = ("code", "name", "description")
+
+    def validate_code(self, value: str) -> str:
+        normalized_code = value.strip().lower()
+        if not CORRECTION_TYPE_CODE_PATTERN.fullmatch(
+            normalized_code
+        ):
+            raise serializers.ValidationError(
+                (
+                    "Correction Type code must start with a lowercase "
+                    "letter and contain only lowercase letters, "
+                    "digits, and underscores."
+                )
+            )
+        if GroundTruthCorrectionType.objects.filter(
+            code=normalized_code
+        ).exists():
+            raise serializers.ValidationError(
+                "A Correction Type with this code already exists."
+            )
+        return normalized_code
 
     def validate_name(self, value: str) -> str:
         normalized_name = value.strip()
         if not normalized_name:
             raise serializers.ValidationError(
-                "Decision Type name must not be blank."
+                "Correction Type name must not be blank."
             )
-        if GroundTruthDecisionType.objects.filter(
+        if GroundTruthCorrectionType.objects.filter(
             name__iexact=normalized_name
         ).exists():
             raise serializers.ValidationError(
-                "A Decision Type with this name already exists."
+                "A Correction Type with this name already exists."
             )
         if contains_hangul(normalized_name):
             raise serializers.ValidationError(
-                "Decision Type names must be written in English."
+                "Correction Type names must be written in English."
             )
         return normalized_name
 
@@ -269,18 +295,18 @@ class GroundTruthDecisionTypeCreateSerializer(
         if contains_hangul(normalized_description):
             raise serializers.ValidationError(
                 (
-                    "Decision Type descriptions must be written "
+                    "Correction Type descriptions must be written "
                     "in English."
                 )
             )
         return normalized_description
 
 
-class GroundTruthDecisionTypeUpdateSerializer(
+class GroundTruthCorrectionTypeUpdateSerializer(
     serializers.ModelSerializer
 ):
     class Meta:
-        model = GroundTruthDecisionType
+        model = GroundTruthCorrectionType
         fields = ("description", "is_active")
 
     def validate_description(self, value: str) -> str:
@@ -288,19 +314,25 @@ class GroundTruthDecisionTypeUpdateSerializer(
         if contains_hangul(normalized_description):
             raise serializers.ValidationError(
                 (
-                    "Decision Type descriptions must be written "
+                    "Correction Type descriptions must be written "
                     "in English."
                 )
             )
         return normalized_description
 
     def validate(self, attributes: dict) -> dict:
-        if "name" in self.initial_data:
+        immutable_fields = {
+            field
+            for field in ("code", "name")
+            if field in self.initial_data
+        }
+        if immutable_fields:
             raise serializers.ValidationError(
                 {
-                    "name": (
-                        "Decision Type names cannot be changed."
+                    field: (
+                        f"Correction Type {field} cannot be changed."
                     )
+                    for field in immutable_fields
                 }
             )
         return attributes
@@ -316,7 +348,11 @@ class ComponentCpeGroundTruthSerializer(
     )
     ground_truth_cpe = GroundTruthCpeSerializer(read_only=True)
     manual_cpe = serializers.SerializerMethodField()
-    decision_type = GroundTruthDecisionTypeSerializer(read_only=True)
+    resolution_outcome = serializers.SerializerMethodField()
+    correction_types = GroundTruthCorrectionTypeSerializer(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = ComponentCpeGroundTruth
@@ -326,7 +362,8 @@ class ComponentCpeGroundTruthSerializer(
             "dictionary_cpe",
             "ground_truth_cpe",
             "manual_cpe",
-            "decision_type",
+            "resolution_outcome",
+            "correction_types",
             "note",
             "created_at",
             "updated_at",
@@ -347,6 +384,18 @@ class ComponentCpeGroundTruthSerializer(
         instance: ComponentCpeGroundTruth,
     ) -> str | None:
         return instance.manual_ground_truth_cpe or None
+
+    def get_resolution_outcome(
+        self,
+        instance: ComponentCpeGroundTruth,
+    ) -> dict[str, str]:
+        outcome = GroundTruthResolutionOutcome(
+            instance.resolution_outcome
+        )
+        return {
+            "code": outcome.value,
+            "label": outcome.label,
+        }
 
 
 class ComponentCpeGroundTruthWriteSerializer(
@@ -372,9 +421,12 @@ class ComponentCpeGroundTruthWriteSerializer(
         default=None,
         trim_whitespace=True,
     )
-    decision_type_id = serializers.PrimaryKeyRelatedField(
-        source="decision_type",
-        queryset=GroundTruthDecisionType.objects.all(),
+    correction_type_ids = serializers.PrimaryKeyRelatedField(
+        source="correction_types",
+        queryset=GroundTruthCorrectionType.objects.all(),
+        many=True,
+        required=False,
+        default=list,
     )
     note = serializers.CharField(
         allow_blank=True,
@@ -384,12 +436,12 @@ class ComponentCpeGroundTruthWriteSerializer(
     )
 
     def validate(self, attributes: dict) -> dict:
-        if "decision_type" in self.initial_data:
+        if "resolution_outcome" in self.initial_data:
             raise serializers.ValidationError(
                 {
-                    "decision_type": (
-                        "Use decision_type_id to select a managed "
-                        "Decision Type."
+                    "resolution_outcome": (
+                        "Resolution Outcome is calculated by the "
+                        "server."
                     )
                 }
             )
@@ -401,22 +453,50 @@ class ComponentCpeGroundTruthWriteSerializer(
                     )
                 }
             )
-        decision_type = attributes["decision_type"]
-        current_ground_truth = self.context.get(
-            "current_ground_truth"
+        raw_correction_type_ids = self.initial_data.get(
+            "correction_type_ids",
+            [],
         )
         if (
-            not decision_type.is_active
-            and (
-                current_ground_truth is None
-                or current_ground_truth.decision_type_id
-                != decision_type.id
-            )
+            isinstance(raw_correction_type_ids, list)
+            and len(raw_correction_type_ids)
+            != len(set(map(str, raw_correction_type_ids)))
         ):
             raise serializers.ValidationError(
                 {
-                    "decision_type_id": (
-                        "Inactive Decision Types cannot be newly "
+                    "correction_type_ids": (
+                        "A Correction Type may be selected only once."
+                    )
+                }
+            )
+        correction_types = attributes["correction_types"]
+        current_ground_truth = self.context.get(
+            "current_ground_truth"
+        )
+        existing_correction_type_ids = (
+            set(
+                current_ground_truth.correction_types.values_list(
+                    "id",
+                    flat=True,
+                )
+            )
+            if current_ground_truth is not None
+            else set()
+        )
+        newly_selected_inactive = [
+            correction_type
+            for correction_type in correction_types
+            if (
+                not correction_type.is_active
+                and correction_type.id
+                not in existing_correction_type_ids
+            )
+        ]
+        if newly_selected_inactive:
+            raise serializers.ValidationError(
+                {
+                    "correction_type_ids": (
+                        "Inactive Correction Types cannot be newly "
                         "selected."
                     )
                 }
@@ -496,6 +576,38 @@ class ComponentCpeGroundTruthWriteSerializer(
         attributes[
             "manual_ground_truth_cpe"
         ] = normalized_manual_cpe
+        outcome = derive_resolution_outcome(
+            original_cpe=self.context["component"].cpe,
+            dictionary_cpe=(
+                ground_truth_cpe.cpe_name
+                if ground_truth_cpe is not None
+                else None
+            ),
+            manual_cpe=normalized_manual_cpe,
+        )
+        if (
+            outcome
+            in {
+                (
+                    GroundTruthResolutionOutcome
+                    .ORIGINAL_OFFICIAL_CONFIRMED
+                ),
+                (
+                    GroundTruthResolutionOutcome
+                    .DIRECT_OFFICIAL_NOT_CONFIRMED
+                ),
+            }
+            and correction_types
+        ):
+            raise serializers.ValidationError(
+                {
+                    "correction_type_ids": (
+                        "Correction Types must be empty for this "
+                        "Resolution Outcome."
+                    )
+                }
+            )
+        attributes["resolution_outcome"] = outcome
         return attributes
 
 
@@ -504,7 +616,8 @@ class GroundTruthComponentListSerializer(
 ):
     ground_truth_status = serializers.SerializerMethodField()
     ground_truth = serializers.SerializerMethodField()
-    decision_type = serializers.SerializerMethodField()
+    resolution_outcome = serializers.SerializerMethodField()
+    correction_types = serializers.SerializerMethodField()
 
     def _ground_truth(
         self,
@@ -533,15 +646,29 @@ class GroundTruthComponentListSerializer(
             ground_truth
         ).data
 
-    def get_decision_type(
+    def get_resolution_outcome(
         self,
         instance: Component,
     ) -> dict | None:
         ground_truth = self._ground_truth(instance)
-        return (
-            GroundTruthDecisionTypeSerializer(
-                ground_truth.decision_type
-            ).data
-            if ground_truth is not None
-            else None
+        if ground_truth is None:
+            return None
+        outcome = GroundTruthResolutionOutcome(
+            ground_truth.resolution_outcome
         )
+        return {
+            "code": outcome.value,
+            "label": outcome.label,
+        }
+
+    def get_correction_types(
+        self,
+        instance: Component,
+    ) -> list[dict]:
+        ground_truth = self._ground_truth(instance)
+        if ground_truth is None:
+            return []
+        return GroundTruthCorrectionTypeSerializer(
+            ground_truth.correction_types.all(),
+            many=True,
+        ).data

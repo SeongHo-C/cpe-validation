@@ -240,6 +240,7 @@ export function GroundTruthEditorPage() {
           <GroundTruthEditor
             key={componentId}
             componentId={componentId}
+            originalCpe={component?.cpe ?? ""}
             selectedCpe={selectedCpe}
             manualCpe={manualCpe}
             onSelectedCpeChange={setSelectedCpe}

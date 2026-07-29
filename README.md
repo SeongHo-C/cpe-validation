@@ -222,7 +222,9 @@ The API is mounted at `/api/` and currently provides:
 - paginated CPE Dictionary search and CPE record detail;
 - Component- and snapshot-specific expected Ground Truth retrieval and
   upsert;
-- a filtered, paginated Ground Truth review queue.
+- managed Ground Truth Correction Types;
+- a filtered, paginated Ground Truth review queue with server-derived
+  Resolution Outcomes.
 
 The inventory, Component, and CPE Dictionary endpoints are read-only. The
 Component list endpoint supports image, Primary CPE presence, Dictionary
@@ -269,11 +271,54 @@ PUT /api/components/<component_id>/cpe-ground-truth/
 
 The server selects the current COMPLETE snapshot. `PUT` creates or updates
 the single annotation for that Component and snapshot. An optional selected
-`CpeName` must belong to the same snapshot; `decision_type` is required
-free text with outer whitespace removed, and `note` is optional. A manual
-`manual_cpe` may be stored instead of a Dictionary record when it passes the
-existing CPE 2.3 structural parser. Dictionary and manual values are mutually
-exclusive. The imported `Component.cpe` value is never replaced or modified.
+`CpeName` must belong to the same snapshot. A manual `manual_cpe` may be
+stored instead of a Dictionary record when it passes the existing CPE 2.3
+structural parser; Dictionary and manual values are mutually exclusive.
+`correction_type_ids` accepts zero or more managed Correction Type IDs, and
+`note` is optional. The client cannot set `resolution_outcome`: the server
+always derives it from the saved Ground Truth source and exact raw-string
+comparison with the imported `Component.cpe`. The imported Component value is
+never replaced or modified.
+
+Ground Truth exposes three deliberately separate concepts:
+
+- Ground Truth Status (`Not Reviewed` or `Completed`) is workflow state
+  derived from whether a record exists.
+- Resolution Outcome is one mutually exclusive final result:
+  `ORIGINAL_OFFICIAL_CONFIRMED` (`Original CPE confirmed`),
+  `CORRECTED_TO_DICTIONARY` (`Corrected to official CPE`),
+  `MANUAL_FROM_OFFICIAL_FAMILY`
+  (`Manual CPE from official family`), or
+  `DIRECT_OFFICIAL_NOT_CONFIRMED`
+  (`Direct official CPE not confirmed`).
+- Correction Types are zero or more overlapping descriptions of what changed:
+  vendor, product, distribution package version, parent product mapping, or
+  deprecated-CPE redirection.
+
+Dictionary selection matching the original raw CPE produces
+`ORIGINAL_OFFICIAL_CONFIRMED`; selecting a different Dictionary raw CPE
+produces `CORRECTED_TO_DICTIONARY`; a structurally valid manual CPE produces
+`MANUAL_FROM_OFFICIAL_FAMILY`; and saving no CPE produces
+`DIRECT_OFFICIAL_NOT_CONFIRMED`. Original-confirmed and direct-not-confirmed
+records cannot have Correction Types. Correction Types can be created,
+deactivated, and reactivated, but not hard-deleted. Inactive values remain on
+records that already reference them and cannot be newly selected.
+
+The legacy `No independent CPE` Decision Type is not part of the new
+taxonomy. A confirmed parent uses `Mapped to parent product`; otherwise the
+record's Resolution Outcome is `Direct official CPE not confirmed`.
+
+Migration `sboms.0005_resolution_outcome_correction_types` is intentionally
+an irreversible development-data reset. The pilot contained only twelve
+legacy annotations, and a single legacy Decision Type cannot be reconstructed
+accurately from the new independent Outcome and many-valued Correction Type
+axes. The migration therefore deletes legacy Ground Truth annotations, drops
+the legacy taxonomy, and seeds the five Correction Types; it does not delete
+Docker images, SBOM documents, Components, Dictionary snapshots, CPE Names,
+or their provenance. Back up the database before applying it. Django will
+refuse to migrate backward across `0005` instead of fabricating an inaccurate
+legacy relationship. Ground Truth created after the new schema is applied is
+normal application data and is not deleted by routine application use.
 
 The review queue and filtered navigation endpoints are:
 
@@ -283,9 +328,24 @@ GET /api/ground-truth/components/<component_id>/navigation/
 ```
 
 The queue defaults to Components with a non-empty Primary CPE. It supports
-image, Ground Truth record presence, exact-match status, keyword, stable ID
-ordering, page, and page-size parameters. Review status is derived from
-record existence rather than stored as a workflow field.
+image, Ground Truth record presence, exact-match status, Resolution Outcome,
+Correction Type, keyword, stable ID ordering, page, and page-size parameters.
+Use `resolution_outcome=MANUAL_FROM_OFFICIAL_FAMILY` for an Outcome filter and
+`correction_type=vendor_corrected` for records containing a specific
+Correction Type. Review status is derived from record existence rather than
+stored as a workflow field.
+
+The Correction Type management endpoints are:
+
+```text
+GET  /api/ground-truth-correction-types/
+POST /api/ground-truth-correction-types/
+GET  /api/ground-truth-correction-types/<correction_type_id>/
+PATCH /api/ground-truth-correction-types/<correction_type_id>/
+```
+
+The collection supports active-state and text search filters. There is no
+DELETE method.
 
 ## Frontend
 
@@ -312,21 +372,28 @@ selected NVD snapshot, not semantic correctness. The application uses
 frontend routes.
 
 The Ground Truth list keeps filters and pagination in the URL and distinguishes
-raw-string exact-match evidence from whether a human annotation exists. Its
-editor restores the list queue for previous, next, and save-then-next
-navigation. Component evidence and the write panel remain visible with a
-desktop sticky layout. Dictionary selection changes only local editor state
-until explicit save; the reviewer can instead copy and edit a raw CPE as a
-manual structurally validated value, or save no CPE. Notes remain optional
-and collapsed by default.
+raw-string exact-match evidence, workflow status, Resolution Outcome, and
+overlapping Correction Types. Its editor restores the list queue for previous,
+next, and save-then-next navigation. Component evidence and the write panel
+remain visible with a desktop sticky layout. Dictionary selection changes only
+local editor state until explicit save; the reviewer can instead copy and edit
+a raw CPE as a manual structurally validated value, or save no CPE. The editor
+shows the expected Resolution Outcome read-only as the input changes and uses
+a searchable multi-select for active Correction Types. The backend result is
+authoritative. Notes remain optional and collapsed by default.
+
+Resolution Outcome counts are mutually exclusive, so their sum equals the
+number of Ground Truth records. Correction Type counts overlap and their sum
+may exceed that record count. Ground Truth labels remain independent of
+Dictionary search ordering and any future candidate-generation algorithm.
 
 The generic Dictionary route has no Component or Ground Truth state. Its
 search form and pagination state remain in the URL, and background page
 fetches retain prior results behind a loading overlay. The record drawer
 exposes all CPE 2.3 fields, titles, references, raw-string and UUID copy
 controls. Candidate ranking, BM25, fuzzy matching, aliases, normalization,
-AI, automatic CPE replacement, controlled decision taxonomies, approval, and
-revision history remain outside this implementation.
+AI, automatic CPE replacement, approval, and revision history remain outside
+this implementation.
 
 ## CPE Profiling
 

@@ -12,6 +12,7 @@ HANGUL_PATTERN = re.compile(
     "[\u1100-\u11ff\u3130-\u318f"
     "\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]"
 )
+CORRECTION_TYPE_CODE_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
 def contains_hangul(value: str) -> bool:
@@ -156,7 +157,51 @@ class Component(models.Model):
         return self.name
 
 
-class GroundTruthDecisionType(models.Model):
+class GroundTruthResolutionOutcome(models.TextChoices):
+    ORIGINAL_OFFICIAL_CONFIRMED = (
+        "ORIGINAL_OFFICIAL_CONFIRMED",
+        "Original CPE confirmed",
+    )
+    CORRECTED_TO_DICTIONARY = (
+        "CORRECTED_TO_DICTIONARY",
+        "Corrected to official CPE",
+    )
+    MANUAL_FROM_OFFICIAL_FAMILY = (
+        "MANUAL_FROM_OFFICIAL_FAMILY",
+        "Manual CPE from official family",
+    )
+    DIRECT_OFFICIAL_NOT_CONFIRMED = (
+        "DIRECT_OFFICIAL_NOT_CONFIRMED",
+        "Direct official CPE not confirmed",
+    )
+
+
+def derive_resolution_outcome(
+    *,
+    original_cpe: str,
+    dictionary_cpe: str | None,
+    manual_cpe: str,
+) -> str:
+    if dictionary_cpe is not None:
+        if dictionary_cpe == original_cpe:
+            return (
+                GroundTruthResolutionOutcome
+                .ORIGINAL_OFFICIAL_CONFIRMED
+            )
+        return GroundTruthResolutionOutcome.CORRECTED_TO_DICTIONARY
+    if manual_cpe:
+        return (
+            GroundTruthResolutionOutcome
+            .MANUAL_FROM_OFFICIAL_FAMILY
+        )
+    return (
+        GroundTruthResolutionOutcome
+        .DIRECT_OFFICIAL_NOT_CONFIRMED
+    )
+
+
+class GroundTruthCorrectionType(models.Model):
+    code = models.CharField(max_length=128, unique=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
@@ -168,27 +213,46 @@ class GroundTruthDecisionType(models.Model):
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
-                name="unique_ground_truth_decision_type_name_ci",
+                name="unique_ground_truth_correction_type_name_ci",
             ),
         ]
 
     def clean(self) -> None:
         super().clean()
+        self.code = (
+            self.code.strip().lower()
+            if isinstance(self.code, str)
+            else ""
+        )
         self.name = self.name.strip() if isinstance(self.name, str) else ""
         self.description = (
             self.description.strip()
             if isinstance(self.description, str)
             else ""
         )
+        if not self.code:
+            raise ValidationError(
+                {"code": "Correction Type code must not be blank."}
+            )
+        if not CORRECTION_TYPE_CODE_PATTERN.fullmatch(self.code):
+            raise ValidationError(
+                {
+                    "code": (
+                        "Correction Type code must start with a "
+                        "lowercase letter and contain only lowercase "
+                        "letters, digits, and underscores."
+                    )
+                }
+            )
         if not self.name:
             raise ValidationError(
-                {"name": "Decision Type name must not be blank."}
+                {"name": "Correction Type name must not be blank."}
             )
         if contains_hangul(self.name):
             raise ValidationError(
                 {
                     "name": (
-                        "Decision Type names must be written in "
+                        "Correction Type names must be written in "
                         "English."
                     )
                 }
@@ -197,7 +261,7 @@ class GroundTruthDecisionType(models.Model):
             raise ValidationError(
                 {
                     "description": (
-                        "Decision Type descriptions must be written "
+                        "Correction Type descriptions must be written "
                         "in English."
                     )
                 }
@@ -233,10 +297,15 @@ class ComponentCpeGroundTruth(models.Model):
         blank=True,
         default="",
     )
-    decision_type = models.ForeignKey(
-        GroundTruthDecisionType,
-        on_delete=models.PROTECT,
-        related_name="ground_truths",
+    resolution_outcome = models.CharField(
+        max_length=64,
+        choices=GroundTruthResolutionOutcome.choices,
+        editable=False,
+    )
+    correction_types = models.ManyToManyField(
+        GroundTruthCorrectionType,
+        blank=True,
+        related_name="ground_truth_records",
     )
     note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -313,7 +382,40 @@ class ComponentCpeGroundTruth(models.Model):
                 )
 
     def save(self, *args, **kwargs) -> None:
+        original_cpe = (
+            Component.objects.filter(pk=self.component_id)
+            .values_list("cpe", flat=True)
+            .first()
+            or ""
+            if self.component_id is not None
+            else ""
+        )
+        dictionary_cpe = (
+            CpeName.objects.filter(pk=self.ground_truth_cpe_id)
+            .values_list("cpe_name", flat=True)
+            .first()
+            if self.ground_truth_cpe_id is not None
+            else None
+        )
+        self.resolution_outcome = derive_resolution_outcome(
+            original_cpe=original_cpe,
+            dictionary_cpe=dictionary_cpe,
+            manual_cpe=(
+                self.manual_ground_truth_cpe.strip()
+                if isinstance(
+                    self.manual_ground_truth_cpe,
+                    str,
+                )
+                else ""
+            ),
+        )
         self.full_clean()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = {
+                *update_fields,
+                "resolution_outcome",
+            }
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:

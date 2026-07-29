@@ -21,11 +21,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
-  createGroundTruthDecisionType,
-  getGroundTruthDecisionTypes,
-  updateGroundTruthDecisionType,
+  createGroundTruthCorrectionType,
+  getGroundTruthCorrectionTypes,
+  updateGroundTruthCorrectionType,
 } from "@/features/ground-truth/ground-truth-api"
-import type { GroundTruthDecisionType } from "@/features/ground-truth/ground-truth-types"
+import type { GroundTruthCorrectionType } from "@/features/ground-truth/ground-truth-types"
 import {
   ApiError,
   isAbortError,
@@ -33,18 +33,19 @@ import {
 
 const HANGUL_PATTERN =
   /[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]/u
+const CODE_PATTERN = /^[a-z][a-z0-9_]*$/
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     return error.detail ?? error.message
   }
-  return "Unable to update Decision Types."
+  return "Unable to update Correction Types."
 }
 
-function sortDecisionTypes(
-  decisionTypes: GroundTruthDecisionType[],
-): GroundTruthDecisionType[] {
-  return [...decisionTypes].sort(
+function sortCorrectionTypes(
+  correctionTypes: GroundTruthCorrectionType[],
+): GroundTruthCorrectionType[] {
+  return [...correctionTypes].sort(
     (left, right) =>
       left.name.localeCompare(right.name, undefined, {
         sensitivity: "base",
@@ -52,7 +53,15 @@ function sortDecisionTypes(
   )
 }
 
-function DecisionTypeDialog({
+function codeFromName(name: string): string {
+  return name
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+}
+
+function CorrectionTypeDialog({
   title,
   children,
   onClose,
@@ -93,21 +102,25 @@ function DecisionTypeDialog({
   )
 }
 
-export function GroundTruthDecisionTypeField({
+export function GroundTruthCorrectionTypeField({
   value,
   onChange,
   onInteraction,
+  disabled,
+  disabledMessage,
 }: {
-  value: GroundTruthDecisionType | null
-  onChange: (decisionType: GroundTruthDecisionType | null) => void
+  value: GroundTruthCorrectionType[]
+  onChange: (
+    correctionTypes: GroundTruthCorrectionType[],
+  ) => void
   onInteraction: () => void
+  disabled: boolean
+  disabledMessage?: string
 }) {
-  const [activeDecisionTypes, setActiveDecisionTypes] = useState<
-    GroundTruthDecisionType[]
-  >([])
-  const [allDecisionTypes, setAllDecisionTypes] = useState<
-    GroundTruthDecisionType[]
-  >([])
+  const [activeCorrectionTypes, setActiveCorrectionTypes] =
+    useState<GroundTruthCorrectionType[]>([])
+  const [allCorrectionTypes, setAllCorrectionTypes] =
+    useState<GroundTruthCorrectionType[]>([])
   const [query, setQuery] = useState("")
   const [manageQuery, setManageQuery] = useState("")
   const [open, setOpen] = useState(false)
@@ -116,20 +129,23 @@ export function GroundTruthDecisionTypeField({
   const [createOpen, setCreateOpen] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
   const [createName, setCreateName] = useState("")
+  const [createCode, setCreateCode] = useState("")
   const [createDescription, setCreateDescription] = useState("")
   const [creating, setCreating] = useState(false)
   const [managing, setManaging] = useState(false)
   const [pendingDeactivation, setPendingDeactivation] =
-    useState<GroundTruthDecisionType | null>(null)
+    useState<GroundTruthCorrectionType | null>(null)
   const [error, setError] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
-    getGroundTruthDecisionTypes({}, controller.signal)
-      .then((decisionTypes) => {
-        setActiveDecisionTypes(sortDecisionTypes(decisionTypes))
+    getGroundTruthCorrectionTypes({}, controller.signal)
+      .then((correctionTypes) => {
+        setActiveCorrectionTypes(
+          sortCorrectionTypes(correctionTypes),
+        )
         setLoading(false)
       })
       .catch((reason: unknown) => {
@@ -142,7 +158,6 @@ export function GroundTruthDecisionTypeField({
 
   useEffect(() => {
     if (!open) return
-
     const closeOnOutsidePointerDown = (event: PointerEvent) => {
       if (
         event.target instanceof Node &&
@@ -162,33 +177,51 @@ export function GroundTruthDecisionTypeField({
       )
   }, [open])
 
-  const filteredDecisionTypes = useMemo(() => {
+  useEffect(() => {
+    if (disabled) setOpen(false)
+  }, [disabled])
+
+  const filteredCorrectionTypes = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase()
-    if (!normalizedQuery) return activeDecisionTypes
-    return activeDecisionTypes.filter((decisionType) =>
-      decisionType.name
-        .toLocaleLowerCase()
-        .includes(normalizedQuery),
+    if (!normalizedQuery) return activeCorrectionTypes
+    return activeCorrectionTypes.filter(
+      (correctionType) =>
+        correctionType.name
+          .toLocaleLowerCase()
+          .includes(normalizedQuery) ||
+        correctionType.code
+          .toLocaleLowerCase()
+          .includes(normalizedQuery),
     )
-  }, [activeDecisionTypes, query])
-  const exactMatch = activeDecisionTypes.some(
-    (decisionType) =>
-      decisionType.name.toLocaleLowerCase() ===
+  }, [activeCorrectionTypes, query])
+  const exactMatch = activeCorrectionTypes.some(
+    (correctionType) =>
+      correctionType.name.toLocaleLowerCase() ===
       query.trim().toLocaleLowerCase(),
   )
   const canCreate = Boolean(query.trim()) && !exactMatch
   const optionCount =
-    filteredDecisionTypes.length + (canCreate ? 1 : 0)
+    filteredCorrectionTypes.length + (canCreate ? 1 : 0)
+  const selectedIds = useMemo(
+    () => new Set(value.map((item) => item.id)),
+    [value],
+  )
 
-  const choose = (decisionType: GroundTruthDecisionType) => {
-    onChange(decisionType)
+  const toggle = (
+    correctionType: GroundTruthCorrectionType,
+  ) => {
+    const next = selectedIds.has(correctionType.id)
+      ? value.filter((item) => item.id !== correctionType.id)
+      : sortCorrectionTypes([...value, correctionType])
+    onChange(next)
     onInteraction()
     setQuery("")
-    setOpen(false)
   }
 
   const openCreate = () => {
-    setCreateName(query.trim())
+    const name = query.trim()
+    setCreateName(name)
+    setCreateCode(codeFromName(name))
     setCreateDescription("")
     setError(null)
     setCreateOpen(true)
@@ -225,52 +258,60 @@ export function GroundTruthDecisionTypeField({
     if (event.key !== "Enter" || !open) return
     event.preventDefault()
     const selectedIndex = activeIndex < 0 ? 0 : activeIndex
-    const selected = filteredDecisionTypes[selectedIndex]
+    const selected = filteredCorrectionTypes[selectedIndex]
     if (selected) {
-      choose(selected)
+      toggle(selected)
     } else if (
       canCreate &&
-      selectedIndex === filteredDecisionTypes.length
+      selectedIndex === filteredCorrectionTypes.length
     ) {
       openCreate()
     }
   }
 
-  const createDecisionType = async (): Promise<void> => {
+  const createCorrectionType = async (): Promise<void> => {
     const normalizedName = createName.trim()
+    const normalizedCode = createCode.trim().toLocaleLowerCase()
     const normalizedDescription = createDescription.trim()
     if (!normalizedName) {
       setError("Name is required.")
       return
     }
+    if (!CODE_PATTERN.test(normalizedCode)) {
+      setError(
+        "Code must start with a lowercase letter and contain only lowercase letters, digits, and underscores.",
+      )
+      return
+    }
     if (HANGUL_PATTERN.test(normalizedName)) {
       setError(
-        "Decision Type names must be written in English.",
+        "Correction Type names must be written in English.",
       )
       return
     }
     if (HANGUL_PATTERN.test(normalizedDescription)) {
       setError(
-        "Decision Type descriptions must be written in English.",
+        "Correction Type descriptions must be written in English.",
       )
       return
     }
     setCreating(true)
     setError(null)
     try {
-      const created = await createGroundTruthDecisionType({
+      const created = await createGroundTruthCorrectionType({
+        code: normalizedCode,
         name: normalizedName,
         description: normalizedDescription,
       })
-      setActiveDecisionTypes((current) =>
-        sortDecisionTypes([...current, created]),
+      setActiveCorrectionTypes((current) =>
+        sortCorrectionTypes([...current, created]),
       )
-      setAllDecisionTypes((current) =>
+      setAllCorrectionTypes((current) =>
         current.length
-          ? sortDecisionTypes([...current, created])
+          ? sortCorrectionTypes([...current, created])
           : current,
       )
-      onChange(created)
+      onChange(sortCorrectionTypes([...value, created]))
       onInteraction()
       setQuery("")
       setCreateOpen(false)
@@ -286,10 +327,13 @@ export function GroundTruthDecisionTypeField({
     setManaging(true)
     setError(null)
     try {
-      const decisionTypes = await getGroundTruthDecisionTypes({
-        is_active: "all",
-      })
-      setAllDecisionTypes(sortDecisionTypes(decisionTypes))
+      const correctionTypes =
+        await getGroundTruthCorrectionTypes({
+          is_active: "all",
+        })
+      setAllCorrectionTypes(
+        sortCorrectionTypes(correctionTypes),
+      )
     } catch (reason: unknown) {
       setError(errorMessage(reason))
     } finally {
@@ -298,25 +342,25 @@ export function GroundTruthDecisionTypeField({
   }
 
   const setActive = async (
-    decisionType: GroundTruthDecisionType,
+    correctionType: GroundTruthCorrectionType,
     isActive: boolean,
   ): Promise<void> => {
     setManaging(true)
     setError(null)
     try {
-      const updated = await updateGroundTruthDecisionType(
-        decisionType.id,
+      const updated = await updateGroundTruthCorrectionType(
+        correctionType.id,
         { is_active: isActive },
       )
-      setAllDecisionTypes((current) =>
-        sortDecisionTypes(
+      setAllCorrectionTypes((current) =>
+        sortCorrectionTypes(
           current.map((item) =>
             item.id === updated.id ? updated : item,
           ),
         ),
       )
-      setActiveDecisionTypes((current) =>
-        sortDecisionTypes(
+      setActiveCorrectionTypes((current) =>
+        sortCorrectionTypes(
           isActive
             ? [
                 ...current.filter(
@@ -327,7 +371,13 @@ export function GroundTruthDecisionTypeField({
             : current.filter((item) => item.id !== updated.id),
         ),
       )
-      if (value?.id === updated.id) onChange(updated)
+      if (selectedIds.has(updated.id)) {
+        onChange(
+          value.map((item) =>
+            item.id === updated.id ? updated : item,
+          ),
+        )
+      }
       setPendingDeactivation(null)
     } catch (reason: unknown) {
       setError(errorMessage(reason))
@@ -339,13 +389,16 @@ export function GroundTruthDecisionTypeField({
   const normalizedManageQuery = manageQuery
     .trim()
     .toLocaleLowerCase()
-  const managedDecisionTypes = allDecisionTypes.filter(
-    (decisionType) =>
+  const managedCorrectionTypes = allCorrectionTypes.filter(
+    (correctionType) =>
       !normalizedManageQuery ||
-      decisionType.name
+      correctionType.code
         .toLocaleLowerCase()
         .includes(normalizedManageQuery) ||
-      decisionType.description
+      correctionType.name
+        .toLocaleLowerCase()
+        .includes(normalizedManageQuery) ||
+      correctionType.description
         .toLocaleLowerCase()
         .includes(normalizedManageQuery),
   )
@@ -354,7 +407,7 @@ export function GroundTruthDecisionTypeField({
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-medium">
-          Decision Type <span className="text-red-600">*</span>
+          Correction Types
         </span>
         <Button
           size="sm"
@@ -363,35 +416,39 @@ export function GroundTruthDecisionTypeField({
           onClick={() => void openManage()}
         >
           <Settings2 aria-hidden="true" />
-          Manage Decision Types
+          Manage Correction Types
         </Button>
       </div>
 
-      {value ? (
+      {value.length ? (
         <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border bg-muted/20 p-2">
-          <Badge
-            className="max-w-full truncate"
-            title={value.name}
-            variant="secondary"
-          >
-            {value.name}
-          </Badge>
-          {!value.is_active ? (
-            <Badge variant="outline">Inactive</Badge>
-          ) : null}
-          <Button
-            aria-label="Clear Decision Type"
-            size="xs"
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              onChange(null)
-              onInteraction()
-            }}
-          >
-            <X aria-hidden="true" />
-            Clear
-          </Button>
+          {value.map((correctionType) => (
+            <div
+              className="flex min-w-0 items-center gap-1"
+              key={correctionType.id}
+            >
+              <Badge
+                className="max-w-full"
+                title={correctionType.name}
+                variant="secondary"
+              >
+                {correctionType.name}
+              </Badge>
+              {!correctionType.is_active ? (
+                <Badge variant="outline">Inactive</Badge>
+              ) : null}
+              <Button
+                aria-label={`Remove correction type ${correctionType.name}`}
+                disabled={disabled}
+                size="icon-xs"
+                type="button"
+                variant="ghost"
+                onClick={() => toggle(correctionType)}
+              >
+                <X aria-hidden="true" />
+              </Button>
+            </div>
+          ))}
         </div>
       ) : null}
 
@@ -399,16 +456,17 @@ export function GroundTruthDecisionTypeField({
         <Input
           aria-activedescendant={
             open && activeIndex >= 0
-              ? activeIndex < filteredDecisionTypes.length
-                ? `ground-truth-decision-type-${filteredDecisionTypes[activeIndex].id}`
-                : "ground-truth-decision-type-create"
+              ? activeIndex < filteredCorrectionTypes.length
+                ? `ground-truth-correction-type-${filteredCorrectionTypes[activeIndex].id}`
+                : "ground-truth-correction-type-create"
               : undefined
           }
-          aria-label="Decision Type"
+          aria-label="Correction Types"
           aria-autocomplete="list"
-          aria-controls="ground-truth-decision-type-options"
+          aria-controls="ground-truth-correction-type-options"
           aria-expanded={open}
-          placeholder="Search or select a decision type..."
+          disabled={disabled}
+          placeholder="Search or select correction types..."
           role="combobox"
           value={query}
           onChange={(event) => {
@@ -426,8 +484,9 @@ export function GroundTruthDecisionTypeField({
         {open ? (
           <div
             className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-background p-1 shadow-lg"
-            id="ground-truth-decision-type-options"
+            id="ground-truth-correction-type-options"
             role="listbox"
+            aria-multiselectable="true"
           >
             {loading ? (
               <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
@@ -435,53 +494,57 @@ export function GroundTruthDecisionTypeField({
                   className="size-4 animate-spin"
                   aria-hidden="true"
                 />
-                Loading Decision Types…
+                Loading Correction Types…
               </div>
             ) : null}
             {!loading && !optionCount ? (
               <p className="p-2 text-sm text-muted-foreground">
-                No active Decision Types found.
+                No active Correction Types found.
               </p>
             ) : null}
-            {filteredDecisionTypes.map((decisionType, index) => (
-              <button
-                aria-selected={value?.id === decisionType.id}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted focus:bg-muted focus:outline-none ${
-                  activeIndex === index ? "bg-muted" : ""
-                }`}
-                id={`ground-truth-decision-type-${decisionType.id}`}
-                key={decisionType.id}
-                role="option"
-                type="button"
-                onClick={() => choose(decisionType)}
-                onMouseEnter={() => setActiveIndex(index)}
-              >
-                <Check
-                  aria-hidden="true"
-                  className={
-                    value?.id === decisionType.id
-                      ? "size-4"
-                      : "size-4 opacity-0"
-                  }
-                />
-                <span className="min-w-0 truncate">
-                  {decisionType.name}
-                </span>
-              </button>
-            ))}
+            {filteredCorrectionTypes.map(
+              (correctionType, index) => (
+                <button
+                  aria-selected={selectedIds.has(
+                    correctionType.id,
+                  )}
+                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted focus:bg-muted focus:outline-none ${
+                    activeIndex === index ? "bg-muted" : ""
+                  }`}
+                  id={`ground-truth-correction-type-${correctionType.id}`}
+                  key={correctionType.id}
+                  role="option"
+                  type="button"
+                  onClick={() => toggle(correctionType)}
+                  onMouseEnter={() => setActiveIndex(index)}
+                >
+                  <Check
+                    aria-hidden="true"
+                    className={
+                      selectedIds.has(correctionType.id)
+                        ? "size-4"
+                        : "size-4 opacity-0"
+                    }
+                  />
+                  <span className="min-w-0 truncate">
+                    {correctionType.name}
+                  </span>
+                </button>
+              ),
+            )}
             {canCreate ? (
               <button
                 className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-cyan-800 hover:bg-muted focus:bg-muted focus:outline-none ${
-                  activeIndex === filteredDecisionTypes.length
+                  activeIndex === filteredCorrectionTypes.length
                     ? "bg-muted"
                     : ""
                 }`}
-                id="ground-truth-decision-type-create"
+                id="ground-truth-correction-type-create"
                 role="option"
                 type="button"
                 onClick={openCreate}
                 onMouseEnter={() =>
-                  setActiveIndex(filteredDecisionTypes.length)
+                  setActiveIndex(filteredCorrectionTypes.length)
                 }
               >
                 <Plus className="size-4" aria-hidden="true" />
@@ -494,13 +557,18 @@ export function GroundTruthDecisionTypeField({
         ) : null}
       </div>
 
+      {disabledMessage ? (
+        <p className="text-xs text-muted-foreground">
+          {disabledMessage}
+        </p>
+      ) : null}
       {error && !createOpen && !manageOpen ? (
         <p className="text-xs text-destructive">{error}</p>
       ) : null}
 
       {createOpen ? (
-        <DecisionTypeDialog
-          title="Add Decision Type"
+        <CorrectionTypeDialog
+          title="Add Correction Type"
           onClose={() => {
             if (!creating) setCreateOpen(false)
           }}
@@ -512,7 +580,19 @@ export function GroundTruthDecisionTypeField({
                 autoFocus
                 value={createName}
                 onChange={(event) => {
-                  setCreateName(event.target.value)
+                  const name = event.target.value
+                  setCreateName(name)
+                  setCreateCode(codeFromName(name))
+                  setError(null)
+                }}
+              />
+            </label>
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Code</span>
+              <Input
+                value={createCode}
+                onChange={(event) => {
+                  setCreateCode(event.target.value)
                   setError(null)
                 }}
               />
@@ -542,18 +622,18 @@ export function GroundTruthDecisionTypeField({
               <Button
                 disabled={creating}
                 type="button"
-                onClick={() => void createDecisionType()}
+                onClick={() => void createCorrectionType()}
               >
                 {creating ? "Creating…" : "Create"}
               </Button>
             </div>
           </div>
-        </DecisionTypeDialog>
+        </CorrectionTypeDialog>
       ) : null}
 
       {manageOpen ? (
-        <DecisionTypeDialog
-          title="Manage Decision Types"
+        <CorrectionTypeDialog
+          title="Manage Correction Types"
           onClose={() => {
             if (!managing) setManageOpen(false)
           }}
@@ -561,20 +641,20 @@ export function GroundTruthDecisionTypeField({
           <div className="space-y-4">
             <Input
               autoFocus
-              placeholder="Search Decision Types"
+              placeholder="Search Correction Types"
               value={manageQuery}
               onChange={(event) =>
                 setManageQuery(event.target.value)
               }
             />
-            {managing && !allDecisionTypes.length ? (
+            {managing && !allCorrectionTypes.length ? (
               <p className="text-sm text-muted-foreground">
-                Loading Decision Types…
+                Loading Correction Types…
               </p>
             ) : null}
             {(["Active", "Inactive"] as const).map((section) => {
               const isActive = section === "Active"
-              const items = managedDecisionTypes.filter(
+              const items = managedCorrectionTypes.filter(
                 (item) => item.is_active === isActive,
               )
               return (
@@ -582,7 +662,7 @@ export function GroundTruthDecisionTypeField({
                   <h4 className="text-sm font-semibold">{section}</h4>
                   {!items.length ? (
                     <p className="text-sm text-muted-foreground">
-                      No {section.toLowerCase()} Decision Types.
+                      No {section.toLowerCase()} Correction Types.
                     </p>
                   ) : null}
                   {items.map((item) => (
@@ -596,6 +676,9 @@ export function GroundTruthDecisionTypeField({
                           title={item.name}
                         >
                           {item.name}
+                        </p>
+                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                          {item.code}
                         </p>
                         {item.description ? (
                           <p className="mt-1 text-xs text-muted-foreground">
@@ -635,12 +718,12 @@ export function GroundTruthDecisionTypeField({
               <p className="text-sm text-destructive">{error}</p>
             ) : null}
           </div>
-        </DecisionTypeDialog>
+        </CorrectionTypeDialog>
       ) : null}
 
       {pendingDeactivation ? (
-        <DecisionTypeDialog
-          title="Deactivate Decision Type?"
+        <CorrectionTypeDialog
+          title="Deactivate Correction Type?"
           onClose={() => {
             if (!managing) setPendingDeactivation(null)
           }}
@@ -670,7 +753,7 @@ export function GroundTruthDecisionTypeField({
               Deactivate
             </Button>
           </div>
-        </DecisionTypeDialog>
+        </CorrectionTypeDialog>
       ) : null}
     </div>
   )
