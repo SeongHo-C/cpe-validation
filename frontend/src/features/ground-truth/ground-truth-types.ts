@@ -31,7 +31,6 @@ export interface ComponentCpeGroundTruthRecord {
   id: number
   source: GroundTruthSource
   dictionary_cpe: CpeDictionaryCandidate | null
-  ground_truth_cpe: CpeDictionaryCandidate | null
   manual_cpe: string | null
   resolution_outcome: GroundTruthResolutionOutcome
   correction_types: GroundTruthCorrectionType[]

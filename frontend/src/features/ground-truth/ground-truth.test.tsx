@@ -191,7 +191,6 @@ function groundTruthRecord(
     id: 501,
     source,
     dictionary_cpe: candidate,
-    ground_truth_cpe: candidate,
     manual_cpe: source === "MANUAL" ? manualCpe : null,
     resolution_outcome: outcome,
     correction_types: corrections,
@@ -481,7 +480,6 @@ function installFetch(options: FetchOptions = {}) {
         const record: ComponentCpeGroundTruthRecord = {
           ...groundTruthRecord(source, selectedCorrections),
           dictionary_cpe: candidate,
-          ground_truth_cpe: candidate,
           manual_cpe: payload.manual_cpe,
           resolution_outcome: resolutionOutcome(code),
           correction_types: selectedCorrections,
@@ -651,6 +649,8 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(within(table).getByText("Vendor corrected"))
       .toBeInTheDocument()
     expect(within(table).getByText("Product corrected"))
+      .toBeInTheDocument()
+    expect(within(table).getByText("No direct official CPE"))
       .toBeInTheDocument()
     expect(within(table).getAllByText("None")).not.toHaveLength(0)
     expect(screen.getByLabelText("Resolution Outcome"))

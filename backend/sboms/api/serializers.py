@@ -346,7 +346,6 @@ class ComponentCpeGroundTruthSerializer(
         source="ground_truth_cpe",
         read_only=True,
     )
-    ground_truth_cpe = GroundTruthCpeSerializer(read_only=True)
     manual_cpe = serializers.SerializerMethodField()
     resolution_outcome = serializers.SerializerMethodField()
     correction_types = GroundTruthCorrectionTypeSerializer(
@@ -360,7 +359,6 @@ class ComponentCpeGroundTruthSerializer(
             "id",
             "source",
             "dictionary_cpe",
-            "ground_truth_cpe",
             "manual_cpe",
             "resolution_outcome",
             "correction_types",
@@ -407,13 +405,6 @@ class ComponentCpeGroundTruthWriteSerializer(
         allow_null=True,
         required=False,
     )
-    ground_truth_cpe_id = serializers.PrimaryKeyRelatedField(
-        source="legacy_dictionary_cpe_input",
-        queryset=CpeName.objects.all(),
-        allow_null=True,
-        required=False,
-        write_only=True,
-    )
     manual_cpe = serializers.CharField(
         allow_blank=True,
         allow_null=True,
@@ -435,24 +426,18 @@ class ComponentCpeGroundTruthWriteSerializer(
         trim_whitespace=False,
     )
 
+    def to_internal_value(self, data):
+        unknown_fields = set(data) - set(self.fields)
+        if unknown_fields:
+            raise serializers.ValidationError(
+                {
+                    field: "Unknown field."
+                    for field in sorted(unknown_fields)
+                }
+            )
+        return super().to_internal_value(data)
+
     def validate(self, attributes: dict) -> dict:
-        if "resolution_outcome" in self.initial_data:
-            raise serializers.ValidationError(
-                {
-                    "resolution_outcome": (
-                        "Resolution Outcome is calculated by the "
-                        "server."
-                    )
-                }
-            )
-        if "snapshot_id" in self.initial_data:
-            raise serializers.ValidationError(
-                {
-                    "snapshot_id": (
-                        "Dictionary snapshot is selected by the server."
-                    )
-                }
-            )
         raw_correction_type_ids = self.initial_data.get(
             "correction_type_ids",
             [],
@@ -505,31 +490,10 @@ class ComponentCpeGroundTruthWriteSerializer(
             "dictionary_cpe_input",
             serializers.empty,
         )
-        legacy_dictionary_cpe = attributes.pop(
-            "legacy_dictionary_cpe_input",
-            serializers.empty,
-        )
-        if (
-            dictionary_cpe is not serializers.empty
-            and legacy_dictionary_cpe is not serializers.empty
-            and dictionary_cpe != legacy_dictionary_cpe
-        ):
-            raise serializers.ValidationError(
-                {
-                    "dictionary_cpe_id": (
-                        "Only one Dictionary Ground Truth CPE "
-                        "may be provided."
-                    )
-                }
-            )
         ground_truth_cpe = (
             dictionary_cpe
             if dictionary_cpe is not serializers.empty
-            else (
-                legacy_dictionary_cpe
-                if legacy_dictionary_cpe is not serializers.empty
-                else None
-            )
+            else None
         )
         manual_cpe = attributes.pop("manual_cpe", None)
         normalized_manual_cpe = (

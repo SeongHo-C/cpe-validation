@@ -1,90 +1,117 @@
-# CPE Validation
+# CPE Validation System
 
-## Overview
+## 1. Overview
 
-CPE Validation is a research workbench for evaluating CPE evidence emitted by
-external SBOM generators. The current pipeline preserves digest-pinned Docker
-image inputs, imports Syft CycloneDX SBOMs, validates the structure of Primary
-CPE 2.3 formatted strings, and imports a verified official NVD CPE Dictionary
-snapshot. It also compares Primary CPEs with that snapshot by exact,
-case-sensitive raw-string equality.
+CPE Validation System is a local research workbench for evaluating CPE
+evidence produced by SBOM tools. It imports Syft CycloneDX SBOMs, compares
+Primary CPE strings with an official NVD CPE Dictionary snapshot by exact,
+case-sensitive string equality, and supports independent Ground Truth review
+using Component metadata.
 
-The Workbench supports snapshot-specific, human-reviewed expected Ground
-Truth annotations. Candidate ranking, approval workflows, and semantic
-automation remain later work.
+Exact Dictionary membership is evidence, not a semantic correctness decision.
+A CPE can be present in the Dictionary and still be wrong for a Component, or
+absent while remaining a plausible Ground Truth candidate.
 
-## Research Scope
+## 2. Key Features
 
-The current evaluation population is the set of SBOM Components whose
-CycloneDX `component.cpe` field is non-empty. Syft `syft:cpe23` properties are
-preserved separately as candidate evidence and are not promoted to Primary
-CPEs.
+- Import digest-pinned Docker image and CycloneDX SBOM metadata.
+- Browse SBOM Components, provenance, package URLs, Primary CPEs, and package
+  properties.
+- Download, verify, and import an NVD CPE Dictionary snapshot.
+- Evaluate raw-string CPE exact matches against one selected snapshot.
+- Search active and deprecated official Dictionary records.
+- Record a Dictionary CPE, a structurally valid Manual CPE, or no direct
+  official CPE as Ground Truth.
+- Derive Resolution Outcome on the server.
+- Assign multiple managed Correction Types when the outcome permits them.
 
-A raw CPE appearing in the official Dictionary will not prove that it is
-semantically correct for a Component. Likewise, absence from the Dictionary
-will not by itself prove that a CPE is incorrect. Dictionary exact matching is
-therefore a reproducible structural signal, not Ground Truth.
+## 3. Technology Stack
 
-## Current Pipeline
+The following versions are fixed by project files or were verified in the
+current WSL/Linux development environment:
 
-1. Select ten Docker Official Images in `pilot/images.yaml`.
-2. Resolve and preserve each `linux/amd64` platform manifest digest.
-3. Generate Syft 1.49.0 CycloneDX JSON SBOMs from digest-pinned references.
-4. Import image, SBOM, Component, Primary CPE, and Syft property evidence into
-   PostgreSQL.
-5. Profile Primary CPE structure without changing imported records.
-6. Download, verify, and import an immutable NVD CPE Dictionary snapshot.
-7. Evaluate raw Primary CPE strings against one explicitly selected COMPLETE
-   Dictionary snapshot.
-8. Browse the image and Primary CPE Component inventory through a read-only
-   Django REST Framework API and React UI.
-9. Search and inspect the selected official Dictionary snapshot through a
-   read-only Dictionary surface in the Workbench.
-10. Build snapshot-specific expected Ground Truth independently from future
-    candidate-generation algorithms, using an official Dictionary CPE, a
-    structurally valid manual CPE 2.3 string, or no CPE.
+| Technology | Version |
+| --- | --- |
+| Python | 3.14.4 |
+| Django | 6.0.7 |
+| Django REST Framework | 3.17.1 |
+| PostgreSQL | 18.4 (`postgres:18.4-trixie`) |
+| Node.js | 22.22.1 |
+| npm | 9.2.0 |
+| React | 19.2.7 |
+| TypeScript | 6.0.3 |
+| Vite | 8.1.5 |
+| Syft | 1.49.0 (`linux/amd64`) |
+| SBOM format | CycloneDX JSON |
 
-## Repository Structure
+Python and Node.js compatibility outside these verified versions has not been
+tested.
+
+## 4. Repository Structure
 
 ```text
-backend/     Django, DRF, SBOM, and CPE Dictionary processing
-frontend/    React research UI
-pilot/       Docker image selection, digest pinning, and SBOM generation
-analysis/    Generated research analysis results
-data/        NVD CPE Dictionary snapshot provenance
+backend/    Django, DRF, SBOM import, Dictionary import, and analysis
+frontend/   React and TypeScript user interface
+pilot/      Fixed Docker image inputs, digest resolution, and SBOM generation
+data/       NVD CPE Dictionary snapshot provenance
+analysis/   Generated research analysis results
 ```
 
-## Requirements
+## 5. Prerequisites
 
-The repository currently fixes or records these versions:
+- Git
+- Docker Engine or Docker Desktop with Docker Compose
+- Python 3.14.4
+- Node.js 22.22.1 and npm 9.2.0
+- Syft 1.49.0 when regenerating pilot SBOMs
 
-| Tool | Project version or image | Locally verified version |
-| --- | --- | --- |
-| Python | Not separately pinned | 3.14.4 |
-| Django | 6.0.7 | 6.0.7 |
-| Django REST Framework | 3.17.1 | 3.17.1 |
-| PostgreSQL | `postgres:18.4-trixie` | 18.4 image configuration |
-| Node.js | No `engines` constraint | 22.22.1 |
-| npm | Lockfile version 3 | 9.2.0 |
-| Syft | 1.49.0 | 1.49.0, `linux/amd64` |
-| Docker | Not pinned | 29.5.2 |
-| Docker Compose | Not pinned | 5.1.4 |
+The commands below were verified in WSL/Linux. Other environments may require
+equivalent path or virtual-environment commands.
 
-The backend uses `backend/requirements.txt`; the pilot has the separate
-`pilot/requirements.txt`; and the frontend uses `frontend/package-lock.json`.
-The commands below assume WSL or Linux.
+## 6. Environment Configuration
 
-## Quick Start
-
-Create the local environment file and start PostgreSQL:
+From the repository root, create the local environment file:
 
 ```bash
 cp .env.example .env
-docker compose up -d db
 ```
 
-Create the backend environment, install its dependencies, and apply committed
-migrations:
+The variables are:
+
+| Variable | Purpose |
+| --- | --- |
+| `POSTGRES_DB` | PostgreSQL database name |
+| `POSTGRES_USER` | PostgreSQL user |
+| `POSTGRES_PASSWORD` | Local PostgreSQL password; replace the example value |
+| `POSTGRES_PORT` | Host port bound to the PostgreSQL container |
+| `CPE_DICTIONARY_SNAPSHOT_ID` | COMPLETE snapshot selected by the API |
+
+This is a local, single-researcher prototype. Authentication and authorization
+are not implemented. Keep Django and Vite bound to loopback and do not expose
+them to an untrusted network.
+
+## 7. Quick Start
+
+Run these commands from the repository root unless a step says otherwise.
+
+### 7.1 Clone and configure
+
+```bash
+git clone REPOSITORY_URL cpe-validation
+cd cpe-validation
+cp .env.example .env
+```
+
+Edit `.env` and replace the example PostgreSQL password.
+
+### 7.2 Start PostgreSQL
+
+```bash
+docker compose up -d db
+docker compose ps
+```
+
+### 7.3 Prepare the Backend
 
 ```bash
 python3 -m venv backend/.venv
@@ -92,14 +119,11 @@ backend/.venv/bin/python -m pip install -r backend/requirements.txt
 backend/.venv/bin/python backend/manage.py migrate
 ```
 
-Import the tracked pilot SBOMs:
+### 7.4 Prepare and import the CPE Dictionary
 
-```bash
-backend/.venv/bin/python backend/manage.py import_sboms
-```
-
-The current verified Dictionary import requires the corresponding
-Git-excluded archive to be present beside its tracked manifest:
+The current tracked manifest describes snapshot `20260725T035002Z`. Place its
+matching archive as described in [CPE Dictionary Data](#8-cpe-dictionary-data),
+then validate and import it:
 
 ```bash
 backend/.venv/bin/python backend/manage.py import_cpe_dictionary \
@@ -109,18 +133,31 @@ backend/.venv/bin/python backend/manage.py import_cpe_dictionary \
   --snapshot-id 20260725T035002Z
 ```
 
-Set `CPE_DICTIONARY_SNAPSHOT_ID=20260725T035002Z` in `.env` to make the
-snapshot used by the Component Detail API explicit. If this setting is empty,
-automatic selection is allowed only when the database contains exactly one
-COMPLETE snapshot.
+Alternatively, download the current NVD feed as a new snapshot:
 
-Start the backend:
+```bash
+backend/.venv/bin/python backend/manage.py download_cpe_dictionary
+```
+
+Use the snapshot ID printed by the command for both import commands and update
+`CPE_DICTIONARY_SNAPSHOT_ID` in `.env`. The current NVD URL is mutable and is
+not guaranteed to reproduce the tracked historical snapshot.
+
+### 7.5 Import the tracked pilot SBOMs
+
+```bash
+backend/.venv/bin/python backend/manage.py import_sboms
+```
+
+### 7.6 Start the Backend
 
 ```bash
 backend/.venv/bin/python backend/manage.py runserver 127.0.0.1:8000
 ```
 
-In another terminal, install and start the frontend:
+### 7.7 Install and start the Frontend
+
+In another terminal:
 
 ```bash
 cd frontend
@@ -128,417 +165,157 @@ npm ci
 npm run dev
 ```
 
-Open <http://127.0.0.1:5173>. Vite proxies relative `/api/...` requests to the
-Django server at `http://127.0.0.1:8000`.
+Open <http://127.0.0.1:5173>.
 
-## Docker SBOM Pilot
+## 8. CPE Dictionary Data
 
-The fixed pilot input contains ten Docker Official Images recorded as the
-latest stable tags for the pilot on 2026-07-24:
-
-| Repository | Tag |
-| --- | --- |
-| memcached | 1.6.45 |
-| nginx | 1.30.4 |
-| busybox | 1.38.0 |
-| alpine | 3.24.1 |
-| postgres | 18.4 |
-| redis | 8.8.0 |
-| ubuntu | 26.04 |
-| python | 3.14.6 |
-| node | 24.18.0 |
-| mysql | 9.7.1 |
-
-All scans target `linux/amd64`. `pilot/results/image-digests.json` records the
-platform manifest digests and pinned references. Syft 1.49.0 scans the remote
-registry source with online enrichment disabled, a `squashed` scope, and
-CycloneDX JSON output.
-
-From `pilot/`, install the one pilot Python dependency and run the commands:
-
-```bash
-python3 -m pip install -r requirements.txt
-python3 scripts/resolve_image_digest.py --input images.yaml
-python3 scripts/generate_sbom.py
-```
-
-Both scripts protect existing result files; they do not silently overwrite the
-tracked pilot artifacts.
-
-## NVD CPE Dictionary
-
-The current snapshot ID is `20260725T035002Z`. Its tracked provenance manifest
-is:
+The verified snapshot manifest is:
 
 ```text
 data/cpe-dictionary/snapshots/20260725T035002Z/manifest.json
 ```
 
-Inspect the current official Feed metadata without creating a snapshot:
+The matching NVD archive is intentionally excluded from Git and must be placed
+at:
+
+```text
+data/cpe-dictionary/snapshots/20260725T035002Z/nvdcpe-2.0.tar.gz
+```
+
+The manifest records the source URLs, retrieval time, archive SHA-256, aggregate
+content SHA-256, and the hashes of all 17 JSON members. Import fails if these
+values, archive structure, record counts, or timestamps are invalid.
+
+The official feed can be inspected without creating a snapshot:
 
 ```bash
 backend/.venv/bin/python backend/manage.py \
   download_cpe_dictionary --dry-run
 ```
 
-Download and verify the current official Feed:
+Download and verify the current feed:
 
 ```bash
 backend/.venv/bin/python backend/manage.py download_cpe_dictionary
 ```
 
-The command derives the snapshot ID from the Feed's last-modified timestamp.
-Use the emitted ID for dry-run validation and PostgreSQL import:
+Then run `import_cpe_dictionary --dry-run` before the real import. Only COMPLETE
+snapshots are selectable. If `CPE_DICTIONARY_SNAPSHOT_ID` is empty, selection
+succeeds only when the database contains exactly one COMPLETE snapshot.
+
+## 9. SBOM Data
+
+The pilot uses ten Docker Official Images listed in `pilot/images.yaml`. All
+images target `linux/amd64`; their platform manifest digests and pinned
+references are stored in `pilot/results/image-digests.json`.
+
+The tracked SBOMs were generated with Syft 1.49.0 from pinned remote-registry
+references, using `squashed` scope, disabled online enrichment, and CycloneDX
+JSON output. Import them with:
 
 ```bash
-backend/.venv/bin/python backend/manage.py import_cpe_dictionary \
-  --snapshot-id SNAPSHOT_ID \
-  --dry-run
-backend/.venv/bin/python backend/manage.py import_cpe_dictionary \
-  --snapshot-id SNAPSHOT_ID
+backend/.venv/bin/python backend/manage.py import_sboms
 ```
 
-The large `nvdcpe-2.0.tar.gz` archive is not committed to Git. The original
-META file and verified manifest preserve source URLs, timestamps, archive and
-content hashes, and per-chunk provenance. A source timestamp with an explicit
-offset is converted to UTC. An NVD `created` or `lastModified` timestamp with
-no offset is interpreted as UTC without rounding or changing millisecond
-precision; invalid timestamps fail the import.
-
-Only COMPLETE snapshots can be used for exact matching. An explicit snapshot
-ID must exist and be COMPLETE. Without an explicit ID, zero COMPLETE snapshots
-is an error and multiple COMPLETE snapshots are ambiguous; the application
-never selects the newest snapshot by timestamp or database ID.
-
-## Backend
-
-The API is mounted at `/api/` and currently provides:
-
-- database health;
-- pilot image list and detail;
-- dashboard summary;
-- paginated Primary CPE Component list and detail;
-- raw-string Dictionary status and snapshot provenance for Component detail;
-- paginated CPE Dictionary search and CPE record detail;
-- Component- and snapshot-specific expected Ground Truth retrieval and
-  upsert;
-- managed Ground Truth Correction Types;
-- a filtered, paginated Ground Truth review queue with server-derived
-  Resolution Outcomes.
-
-The inventory, Component, and CPE Dictionary endpoints are read-only. The
-Component list endpoint supports image, Primary CPE presence, Dictionary
-status, search, ordering, page, and page-size parameters. List rows contain
-`dictionary_status` but omit per-record Dictionary provenance; Component
-detail provides the selected snapshot and matched NVD CPE record. The
-dedicated Ground Truth endpoint is the only write API in this workflow.
-
-Filter the list before pagination with:
-
-```text
-GET /api/components/?dictionary_status=NOT_IN_DICTIONARY
-```
-
-Supported values are `OFFICIAL_ACTIVE`, `OFFICIAL_DEPRECATED`,
-`NOT_IN_DICTIONARY`, and `NOT_PRESENT`. The default list retains its existing
-`has_cpe=true` scope. `dictionary_status=NOT_PRESENT` uses the missing-Primary-
-CPE scope; explicitly contradictory `has_cpe` and `dictionary_status` values
-return HTTP 400.
-
-The Dictionary endpoints are:
-
-```text
-GET /api/cpe-dictionary/
-GET /api/cpe-dictionary/snapshot/
-GET /api/cpe-dictionary/<cpe_name_id>/
-```
-
-Search accepts `q`, `part`, `vendor`, `product`, `version`, optional exact
-`cpe_name`, `deprecated`, `page`, and `page_size`. `q` searches raw CPE,
-vendor, product, version, and stored title JSON case-insensitively. Structured
-vendor, product, and version filters use case-insensitive exact equality;
-there is no alias or version normalization. A keyword or structured search
-term is required, the default status is active, and page sizes are limited to
-25, 50, or 100. All Dictionary endpoints use the same explicit-or-unique
-COMPLETE snapshot contract as exact matching and permit GET only.
-
-The Component Ground Truth endpoint is:
-
-```text
-GET /api/components/<component_id>/cpe-ground-truth/
-PUT /api/components/<component_id>/cpe-ground-truth/
-```
-
-The server selects the current COMPLETE snapshot. `PUT` creates or updates
-the single annotation for that Component and snapshot. An optional selected
-`CpeName` must belong to the same snapshot. A manual `manual_cpe` may be
-stored instead of a Dictionary record when it passes the existing CPE 2.3
-structural parser; Dictionary and manual values are mutually exclusive.
-`correction_type_ids` accepts zero or more managed Correction Type IDs, and
-`note` is optional. The client cannot set `resolution_outcome`: the server
-always derives it from the saved Ground Truth source and exact raw-string
-comparison with the imported `Component.cpe`. The imported Component value is
-never replaced or modified.
-
-Ground Truth exposes three deliberately separate concepts:
-
-- Ground Truth Status (`Not Reviewed` or `Completed`) is workflow state
-  derived from whether a record exists.
-- Resolution Outcome is one mutually exclusive final result:
-  `ORIGINAL_OFFICIAL_CONFIRMED` (`Original CPE confirmed`),
-  `CORRECTED_TO_DICTIONARY` (`Corrected to official CPE`),
-  `MANUAL_FROM_OFFICIAL_FAMILY`
-  (`Manual CPE from official family`), or
-  `DIRECT_OFFICIAL_NOT_CONFIRMED`
-  (`Direct official CPE not confirmed`).
-- Correction Types are zero or more overlapping descriptions of what changed:
-  vendor, product, distribution package version, parent product mapping, or
-  deprecated-CPE redirection.
-
-Dictionary selection matching the original raw CPE produces
-`ORIGINAL_OFFICIAL_CONFIRMED`; selecting a different Dictionary raw CPE
-produces `CORRECTED_TO_DICTIONARY`; a structurally valid manual CPE produces
-`MANUAL_FROM_OFFICIAL_FAMILY`; and saving no CPE produces
-`DIRECT_OFFICIAL_NOT_CONFIRMED`. Original-confirmed and direct-not-confirmed
-records cannot have Correction Types. Correction Types can be created,
-deactivated, and reactivated, but not hard-deleted. Inactive values remain on
-records that already reference them and cannot be newly selected.
-
-The legacy `No independent CPE` Decision Type is not part of the new
-taxonomy. A confirmed parent uses `Mapped to parent product`; otherwise the
-record's Resolution Outcome is `Direct official CPE not confirmed`.
-
-Migration `sboms.0005_resolution_outcome_correction_types` is intentionally
-an irreversible development-data reset. The pilot contained only twelve
-legacy annotations, and a single legacy Decision Type cannot be reconstructed
-accurately from the new independent Outcome and many-valued Correction Type
-axes. The migration therefore deletes legacy Ground Truth annotations, drops
-the legacy taxonomy, and seeds the five Correction Types; it does not delete
-Docker images, SBOM documents, Components, Dictionary snapshots, CPE Names,
-or their provenance. Back up the database before applying it. Django will
-refuse to migrate backward across `0005` instead of fabricating an inaccurate
-legacy relationship. Ground Truth created after the new schema is applied is
-normal application data and is not deleted by routine application use.
-
-The review queue and filtered navigation endpoints are:
-
-```text
-GET /api/ground-truth/components/
-GET /api/ground-truth/components/<component_id>/navigation/
-```
-
-The queue defaults to Components with a non-empty Primary CPE. It supports
-image, Ground Truth record presence, exact-match status, Resolution Outcome,
-Correction Type, keyword, stable ID ordering, page, and page-size parameters.
-Use `resolution_outcome=MANUAL_FROM_OFFICIAL_FAMILY` for an Outcome filter and
-`correction_type=vendor_corrected` for records containing a specific
-Correction Type. Review status is derived from record existence rather than
-stored as a workflow field.
-
-The Correction Type management endpoints are:
-
-```text
-GET  /api/ground-truth-correction-types/
-POST /api/ground-truth-correction-types/
-GET  /api/ground-truth-correction-types/<correction_type_id>/
-PATCH /api/ground-truth-correction-types/<correction_type_id>/
-```
-
-The collection supports active-state and text search filters. There is no
-DELETE method.
-
-## Frontend
-
-The desktop-oriented React UI provides:
-
-- `/images` for the Docker image inventory and Primary CPE coverage;
-- `/components` for the server-filtered Primary CPE queue and read-only
-  Component evidence panel;
-- `/ground-truth` for the independent human review queue;
-- `/ground-truth/components/<component_id>` for Component evidence,
-  Dictionary lookup, and expected Ground Truth entry;
-- `/cpe-dictionary` for independent read-only official Dictionary search and
-  record inspection.
-
-The Components route supports `image_id`, `search`, `ordering`, `page`,
-`page_size`, `dictionary_status`, and `component_id` query parameters. Its
-table shows structural and Dictionary status side by side. The Dictionary
-filter is preserved in the URL, composes with the existing image and search
-filters, and requests `has_cpe=false` for `NOT_PRESENT`. Component detail shows
-a summary status badge at the top and keeps snapshot and UUID provenance in
-the detailed Dictionary section. Status indicates raw-string presence in the
-selected NVD snapshot, not semantic correctness. The application uses
-`BrowserRouter`; a production static host would need an SPA fallback for
-frontend routes.
-
-The Ground Truth list keeps filters and pagination in the URL and distinguishes
-raw-string exact-match evidence, workflow status, Resolution Outcome, and
-overlapping Correction Types. Its editor restores the list queue for previous,
-next, and save-then-next navigation. Component evidence and the write panel
-remain visible with a desktop sticky layout. Dictionary selection changes only
-local editor state until explicit save; the reviewer can instead copy and edit
-a raw CPE as a manual structurally validated value, or save no CPE. The editor
-shows the expected Resolution Outcome read-only as the input changes and uses
-a searchable multi-select for active Correction Types. The backend result is
-authoritative. Notes remain optional and collapsed by default.
-
-Resolution Outcome counts are mutually exclusive, so their sum equals the
-number of Ground Truth records. Correction Type counts overlap and their sum
-may exceed that record count. Ground Truth labels remain independent of
-Dictionary search ordering and any future candidate-generation algorithm.
-
-The generic Dictionary route has no Component or Ground Truth state. Its
-search form and pagination state remain in the URL, and background page
-fetches retain prior results behind a loading overlay. The record drawer
-exposes all CPE 2.3 fields, titles, references, raw-string and UUID copy
-controls. Candidate ranking, BM25, fuzzy matching, aliases, normalization,
-AI, automatic CPE replacement, approval, and revision history remain outside
-this implementation.
-
-## CPE Profiling
-
-Print the deterministic profile summary without writing output files:
+To regenerate pilot inputs, work from `pilot/`:
 
 ```bash
-backend/.venv/bin/python backend/manage.py profile_cpes --stdout-only
+cd pilot
+python3 -m pip install -r requirements.txt
+python3 scripts/resolve_image_digest.py --input images.yaml
+python3 scripts/generate_sbom.py
 ```
 
-Regenerate the six known outputs under `analysis/results/cpe-profile/`:
+The scripts do not overwrite existing results unless overwrite behavior is
+explicitly requested.
+
+## 10. Running the Application
+
+Start or inspect PostgreSQL from the repository root:
 
 ```bash
-backend/.venv/bin/python backend/manage.py profile_cpes
+docker compose up -d db
+docker compose ps
 ```
 
-The profiler reads imported records and does not modify them.
-
-## Dictionary Exact Match
-
-The exact-match service compares only:
-
-```text
-Component.cpe == CpeName.cpe_name
-```
-
-It does not trim, normalize case or escapes, apply aliases, replace deprecated
-CPEs, or parse the string as a prerequisite. Results use four statuses:
-
-- `OFFICIAL_ACTIVE`: an identical active Dictionary record exists;
-- `OFFICIAL_DEPRECATED`: an identical deprecated Dictionary record exists;
-- `NOT_IN_DICTIONARY`: a Primary CPE exists but no identical record exists;
-- `NOT_PRESENT`: the Component has no Primary CPE.
-
-These statuses are automated evidence, not a semantic correctness decision or
-Ground Truth. Reproduce the unique-CPE and Component-level evaluation with:
+Start Django from the repository root:
 
 ```bash
-backend/.venv/bin/python backend/manage.py evaluate_cpe_exact_matches \
-  --snapshot-id 20260725T035002Z
+backend/.venv/bin/python backend/manage.py runserver 127.0.0.1:8000
 ```
 
-The default output directory is
-`analysis/results/cpe-exact-match/20260725T035002Z/` and contains
-`summary.json`, `unique_cpe_matches.csv`, and `component_matches.csv`. Use
-`--output-dir` to choose another directory. Existing known output files are
-protected unless `--overwrite` is supplied. The command reads the database but
-does not create or update match records.
+The Backend is available at <http://127.0.0.1:8000/api/>. It provides health,
+image and Component inventory, Dictionary search and detail, exact-match
+status, Ground Truth review, and Correction Type management endpoints.
 
-## Dictionary Mismatch Profiling
-
-Profile unique `NOT_IN_DICTIONARY` Primary CPEs against the selected
-Dictionary snapshot with exact equality at three structured-field levels:
-
-```text
-part + vendor + product + version
-part + vendor + product
-part + product
-```
-
-The mutually exclusive statuses are
-`SAME_PART_VENDOR_PRODUCT_VERSION`, `SAME_PART_VENDOR_PRODUCT`,
-`SAME_PART_PRODUCT`, `NO_STRUCTURED_MATCH`, and `UNPARSABLE`. The comparison
-does not normalize fields, apply aliases, rank candidates, or decide semantic
-correctness or Ground Truth.
-
-Run the read-only analysis with:
-
-```bash
-backend/.venv/bin/python backend/manage.py \
-  profile_cpe_dictionary_mismatches \
-  --snapshot-id 20260725T035002Z
-```
-
-The default snapshot-specific directory is
-`analysis/results/cpe-dictionary-mismatch/20260725T035002Z/`. It contains
-`summary.json`, `unique_cpe_mismatch_profiles.csv`, and
-`field_value_counts.json`; existing known files require `--overwrite`.
-
-For snapshot `20260725T035002Z`, the 1,331 unique raw mismatches profile as 3
-`SAME_PART_VENDOR_PRODUCT_VERSION`, 44 `SAME_PART_VENDOR_PRODUCT`, 149
-`SAME_PART_PRODUCT`, 1,135 `NO_STRUCTURED_MATCH`, and 0 `UNPARSABLE`. These
-counts measure exact structured-field presence only and do not identify a
-correct replacement CPE.
-
-## Tests
-
-Run backend checks and tests from `backend/`:
-
-```bash
-cd backend
-.venv/bin/python manage.py check
-.venv/bin/python manage.py makemigrations --check --dry-run
-.venv/bin/python manage.py test
-```
-
-Run frontend checks:
+Start Vite from `frontend/`:
 
 ```bash
 cd frontend
-npm run lint
+npm run dev
+```
+
+The Frontend is available at <http://127.0.0.1:5173>. Vite proxies relative
+`/api/...` requests to Django at `http://127.0.0.1:8000`.
+
+The main routes are:
+
+- `/images`
+- `/components`
+- `/cpe-dictionary`
+- `/ground-truth`
+- `/ground-truth/components/<component_id>`
+
+Ground Truth Status indicates whether a review record exists. A record contains
+one of these server-derived Resolution Outcomes:
+
+- `ORIGINAL_OFFICIAL_CONFIRMED` — Original CPE confirmed
+- `CORRECTED_TO_DICTIONARY` — Corrected to official CPE
+- `MANUAL_FROM_OFFICIAL_FAMILY` — Manual CPE from official family
+- `DIRECT_OFFICIAL_NOT_CONFIRMED` — Direct official CPE not confirmed
+
+Correction Types are multi-valued. They are available for corrected Dictionary
+CPEs and Manual CPEs, but not for original-confirmed or no-direct-official-CPE
+outcomes. The Ground Truth list keeps the Exact Match filter, while the review
+screen keeps Exact Match evidence in Component Context.
+
+## 11. Testing and Build
+
+Backend checks and tests, from the repository root:
+
+```bash
+backend/.venv/bin/python backend/manage.py check
+backend/.venv/bin/python backend/manage.py \
+  makemigrations --check --dry-run
+backend/.venv/bin/python backend/manage.py test
+backend/.venv/bin/python -m pip check
+```
+
+Frontend tests, lint, and production build:
+
+```bash
+cd frontend
 npm test -- --run
+npm run lint
 npm run build
 ```
 
-Run the pilot unit tests without contacting a registry:
+Pilot tests do not contact a registry:
 
 ```bash
 cd pilot
 python3 -m unittest discover -s tests -v
 ```
 
-## Current Pilot Dataset
+## 12. Current Limitations
 
-The following counts apply to the tracked pilot and the
-`20260725T035002Z` Dictionary snapshot:
-
-| Measure | Count |
-| --- | ---: |
-| Docker images | 10 |
-| SBOM documents | 10 |
-| Components | 87,411 |
-| Components with Primary CPEs | 1,769 |
-| Unique Primary CPEs | 1,337 |
-| Imported NVD CPE records | 1,786,125 |
-| Active NVD CPE records | 1,687,483 |
-| Deprecated NVD CPE records | 98,642 |
-
-For raw-string exact matching against snapshot `20260725T035002Z`, the 1,337
-unique Primary CPEs contain 6 `OFFICIAL_ACTIVE`, 0
-`OFFICIAL_DEPRECATED`, and 1,331 `NOT_IN_DICTIONARY` results. At Component
-level, the counts are 6, 0, 1,763, and 85,642 respectively for
-`OFFICIAL_ACTIVE`, `OFFICIAL_DEPRECATED`, `NOT_IN_DICTIONARY`, and
-`NOT_PRESENT`.
-
-## Limitations
-
-- Dictionary search is deterministic field/keyword lookup, not candidate
-  ranking or semantic matching.
-- Dictionary membership is not a semantic correctness decision or Ground
-  Truth.
-- Stored Ground Truth is a single expected human annotation per Component
-  and snapshot; there is no reviewer identity, approval state, or revision
+- This is a local, single-researcher prototype without authentication or
+  authorization.
+- Raw-string exact match does not establish semantic CPE correctness.
+- `NOT_IN_DICTIONARY` does not by itself prove that an SBOM CPE is wrong.
+- Ground Truth has no reviewer identity, approval workflow, or revision
   history.
-- Candidate generation and ranking are outside the current implementation.
-- Authentication, review history, exports, and frontend containerization are
-  not implemented.
-- The current NVD archive is excluded from Git; the tracked manifest and
-  hashes preserve provenance but do not contain the archive bytes.
+- Candidate ranking, BM25 search, CVE configuration evaluation, and AI
+  suggestions are outside the current scope.
+- The historical NVD archive is not stored in Git; the tracked manifest and
+  hashes cannot guarantee that the same bytes remain downloadable later.

@@ -262,35 +262,6 @@ class ReadOnlyAPITests(APITestCase):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
-    def test_dashboard_summary_uses_current_database(self) -> None:
-        response = self.client.get(
-            reverse("sboms_api:dashboard-summary")
-        )
-        body = response.json()
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(body["total_images"], 2)
-        self.assertEqual(body["total_sboms"], 2)
-        self.assertEqual(body["total_components"], 58)
-        self.assertEqual(body["components_with_primary_cpe"], 57)
-        self.assertEqual(body["components_without_primary_cpe"], 1)
-        self.assertEqual(body["unique_primary_cpes"], 56)
-        self.assertEqual(
-            body["structural_status_counts"],
-            {
-                "STRUCTURALLY_VALID": 56,
-                "INVALID_PREFIX": 0,
-                "INVALID_FIELD_COUNT": 0,
-                "INVALID_ESCAPE": 0,
-                "INVALID_PART": 1,
-            },
-        )
-        self.assertEqual(body["part_counts"], {"a": 55, "o": 1, "h": 0})
-        self.assertEqual(
-            sum(body["structural_status_counts"].values()),
-            body["components_with_primary_cpe"],
-        )
-
     def test_image_list_is_sorted_and_annotated(self) -> None:
         response = self.client.get(reverse("sboms_api:image-list"))
         body = response.json()
@@ -1201,7 +1172,6 @@ class ReadOnlyAPITests(APITestCase):
     def test_get_requests_do_not_change_database_counts(self) -> None:
         counts_before = self.model_counts()
 
-        self.client.get(reverse("sboms_api:dashboard-summary"))
         self.client.get(reverse("sboms_api:image-list"))
         self.client.get(reverse("sboms_api:component-list"))
         self.client.get(

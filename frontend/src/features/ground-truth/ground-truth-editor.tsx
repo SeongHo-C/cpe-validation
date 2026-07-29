@@ -168,9 +168,7 @@ export function GroundTruthEditor({
       .then((response) => {
         const groundTruth = response.ground_truth
         const restoredCandidate =
-          groundTruth?.dictionary_cpe ??
-          groundTruth?.ground_truth_cpe ??
-          null
+          groundTruth?.dictionary_cpe ?? null
         const restoredManual = groundTruth?.manual_cpe ?? ""
         const restoredCorrectionTypes =
           groundTruth?.correction_types ?? []
@@ -226,9 +224,7 @@ export function GroundTruthEditor({
         })
       const groundTruth = response.ground_truth
       const restoredCandidate =
-        groundTruth?.dictionary_cpe ??
-        groundTruth?.ground_truth_cpe ??
-        null
+        groundTruth?.dictionary_cpe ?? null
       const restoredManual = groundTruth?.manual_cpe ?? ""
       const restoredCorrectionTypes =
         groundTruth?.correction_types ?? []

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter
-
 from django.core.exceptions import (
     ValidationError as DjangoValidationError,
 )
@@ -27,10 +25,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from cpe.cpe23 import (
-    CPE23StructuralStatus,
-    parse_cpe23_formatted_string,
-)
 from cpe_dictionary.api.snapshot import (
     CpeDictionarySnapshotViewMixin,
 )
@@ -118,57 +112,6 @@ class HealthAPIView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         return Response({"status": "ok", "database": "ok"})
-
-
-class DashboardSummaryAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    http_method_names = ["get", "head", "options"]
-
-    def get(self, request) -> Response:
-        total_components = Component.objects.count()
-        cpe_values = Component.objects.exclude(cpe="").values_list(
-            "cpe",
-            flat=True,
-        )
-        status_counts = Counter(
-            {
-                structural_status.value: 0
-                for structural_status in CPE23StructuralStatus
-            }
-        )
-        part_counts = Counter({"a": 0, "o": 0, "h": 0})
-        unique_primary_cpes: set[str] = set()
-        components_with_primary_cpe = 0
-        for raw_cpe in cpe_values:
-            components_with_primary_cpe += 1
-            unique_primary_cpes.add(raw_cpe)
-            parse_result = parse_cpe23_formatted_string(raw_cpe)
-            status_counts[parse_result.status.value] += 1
-            if parse_result.is_structurally_valid:
-                part_counts[parse_result.part_raw] += 1
-
-        return Response(
-            {
-                "total_images": DockerImage.objects.count(),
-                "total_sboms": SBOMDocument.objects.count(),
-                "total_components": total_components,
-                "components_with_primary_cpe": (
-                    components_with_primary_cpe
-                ),
-                "components_without_primary_cpe": (
-                    total_components - components_with_primary_cpe
-                ),
-                "primary_cpe_ratio": (
-                    components_with_primary_cpe / total_components
-                    if total_components
-                    else 0.0
-                ),
-                "unique_primary_cpes": len(unique_primary_cpes),
-                "structural_status_counts": dict(status_counts),
-                "part_counts": dict(part_counts),
-            }
-        )
 
 
 class DockerImageListAPIView(generics.ListAPIView):

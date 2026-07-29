@@ -84,13 +84,14 @@ function groundTruthValue(
   if (!groundTruth) return "Not Assigned"
   if (groundTruth.source === "DICTIONARY") {
     return (
-      groundTruth.dictionary_cpe?.cpe_name ?? "No CPE Assigned"
+      groundTruth.dictionary_cpe?.cpe_name ??
+      "No direct official CPE"
     )
   }
   if (groundTruth.source === "MANUAL") {
-    return groundTruth.manual_cpe ?? "No CPE Assigned"
+    return groundTruth.manual_cpe ?? "No direct official CPE"
   }
-  return "No CPE Assigned"
+  return "No direct official CPE"
 }
 
 function requestError(error: unknown): string {

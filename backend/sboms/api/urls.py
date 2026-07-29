@@ -4,7 +4,6 @@ from sboms.api.views import (
     ComponentCpeGroundTruthAPIView,
     ComponentDetailAPIView,
     ComponentListAPIView,
-    DashboardSummaryAPIView,
     DockerImageDetailAPIView,
     DockerImageListAPIView,
     GroundTruthComponentListAPIView,
@@ -19,11 +18,6 @@ app_name = "sboms_api"
 
 urlpatterns = [
     path("health/", HealthAPIView.as_view(), name="health"),
-    path(
-        "dashboard/summary/",
-        DashboardSummaryAPIView.as_view(),
-        name="dashboard-summary",
-    ),
     path(
         "images/",
         DockerImageListAPIView.as_view(),

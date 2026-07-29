@@ -590,6 +590,11 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         )
         body = corrected.json()["ground_truth"]
         self.assertEqual(
+            body["dictionary_cpe"]["id"],
+            self.corrected_cpe.id,
+        )
+        self.assertNotIn("ground_truth_cpe", body)
+        self.assertEqual(
             body["resolution_outcome"]["code"],
             "CORRECTED_TO_DICTIONARY",
         )
