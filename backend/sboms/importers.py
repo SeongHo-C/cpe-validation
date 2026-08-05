@@ -299,7 +299,7 @@ def match_sbom_files(
 
 def extract_syft_generator(
     metadata: dict[str, Any],
-    path: Path,
+    path: str | Path,
 ) -> tuple[str, str]:
     """Extract Syft name and version from supported CycloneDX layouts."""
 
@@ -334,9 +334,41 @@ def extract_syft_generator(
     raise ImporterError(f"{path}: metadata has no Syft generator")
 
 
+def extract_optional_generator(
+    metadata: dict[str, Any],
+) -> tuple[str, str]:
+    """Extract an EMBA-preferred generator when metadata provides one."""
+
+    tools = metadata.get("tools")
+    if isinstance(tools, dict):
+        tool_entries = tools.get("components")
+    elif isinstance(tools, list):
+        tool_entries = tools
+    else:
+        return "", ""
+    if not isinstance(tool_entries, list):
+        return "", ""
+
+    candidates: list[tuple[str, str]] = []
+    for tool in tool_entries:
+        if not isinstance(tool, dict):
+            continue
+        name = tool.get("name")
+        version = tool.get("version", "")
+        if not isinstance(name, str) or not name:
+            continue
+        if not isinstance(version, str):
+            version = ""
+        candidate = (name, version)
+        if name.lower() == "emba":
+            return candidate
+        candidates.append(candidate)
+    return candidates[0] if candidates else ("", "")
+
+
 def parse_component_tree(
     entries: Any,
-    path: Path,
+    path: str | Path,
 ) -> list[ParsedComponent]:
     """Recursively validate and flatten CycloneDX components."""
 
@@ -422,30 +454,42 @@ def parse_component_tree(
     return parsed
 
 
-def parse_cyclonedx_document(path: Path) -> ParsedSBOM:
-    """Parse the supported CycloneDX fields without normalizing them."""
+def parse_cyclonedx_document_data(
+    document: Any,
+    label: str | Path,
+    *,
+    allow_missing_components: bool = False,
+    require_syft_generator: bool = True,
+) -> ParsedSBOM:
+    """Parse supported CycloneDX fields from an in-memory document."""
 
-    document = load_json_document(path, "SBOM file")
     if not isinstance(document, dict):
-        raise ImporterError(f"{path}: CycloneDX root must be an object")
+        raise ImporterError(
+            f"{label}: CycloneDX root must be an object"
+        )
     if document.get("bomFormat") != "CycloneDX":
         raise ImporterError(
-            f"{path}: bomFormat must be 'CycloneDX'"
+            f"{label}: bomFormat must be 'CycloneDX'"
         )
     spec_version = required_string(
         document,
         "specVersion",
-        str(path),
+        str(label),
     )
-    components = parse_component_tree(
-        document.get("components"),
-        path,
-    )
+    if "components" in document:
+        components = parse_component_tree(
+            document["components"],
+            label,
+        )
+    elif allow_missing_components:
+        components = []
+    else:
+        components = parse_component_tree(None, label)
 
     serial_number = optional_string(
         document,
         "serialNumber",
-        str(path),
+        str(label),
     )
     document_version = document.get("version", 1)
     if (
@@ -454,28 +498,35 @@ def parse_cyclonedx_document(path: Path) -> ParsedSBOM:
         or document_version < 1
     ):
         raise ImporterError(
-            f"{path}: version must be a positive integer"
+            f"{label}: version must be a positive integer"
         )
 
     metadata = document.get("metadata")
+    if metadata is None and not require_syft_generator:
+        metadata = {}
     if not isinstance(metadata, dict):
-        raise ImporterError(f"{path}: metadata must be an object")
-    generator_name, generator_version = extract_syft_generator(
-        metadata,
-        path,
-    )
+        raise ImporterError(f"{label}: metadata must be an object")
+    if require_syft_generator:
+        generator_name, generator_version = extract_syft_generator(
+            metadata,
+            label,
+        )
+    else:
+        generator_name, generator_version = extract_optional_generator(
+            metadata
+        )
 
     generated_at = None
     if "timestamp" in metadata:
         timestamp = metadata["timestamp"]
         if not isinstance(timestamp, str) or not timestamp:
             raise ImporterError(
-                f"{path}: metadata.timestamp must be a non-empty string"
+                f"{label}: metadata.timestamp must be a non-empty string"
             )
         generated_at = parse_datetime(timestamp)
         if generated_at is None or not is_aware(generated_at):
             raise ImporterError(
-                f"{path}: metadata.timestamp is not a timezone-aware "
+                f"{label}: metadata.timestamp is not a timezone-aware "
                 f"ISO datetime: {timestamp!r}"
             )
 
@@ -488,6 +539,42 @@ def parse_cyclonedx_document(path: Path) -> ParsedSBOM:
         generated_at=generated_at,
         components=components,
     )
+
+
+def parse_cyclonedx_document(path: Path) -> ParsedSBOM:
+    """Parse a Docker-import CycloneDX file with its legacy rules."""
+
+    return parse_cyclonedx_document_data(
+        load_json_document(path, "SBOM file"),
+        path,
+    )
+
+
+def create_components_from_parsed(
+    sbom_document: SBOMDocument,
+    components: list[ParsedComponent],
+) -> int:
+    """Create parsed components with the importer's existing mapping."""
+
+    Component.objects.bulk_create(
+        [
+            Component(
+                sbom_document=sbom_document,
+                bom_ref=component.bom_ref,
+                component_type=component.component_type,
+                group=component.group,
+                name=component.name,
+                version=component.version,
+                publisher=component.publisher,
+                purl=component.purl,
+                cpe=component.cpe,
+                properties=component.properties,
+            )
+            for component in components
+        ],
+        batch_size=1000,
+    )
+    return len(components)
 
 
 def get_or_create_image(
@@ -633,23 +720,9 @@ def _import_sboms(
                 scope="squashed",
                 generated_at=parsed.generated_at,
             )
-            Component.objects.bulk_create(
-                [
-                    Component(
-                        sbom_document=sbom_document,
-                        bom_ref=component.bom_ref,
-                        component_type=component.component_type,
-                        group=component.group,
-                        name=component.name,
-                        version=component.version,
-                        publisher=component.publisher,
-                        purl=component.purl,
-                        cpe=component.cpe,
-                        properties=component.properties,
-                    )
-                    for component in parsed.components
-                ],
-                batch_size=1000,
+            create_components_from_parsed(
+                sbom_document,
+                parsed.components,
             )
             sbom_status = "created"
             result.sboms_created += 1

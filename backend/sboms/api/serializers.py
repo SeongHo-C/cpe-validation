@@ -76,6 +76,34 @@ class SBOMDocumentDetailSerializer(SBOMDocumentListSerializer):
         read_only_fields = fields
 
 
+class SBOMDocumentUploadSerializer(serializers.Serializer):
+    file = serializers.FileField(
+        allow_empty_file=False,
+        max_length=255,
+    )
+    manufacturer = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        max_length=255,
+        trim_whitespace=False,
+    )
+    product_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        max_length=255,
+        trim_whitespace=False,
+    )
+    product_version = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        max_length=255,
+        trim_whitespace=False,
+    )
+
+
 class SBOMDocumentSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = SBOMDocument

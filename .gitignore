@@ -224,3 +224,6 @@ data/cpe-dictionary/snapshots/*/nvdcpe-2.0.tar.gz
 data/cpe-dictionary/snapshots/*/nvdcpe-2.0.json
 data/cpe-dictionary/snapshots/.*.tmp-*/
 data/cpe-dictionary/snapshots/**/*.part
+
+# Uploaded SBOM originals
+backend/media/

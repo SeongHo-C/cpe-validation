@@ -13,10 +13,26 @@ HANGUL_PATTERN = re.compile(
     "\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]"
 )
 CORRECTION_TYPE_CODE_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+FILE_SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
 def contains_hangul(value: str) -> bool:
     return bool(HANGUL_PATTERN.search(value))
+
+
+def sbom_uploaded_file_path(
+    instance: "SBOMDocument",
+    filename: str,
+) -> str:
+    """Build a deterministic upload path without trusting the filename."""
+
+    del filename
+    file_sha256 = instance.file_sha256
+    if FILE_SHA256_PATTERN.fullmatch(file_sha256) is None:
+        raise ValueError(
+            "A valid file SHA-256 is required before saving an SBOM file."
+        )
+    return f"sboms/{file_sha256[:2]}/{file_sha256}.json"
 
 
 class DockerImage(models.Model):
@@ -71,6 +87,11 @@ class SBOMDocument(models.Model):
     )
     original_filename = models.CharField(
         max_length=255,
+        blank=True,
+        default="",
+    )
+    uploaded_file = models.FileField(
+        upload_to=sbom_uploaded_file_path,
         blank=True,
         default="",
     )

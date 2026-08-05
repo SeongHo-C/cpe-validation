@@ -13,6 +13,7 @@ from sboms.api.views import (
     HealthAPIView,
     SBOMDocumentDetailAPIView,
     SBOMDocumentListAPIView,
+    SBOMDocumentUploadAPIView,
 )
 
 
@@ -34,6 +35,11 @@ urlpatterns = [
         "sboms/",
         SBOMDocumentListAPIView.as_view(),
         name="sbom-list",
+    ),
+    path(
+        "sboms/upload/",
+        SBOMDocumentUploadAPIView.as_view(),
+        name="sbom-upload",
     ),
     path(
         "sboms/<int:pk>/",

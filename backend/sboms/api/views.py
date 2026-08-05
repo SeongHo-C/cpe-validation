@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from django.core.exceptions import (
     ValidationError as DjangoValidationError,
 )
@@ -22,6 +24,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -43,6 +46,7 @@ from sboms.api.serializers import (
     GroundTruthCorrectionTypeUpdateSerializer,
     SBOMDocumentDetailSerializer,
     SBOMDocumentListSerializer,
+    SBOMDocumentUploadSerializer,
 )
 from sboms.exact_matching import (
     CPEExactMatchStatus,
@@ -56,6 +60,14 @@ from sboms.models import (
     GroundTruthResolutionOutcome,
     SBOMDocument,
 )
+from sboms.importers import ImporterError
+from sboms.uploads import (
+    DuplicateSBOMError,
+    import_uploaded_cyclonedx_sbom,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_COMPONENT_ORDERING = (
@@ -214,6 +226,63 @@ class SBOMDocumentDetailAPIView(generics.RetrieveAPIView):
 
     def get_queryset(self) -> QuerySet[SBOMDocument]:
         return _annotated_sbom_queryset()
+
+
+class SBOMDocumentUploadAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    parser_classes = [MultiPartParser, FormParser]
+    http_method_names = ["post", "options"]
+
+    def post(self, request) -> Response:
+        input_serializer = SBOMDocumentUploadSerializer(
+            data=request.data
+        )
+        input_serializer.is_valid(raise_exception=True)
+        values = input_serializer.validated_data
+
+        try:
+            result = import_uploaded_cyclonedx_sbom(
+                uploaded_file=values["file"],
+                manufacturer=values["manufacturer"],
+                product_name=values["product_name"],
+                product_version=values["product_version"],
+            )
+        except DuplicateSBOMError as error:
+            return Response(
+                {
+                    "code": "duplicate_sbom",
+                    "detail": (
+                        "An SBOM with the same SHA-256 is already "
+                        "registered."
+                    ),
+                    "existing_sbom_id": error.existing_sbom_id,
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+        except ImporterError as error:
+            return Response(
+                {
+                    "code": "invalid_sbom",
+                    "detail": str(error),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception:
+            logger.exception("Unexpected uploaded SBOM import failure")
+            return Response(
+                {
+                    "code": "sbom_import_failed",
+                    "detail": "The SBOM could not be imported.",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        result.document.component_count = result.component_count
+        return Response(
+            SBOMDocumentDetailSerializer(result.document).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class ComponentListAPIView(
