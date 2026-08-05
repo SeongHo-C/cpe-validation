@@ -65,7 +65,7 @@ export const componentsTableColumns: ColumnDef<ComponentSummary>[] =
     },
     {
       id: "repository",
-      accessorFn: (component) => component.image.repository,
+      accessorFn: (component) => component.image?.repository ?? "",
       header: ({ column }) => (
         <ComponentsTableSortHeader
           column={column}
@@ -73,7 +73,15 @@ export const componentsTableColumns: ColumnDef<ComponentSummary>[] =
         />
       ),
       cell: ({ row }) => {
-        const { repository, tag } = row.original.image
+        const image = row.original.image
+        if (!image) {
+          return (
+            <span className="text-sm text-muted-foreground">
+              No Docker image
+            </span>
+          )
+        }
+        const { repository, tag } = image
         const imageReference = `${repository}:${tag}`
         return (
           <div

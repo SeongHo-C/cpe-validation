@@ -1,7 +1,17 @@
+import type { PaginatedResponse as ApiPaginatedResponse } from "@/lib/api-types"
+
 export interface ComponentImageReference {
   id: number
   repository: string
   tag: string
+}
+
+export interface SbomReference {
+  id: number
+  manufacturer: string
+  product_name: string
+  product_version: string
+  original_filename: string
 }
 
 export interface CpeFields {
@@ -26,7 +36,8 @@ export type DictionaryStatus =
 
 export interface ComponentSummary {
   id: number
-  image: ComponentImageReference
+  image: ComponentImageReference | null
+  sbom: SbomReference
   sbom_document_id: number
   component_type: string
   group: string
@@ -71,15 +82,7 @@ export interface ComponentDetail extends ComponentSummary {
   dictionary_match: DictionaryMatch
 }
 
-export interface PaginatedResponse<T> {
-  count: number
-  page: number
-  page_size: number
-  total_pages: number
-  next: string | null
-  previous: string | null
-  results: T[]
-}
+export type PaginatedResponse<T> = ApiPaginatedResponse<T>
 
 export interface DockerImageDetail {
   id: number
@@ -98,6 +101,7 @@ export interface DockerImageDetail {
 
 export interface ComponentsQuery {
   image_id?: number
+  sbom_id?: number
   search?: string
   ordering?: string
   page?: number

@@ -11,6 +11,15 @@ import type {
 export function buildComponentsApiUrl(
   parameters: ComponentsQuery,
 ): string {
+  if (
+    parameters.image_id !== undefined &&
+    parameters.sbom_id !== undefined
+  ) {
+    throw new Error(
+      "image_id and sbom_id cannot be requested together",
+    )
+  }
+
   const searchParameters = new URLSearchParams()
   searchParameters.set(
     "has_cpe",
@@ -21,6 +30,9 @@ export function buildComponentsApiUrl(
 
   if (parameters.image_id !== undefined) {
     searchParameters.set("image_id", String(parameters.image_id))
+  }
+  if (parameters.sbom_id !== undefined) {
+    searchParameters.set("sbom_id", String(parameters.sbom_id))
   }
   const normalizedSearch = parameters.search?.trim()
   if (normalizedSearch) {

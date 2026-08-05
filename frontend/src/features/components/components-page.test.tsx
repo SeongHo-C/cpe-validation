@@ -31,7 +31,14 @@ const componentFixture: ComponentSummary = {
     repository: "docker.io/library/alpine",
     tag: "3.24.1",
   },
-  sbom_document_id: 11,
+  sbom: {
+    id: 1,
+    manufacturer: "NETGEAR",
+    product_name: "R7000",
+    product_version: "1.0.11.136",
+    original_filename: "r7000.cdx.json",
+  },
+  sbom_document_id: 1,
   component_type: "library",
   group: "alpine",
   name: "curl",
@@ -142,6 +149,19 @@ function installSuccessfulFetch({
     if (url.pathname === "/api/images/") {
       return Promise.resolve(jsonResponse([]))
     }
+    if (url.pathname === "/api/sboms/") {
+      return Promise.resolve(
+        jsonResponse({
+          count: 0,
+          page: 1,
+          page_size: 50,
+          total_pages: 1,
+          next: null,
+          previous: null,
+          results: [],
+        }),
+      )
+    }
     return Promise.resolve(jsonResponse({}, 404))
   })
 }
@@ -173,16 +193,16 @@ describe("Components routing and page", () => {
     vi.unstubAllGlobals()
   })
 
-  it("routes root, images, components, and unknown paths", async () => {
+  it("routes root to SBOMs and keeps Components available", async () => {
     installSuccessfulFetch()
     const root = renderAppAt("/")
     expect(
       await screen.findByRole("heading", {
-        name: "Docker Images",
+        name: "SBOMs",
       }),
     ).toBeInTheDocument()
     expect(screen.getByTestId("route-location")).toHaveTextContent(
-      "/images",
+      "/sboms",
     )
     root.unmount()
 
@@ -193,8 +213,6 @@ describe("Components routing and page", () => {
       }),
     ).toBeInTheDocument()
     expect(await screen.findByText("curl")).toBeInTheDocument()
-
-    root.unmount()
   })
 
   it("renders the Not Found route", () => {
@@ -206,16 +224,16 @@ describe("Components routing and page", () => {
     ).toBeInTheDocument()
     expect(
       screen.getByRole("link", {
-        name: "Back to Docker Images",
+        name: "Back to SBOMs",
       }),
-    ).toHaveAttribute("href", "/images")
+    ).toHaveAttribute("href", "/sboms")
   })
 
   it("marks route navigation and exposes the Dictionary Workbench", async () => {
     installSuccessfulFetch()
-    const view = renderAppAt("/images")
-    const imagesLink = screen.getByRole("link", { name: "Images" })
-    expect(imagesLink).toHaveAttribute("aria-current", "page")
+    const view = renderAppAt("/sboms")
+    const sbomsLink = screen.getByRole("link", { name: "SBOMs" })
+    expect(sbomsLink).toHaveAttribute("aria-current", "page")
     view.unmount()
 
     renderAppAt("/components")
@@ -237,6 +255,7 @@ describe("Components routing and page", () => {
     expect(request.searchParams.get("page_size")).toBe("50")
     expect(request.searchParams.get("ordering")).toBe("name")
     expect(request.searchParams.has("image_id")).toBe(false)
+    expect(request.searchParams.has("sbom_id")).toBe(false)
   })
 
   it("loads the selected image independently and shows its scope", async () => {
@@ -262,6 +281,63 @@ describe("Components routing and page", () => {
           ([input]) => String(input) === "/api/images/1/",
         ),
     ).toBe(true)
+  })
+
+  it("requests sbom_id and renders a Dockerless SBOM scope", async () => {
+    installSuccessfulFetch({
+      componentResults: [
+        {
+          ...componentFixture,
+          image: null,
+        },
+      ],
+      componentCount: 1,
+    })
+    renderAppAt("/components?sbom_id=1")
+
+    expect(
+      await screen.findByText("NETGEAR R7000 1.0.11.136"),
+    ).toBeInTheDocument()
+    expect(await screen.findByText("No Docker image")).toBeInTheDocument()
+
+    const request = await waitForComponentRequest(
+      (url) => url.searchParams.get("sbom_id") === "1",
+    )
+    expect(request.searchParams.has("image_id")).toBe(false)
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(
+          ([input]) => String(input) === "/api/images/1/",
+        ),
+    ).toBe(false)
+  })
+
+  it("does not request Components for conflicting scope filters", () => {
+    installSuccessfulFetch()
+    renderAppAt("/components?sbom_id=1&image_id=1")
+
+    expect(
+      screen.getByText("Conflicting component filters"),
+    ).toBeInTheDocument()
+    expect(componentRequestUrls()).toHaveLength(0)
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(
+          ([input]) => String(input) === "/api/images/1/",
+        ),
+    ).toBe(false)
+  })
+
+  it("rejects an invalid sbom_id before any data request", () => {
+    installSuccessfulFetch()
+    renderAppAt("/components?sbom_id=not-a-number")
+
+    expect(
+      screen.getByText("Invalid SBOM filter"),
+    ).toBeInTheDocument()
+    expect(componentRequestUrls()).toHaveLength(0)
   })
 
   it("renders only the five manual-review columns", async () => {
@@ -359,7 +435,7 @@ describe("Components routing and page", () => {
           name: longName,
           version: longVersion,
           image: {
-            ...componentFixture.image,
+            id: 1,
             repository: longRepository,
             tag: longTag,
           },

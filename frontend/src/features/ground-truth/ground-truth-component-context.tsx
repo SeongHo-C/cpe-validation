@@ -149,7 +149,11 @@ export function GroundTruthComponentContext({
           />
           <MetadataField
             label="Docker image"
-            value={`${detail.image.repository}:${detail.image.tag}`}
+            value={
+              detail.image
+                ? `${detail.image.repository}:${detail.image.tag}`
+                : ""
+            }
             className="xl:col-span-3"
           />
           <MetadataField

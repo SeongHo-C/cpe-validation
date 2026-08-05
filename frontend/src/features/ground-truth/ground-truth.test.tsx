@@ -126,6 +126,13 @@ function componentDetail(
       repository: "docker.io/library/alpine",
       tag: "3.24.1",
     },
+    sbom: {
+      id: 11,
+      manufacturer: "",
+      product_name: "alpine",
+      product_version: "3.24.1",
+      original_filename: "alpine-3.24.1.cdx.json",
+    },
     sbom_document_id: 11,
     component_type: "library",
     group: "alpine",

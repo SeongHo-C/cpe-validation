@@ -49,6 +49,7 @@ import {
   ImageScopeSummary,
   type ImageDetailError,
 } from "@/features/components/image-scope-summary"
+import { SbomScopeSummary } from "@/features/components/sbom-scope-summary"
 import {
   ApiError,
   isAbortError,
@@ -56,6 +57,7 @@ import {
 
 interface QueryUpdates {
   imageId?: number | null
+  sbomId?: number | null
   componentId?: number | null
   search?: string
   ordering?: ComponentOrdering
@@ -67,11 +69,13 @@ interface QueryUpdates {
 function EmptyComponents({
   hasSearch,
   hasImageFilter,
+  hasSbomFilter,
   hasDictionaryFilter,
   onClearSearch,
 }: {
   hasSearch: boolean
   hasImageFilter: boolean
+  hasSbomFilter: boolean
   hasDictionaryFilter: boolean
   onClearSearch: () => void
 }) {
@@ -86,6 +90,9 @@ function EmptyComponents({
   } else if (hasImageFilter) {
     description =
       "This image does not contain components with a primary CPE."
+  } else if (hasSbomFilter) {
+    description =
+      "This SBOM does not contain components with a primary CPE."
   }
 
   return (
@@ -131,6 +138,9 @@ export function ComponentsPage() {
   const {
     imageId,
     invalidImageId,
+    sbomId,
+    invalidSbomId,
+    conflictingScopeFilters,
     componentId,
     invalidComponentId,
     search,
@@ -163,6 +173,13 @@ export function ComponentsPage() {
           next.delete("image_id")
         } else if (updates.imageId !== undefined) {
           next.set("image_id", String(updates.imageId))
+        }
+      }
+      if ("sbomId" in updates) {
+        if (updates.sbomId === null) {
+          next.delete("sbom_id")
+        } else if (updates.sbomId !== undefined) {
+          next.set("sbom_id", String(updates.sbomId))
         }
       }
       if ("componentId" in updates) {
@@ -258,7 +275,11 @@ export function ComponentsPage() {
   }, [search, searchInput, updateListQuery])
 
   useEffect(() => {
-    if (invalidImageId) {
+    if (
+      invalidImageId ||
+      invalidSbomId ||
+      conflictingScopeFilters
+    ) {
       setComponents(null)
       setComponentsError(false)
       setIsLoading(false)
@@ -273,6 +294,7 @@ export function ComponentsPage() {
     getComponents(
       {
         image_id: imageId,
+        sbom_id: sbomId,
         search,
         ordering,
         page,
@@ -300,6 +322,9 @@ export function ComponentsPage() {
     componentsReloadToken,
     imageId,
     invalidImageId,
+    sbomId,
+    invalidSbomId,
+    conflictingScopeFilters,
     ordering,
     page,
     pageSize,
@@ -308,7 +333,12 @@ export function ComponentsPage() {
   ])
 
   useEffect(() => {
-    if (invalidImageId || imageId === undefined) {
+    if (
+      invalidImageId ||
+      invalidSbomId ||
+      conflictingScopeFilters ||
+      imageId === undefined
+    ) {
       setImage(null)
       setImageError(null)
       setIsImageLoading(false)
@@ -341,7 +371,12 @@ export function ComponentsPage() {
       active = false
       controller.abort()
     }
-  }, [imageId, invalidImageId])
+  }, [
+    imageId,
+    invalidImageId,
+    invalidSbomId,
+    conflictingScopeFilters,
+  ])
 
   const clearSearch = () => {
     setSearchInput("")
@@ -358,20 +393,47 @@ export function ComponentsPage() {
     })
   }
 
-  if (invalidImageId) {
+  const clearSbomFilter = () => {
+    updateListQuery({
+      sbomId: null,
+      page: DEFAULT_COMPONENT_PAGE,
+    })
+  }
+
+  const clearScopeFilters = () => {
+    updateListQuery({
+      imageId: null,
+      sbomId: null,
+      page: DEFAULT_COMPONENT_PAGE,
+    })
+  }
+
+  if (
+    invalidImageId ||
+    invalidSbomId ||
+    conflictingScopeFilters
+  ) {
+    const title = conflictingScopeFilters
+      ? "Conflicting component filters"
+      : invalidSbomId
+        ? "Invalid SBOM filter"
+        : "Invalid image filter"
+    const description = conflictingScopeFilters
+      ? "Select either an SBOM or Docker image scope, not both."
+      : invalidSbomId
+        ? "The SBOM identifier in the URL is not valid."
+        : "The image identifier in the URL is not valid."
     return (
       <PageContent>
         <Alert variant="destructive" className="p-4">
           <TriangleAlert aria-hidden="true" />
-          <AlertTitle>Invalid image filter</AlertTitle>
-          <AlertDescription>
-            The image identifier in the URL is not valid.
-          </AlertDescription>
+          <AlertTitle>{title}</AlertTitle>
+          <AlertDescription>{description}</AlertDescription>
           <div className="col-start-2 mt-3">
             <Button
               type="button"
               variant="outline"
-              onClick={clearImageFilter}
+              onClick={clearScopeFilters}
             >
               View all components
             </Button>
@@ -383,6 +445,12 @@ export function ComponentsPage() {
 
   const isInitialLoading = isLoading && components === null
   const resultCount = components?.count
+  const selectedSbom =
+    sbomId === undefined
+      ? null
+      : (components?.results.find(
+          (component) => component.sbom.id === sbomId,
+        )?.sbom ?? null)
 
   return (
     <PageContent aria-busy={isLoading}>
@@ -391,15 +459,24 @@ export function ComponentsPage() {
           aria-label="Primary CPE Component list"
           className="min-w-0 flex-1 space-y-5"
         >
-          <ImageScopeSummary
-            imageId={imageId}
-            image={image}
-            isLoading={isImageLoading}
-            error={imageError}
-            componentCount={resultCount}
-            dictionaryStatus={dictionaryStatus}
-            onClearImageFilter={clearImageFilter}
-          />
+          {sbomId !== undefined ? (
+            <SbomScopeSummary
+              sbomId={sbomId}
+              sbom={selectedSbom}
+              componentCount={resultCount}
+              onClearSbomFilter={clearSbomFilter}
+            />
+          ) : (
+            <ImageScopeSummary
+              imageId={imageId}
+              image={image}
+              isLoading={isImageLoading}
+              error={imageError}
+              componentCount={resultCount}
+              dictionaryStatus={dictionaryStatus}
+              onClearImageFilter={clearImageFilter}
+            />
+          )}
 
           <Card
             id="components-table"
@@ -475,6 +552,7 @@ export function ComponentsPage() {
               <EmptyComponents
                 hasSearch={Boolean(search)}
                 hasImageFilter={imageId !== undefined}
+                hasSbomFilter={sbomId !== undefined}
                 hasDictionaryFilter={
                   dictionaryStatus !== undefined
                 }

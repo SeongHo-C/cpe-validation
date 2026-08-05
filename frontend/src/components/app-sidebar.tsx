@@ -11,14 +11,14 @@ import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
 interface AppNavigationProps {
-  imageCount?: number
+  sbomCount?: number
   className?: string
 }
 
 const navigationItems = [
   {
-    label: "Images",
-    to: "/images",
+    label: "SBOMs",
+    to: "/sboms",
     icon: Boxes,
   },
   {
@@ -39,7 +39,7 @@ const navigationItems = [
 ] as const
 
 export function AppNavigation({
-  imageCount,
+  sbomCount,
   className,
 }: AppNavigationProps) {
   return (
@@ -88,22 +88,22 @@ export function AppNavigation({
 
       <div className="m-3 rounded-lg border bg-muted/40 p-3">
         <p className="text-xs font-medium text-foreground">
-          Pilot Dataset
+          SBOM Inventory
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {imageCount === undefined
-            ? "Docker Official Images"
-            : `${imageCount} Docker Official Images`}
+          {sbomCount === undefined
+            ? "SBOM documents"
+            : `${sbomCount} SBOM documents`}
         </p>
       </div>
     </div>
   )
 }
 
-export function AppSidebar({ imageCount }: { imageCount?: number }) {
+export function AppSidebar({ sbomCount }: { sbomCount?: number }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 w-60 border-r bg-card">
-      <AppNavigation imageCount={imageCount} />
+      <AppNavigation sbomCount={sbomCount} />
     </aside>
   )
 }

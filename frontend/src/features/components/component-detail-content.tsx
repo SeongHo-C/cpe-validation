@@ -246,12 +246,12 @@ export function ComponentDetailContent({
             { label: "bom-ref", value: detail.bom_ref, monospace: true },
             {
               label: "Docker repository",
-              value: detail.image.repository,
+              value: detail.image?.repository ?? "",
               monospace: true,
             },
             {
               label: "Docker tag",
-              value: detail.image.tag,
+              value: detail.image?.tag ?? "",
               monospace: true,
             },
             {

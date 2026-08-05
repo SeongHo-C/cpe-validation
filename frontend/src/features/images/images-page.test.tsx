@@ -1,9 +1,15 @@
 import {
+  render,
   screen,
   waitFor,
   within,
 } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+} from "react-router-dom"
 import {
   afterEach,
   beforeEach,
@@ -17,7 +23,10 @@ import type {
   ApiHealth,
   DockerImageSummary,
 } from "@/features/images/images-types"
-import { renderAppAt } from "@/test/render-app"
+import { AppShell } from "@/components/app-shell"
+import { ComponentsPage } from "@/features/components/components-page"
+import { ImagesPage } from "@/features/images/images-page"
+import { RouteLocationProbe } from "@/test/route-location-probe"
 
 const healthResponse: ApiHealth = {
   status: "ok",
@@ -82,8 +91,22 @@ async function renderLoadedPage(
   images: DockerImageSummary[] = imageFixtures,
 ) {
   installSuccessfulFetch(images)
-  renderAppAt("/images")
+  renderLegacyImagesPage()
   await screen.findByText("docker.io/library/alpine")
+}
+
+function renderLegacyImagesPage() {
+  return render(
+    <MemoryRouter initialEntries={["/legacy-images"]}>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="legacy-images" element={<ImagesPage />} />
+          <Route path="components" element={<ComponentsPage />} />
+        </Route>
+      </Routes>
+      <RouteLocationProbe />
+    </MemoryRouter>,
+  )
 }
 
 function firstRepositoryName(): string {
@@ -111,7 +134,7 @@ describe("ImagesPage", () => {
       () => new Promise<Response>(() => undefined),
     )
 
-    renderAppAt("/images")
+    renderLegacyImagesPage()
 
     expect(
       screen.getByLabelText("Loading summary metrics"),
@@ -218,7 +241,7 @@ describe("ImagesPage", () => {
       )
     })
 
-    renderAppAt("/images")
+    renderLegacyImagesPage()
 
     expect(
       await screen.findByText("Unable to load Docker images"),
@@ -250,7 +273,7 @@ describe("ImagesPage", () => {
       return Promise.resolve(jsonResponse(imageFixtures))
     })
 
-    renderAppAt("/images")
+    renderLegacyImagesPage()
     await user.click(
       await screen.findByRole("button", { name: "Retry" }),
     )
@@ -269,7 +292,7 @@ describe("ImagesPage", () => {
       return Promise.resolve(jsonResponse(imageFixtures))
     })
 
-    renderAppAt("/images")
+    renderLegacyImagesPage()
 
     expect(
       await screen.findByText("docker.io/library/alpine"),
@@ -281,7 +304,7 @@ describe("ImagesPage", () => {
 
   it("distinguishes an empty API dataset", async () => {
     installSuccessfulFetch([])
-    renderAppAt("/images")
+    renderLegacyImagesPage()
 
     expect(
       await screen.findByText("No Docker images available"),

@@ -9,15 +9,19 @@ import { CpeDictionaryPage } from "@/features/cpe-dictionary/cpe-dictionary-page
 import { ComponentsPage } from "@/features/components/components-page"
 import { GroundTruthEditorPage } from "@/features/ground-truth/ground-truth-editor-page"
 import { GroundTruthListPage } from "@/features/ground-truth/ground-truth-list-page"
-import { ImagesPage } from "@/features/images/images-page"
+import { SbomsPage } from "@/features/sboms/sboms-page"
 import { NotFoundPage } from "@/pages/not-found-page"
 
 function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        <Route index element={<Navigate to="/images" replace />} />
-        <Route path="images" element={<ImagesPage />} />
+        <Route index element={<Navigate to="/sboms" replace />} />
+        <Route
+          path="images"
+          element={<Navigate to="/sboms" replace />}
+        />
+        <Route path="sboms" element={<SbomsPage />} />
         <Route path="components" element={<ComponentsPage />} />
         <Route
           path="ground-truth"

@@ -10,25 +10,25 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { useApiHealth } from "@/hooks/use-api-health"
 
 export interface AppShellOutletContext {
-  setImageCount: (count: number | undefined) => void
+  setSbomCount: (count: number | undefined) => void
 }
 
 export function AppShell() {
   const apiStatus = useApiHealth()
-  const [imageCount, setImageCountState] = useState<number>()
+  const [sbomCount, setSbomCountState] = useState<number>()
 
-  const setImageCount = useCallback(
-    (count: number | undefined) => setImageCountState(count),
+  const setSbomCount = useCallback(
+    (count: number | undefined) => setSbomCountState(count),
     [],
   )
   const outletContext = useMemo<AppShellOutletContext>(
-    () => ({ setImageCount }),
-    [setImageCount],
+    () => ({ setSbomCount }),
+    [setSbomCount],
   )
 
   return (
     <div className="min-h-screen bg-muted/35">
-      <AppSidebar imageCount={imageCount} />
+      <AppSidebar sbomCount={sbomCount} />
 
       <div className="min-w-0 pl-60">
         <AppHeader apiStatus={apiStatus} />

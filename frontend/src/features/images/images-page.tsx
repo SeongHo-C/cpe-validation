@@ -8,12 +8,8 @@ import {
   useMemo,
   useState,
 } from "react"
-import {
-  useNavigate,
-  useOutletContext,
-} from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
-import type { AppShellOutletContext } from "@/components/app-shell"
 import { DataPanelHeader } from "@/components/data-panel-header"
 import { PageContent } from "@/components/page-content"
 import {
@@ -102,8 +98,6 @@ function LoadingContent() {
 
 export function ImagesPage() {
   const navigate = useNavigate()
-  const { setImageCount } =
-    useOutletContext<AppShellOutletContext>()
   const [images, setImages] = useState<DockerImageSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
@@ -116,18 +110,15 @@ export function ImagesPage() {
 
     setIsLoading(true)
     setHasError(false)
-    setImageCount(undefined)
     getDockerImages(controller.signal)
       .then((responseImages) => {
         if (!active) return
         setImages(responseImages)
-        setImageCount(responseImages.length)
         setIsLoading(false)
       })
       .catch((error: unknown) => {
         if (!active || isAbortError(error)) return
         setHasError(true)
-        setImageCount(undefined)
         setIsLoading(false)
       })
 
@@ -135,7 +126,7 @@ export function ImagesPage() {
       active = false
       controller.abort()
     }
-  }, [reloadToken, setImageCount])
+  }, [reloadToken])
 
   const normalizedSearch = search.trim().toLowerCase()
   const filteredImages = useMemo(() => {

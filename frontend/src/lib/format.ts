@@ -19,3 +19,13 @@ export function formatPercent(
     maximumFractionDigits,
   }).format(safeRatio)
 }
+
+export function formatDateTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "—"
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date)
+}

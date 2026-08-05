@@ -22,9 +22,9 @@ export function NotFoundPage() {
             The requested page does not exist.
           </p>
           <Button asChild className="mt-6">
-            <Link to="/images">
+            <Link to="/sboms">
               <ArrowLeft aria-hidden="true" />
-              Back to Docker Images
+              Back to SBOMs
             </Link>
           </Button>
         </CardContent>

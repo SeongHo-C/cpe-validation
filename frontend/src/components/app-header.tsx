@@ -9,10 +9,10 @@ interface AppHeaderProps {
 }
 
 const routeMetadata = {
-  "/images": {
+  "/sboms": {
     eyebrow: "Inventory",
-    title: "Docker Images",
-    description: "Syft-generated CycloneDX SBOM inventory",
+    title: "SBOMs",
+    description: "SBOM documents available for CPE validation",
   },
   "/components": {
     eyebrow: "Validation Queue",
@@ -39,7 +39,7 @@ export function AppHeader({ apiStatus }: AppHeaderProps) {
     ? routeMetadata["/ground-truth"]
     : (routeMetadata[
         location.pathname as keyof typeof routeMetadata
-      ] ?? routeMetadata["/images"])
+      ] ?? routeMetadata["/sboms"])
 
   return (
     <header className="border-b bg-card">

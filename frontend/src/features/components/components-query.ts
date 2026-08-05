@@ -32,6 +32,9 @@ export type ComponentOrdering =
 export interface ComponentsUrlState {
   imageId?: number
   invalidImageId: boolean
+  sbomId?: number
+  invalidSbomId: boolean
+  conflictingScopeFilters: boolean
   componentId?: number
   invalidComponentId: boolean
   search: string
@@ -71,6 +74,9 @@ export function parseComponentsUrlState(
   const hasImageId = rawImageId !== null
   const validImageId =
     !hasImageId || isPositiveInteger(rawImageId)
+  const rawSbomId = searchParameters.get("sbom_id")
+  const hasSbomId = rawSbomId !== null
+  const validSbomId = !hasSbomId || isPositiveInteger(rawSbomId)
   const rawComponentId = searchParameters.get("component_id")
   const hasComponentId = rawComponentId !== null
   const validComponentId =
@@ -100,6 +106,12 @@ export function parseComponentsUrlState(
         ? Number(rawImageId)
         : undefined,
     invalidImageId: hasImageId && !validImageId,
+    sbomId:
+      hasSbomId && validSbomId
+        ? Number(rawSbomId)
+        : undefined,
+    invalidSbomId: hasSbomId && !validSbomId,
+    conflictingScopeFilters: hasImageId && hasSbomId,
     componentId:
       hasComponentId && validComponentId
         ? Number(rawComponentId)

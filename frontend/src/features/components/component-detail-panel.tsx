@@ -247,10 +247,9 @@ export function ComponentDetailPanel({
                     }
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {repositoryBasename(
-                      detail.image.repository,
-                    )}
-                    :{detail.image.tag}
+                    {detail.image
+                      ? `${repositoryBasename(detail.image.repository)}:${detail.image.tag}`
+                      : "No Docker image"}
                   </span>
                 </div>
               </div>
