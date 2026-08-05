@@ -51,6 +51,28 @@ class SBOMDocument(models.Model):
         DockerImage,
         on_delete=models.PROTECT,
         related_name="sbom_documents",
+        null=True,
+        blank=True,
+    )
+    manufacturer = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    product_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    product_version = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    original_filename = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
     )
     source_path = models.CharField(max_length=512)
     file_sha256 = models.CharField(
@@ -85,29 +107,31 @@ class SBOMDocument(models.Model):
     imported_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = [
-            "docker_image__repository",
-            "docker_image__tag",
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=[
-                    "docker_image",
-                    "generator_name",
-                    "generator_version",
-                    "format",
-                    "file_sha256",
-                ],
-                name="unique_sbom_document_import",
-            ),
-        ]
+        ordering = ["-imported_at", "-id"]
 
     def __str__(self) -> str:
-        return (
-            f"{self.docker_image.repository}:"
-            f"{self.docker_image.tag} - "
-            f"{self.generator_name} {self.generator_version}"
+        product_identity = " ".join(
+            value
+            for value in (
+                self.manufacturer,
+                self.product_name,
+                self.product_version,
+            )
+            if value
         )
+        if product_identity:
+            return product_identity
+        if self.docker_image_id is not None:
+            return (
+                f"{self.docker_image.repository}:"
+                f"{self.docker_image.tag} - "
+                f"{self.generator_name} {self.generator_version}"
+            )
+        if self.original_filename:
+            return self.original_filename
+        if self.file_sha256:
+            return f"SBOM {self.file_sha256[:12]}"
+        return f"SBOMDocument {self.pk or 'unsaved'}"
 
 
 class Component(models.Model):
