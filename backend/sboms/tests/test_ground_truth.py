@@ -919,6 +919,16 @@ class GroundTruthComponentListAPITests(APITestCase):
                 if item["code"] == "product_corrected"
             )["is_active"]
         )
+        self.assertEqual(
+            rows[self.original.id]["sbom"],
+            {
+                "id": self.original.sbom_document_id,
+                "manufacturer": "",
+                "product_name": "",
+                "product_version": "",
+                "original_filename": "",
+            },
+        )
 
     def test_resolution_and_correction_filters(self) -> None:
         manual = self.client.get(
@@ -985,6 +995,104 @@ class GroundTruthComponentListAPITests(APITestCase):
                 row["id"]
                 for row in unreviewed.json()["results"]
             },
+        )
+
+    def test_sbom_and_image_scope_filters_remain_compatible(
+        self,
+    ) -> None:
+        document = SBOMDocument.objects.create(
+            docker_image=None,
+            manufacturer="NETGEAR",
+            product_name="R7000",
+            product_version="1.0.11.136",
+            original_filename="r7000.cdx.json",
+            source_path="private/storage/r7000.cdx.json",
+            file_sha256="9" * 64,
+            spec_version="1.7",
+            generator_name="uploaded",
+            generator_version="1.0",
+        )
+        component = Component.objects.create(
+            sbom_document=document,
+            bom_ref="dockerless-ground-truth",
+            component_type="firmware",
+            name="R7000 firmware",
+            version="1.0.11.136",
+            cpe=(
+                "cpe:2.3:o:netgear:r7000_firmware:"
+                "1.0.11.136:*:*:*:*:*:*:*"
+            ),
+        )
+
+        sbom_response = self.client.get(
+            self.url,
+            {"sbom_id": document.id},
+        )
+        sbom_body = sbom_response.json()
+
+        self.assertEqual(
+            sbom_response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(sbom_body["count"], 1)
+        self.assertEqual(sbom_body["results"][0]["id"], component.id)
+        self.assertEqual(
+            sbom_body["results"][0]["sbom"],
+            {
+                "id": document.id,
+                "manufacturer": "NETGEAR",
+                "product_name": "R7000",
+                "product_version": "1.0.11.136",
+                "original_filename": "r7000.cdx.json",
+            },
+        )
+        self.assertIsNone(sbom_body["results"][0]["image"])
+
+        image_id = self.unreviewed.sbom_document.docker_image_id
+        image_response = self.client.get(
+            self.url,
+            {"image_id": image_id, "page_size": 200},
+        )
+        self.assertEqual(
+            image_response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(image_response.json()["count"], 11)
+        self.assertTrue(
+            all(
+                row["image"]["id"] == image_id
+                for row in image_response.json()["results"]
+            )
+        )
+
+    def test_ground_truth_list_validates_sbom_scope(self) -> None:
+        invalid = self.client.get(
+            self.url,
+            {"sbom_id": "not-a-number"},
+        )
+        conflicting = self.client.get(
+            self.url,
+            {
+                "image_id": self.unreviewed.sbom_document.docker_image_id,
+                "sbom_id": self.unreviewed.sbom_document_id,
+            },
+        )
+
+        self.assertEqual(
+            invalid.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertEqual(
+            invalid.json()["detail"],
+            "sbom_id must be a positive integer",
+        )
+        self.assertEqual(
+            conflicting.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertEqual(
+            conflicting.json()["detail"],
+            "image_id and sbom_id cannot be used together",
         )
 
     def test_list_prefetches_correction_types_without_n_plus_one(

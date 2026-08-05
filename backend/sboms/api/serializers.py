@@ -26,6 +26,56 @@ class ImageReferenceSerializer(serializers.ModelSerializer):
         fields = ("id", "repository", "tag")
 
 
+class SBOMReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SBOMDocument
+        fields = (
+            "id",
+            "manufacturer",
+            "product_name",
+            "product_version",
+            "original_filename",
+        )
+        read_only_fields = fields
+
+
+class SBOMDocumentListSerializer(serializers.ModelSerializer):
+    component_count = serializers.IntegerField(read_only=True)
+    uploaded_at = serializers.DateTimeField(
+        source="imported_at",
+        read_only=True,
+    )
+
+    class Meta:
+        model = SBOMDocument
+        fields = (
+            "id",
+            "manufacturer",
+            "product_name",
+            "product_version",
+            "original_filename",
+            "format",
+            "spec_version",
+            "generator_name",
+            "generator_version",
+            "component_count",
+            "uploaded_at",
+        )
+        read_only_fields = fields
+
+
+class SBOMDocumentDetailSerializer(SBOMDocumentListSerializer):
+    class Meta(SBOMDocumentListSerializer.Meta):
+        fields = (
+            *SBOMDocumentListSerializer.Meta.fields,
+            "file_sha256",
+            "serial_number",
+            "document_version",
+            "generated_at",
+        )
+        read_only_fields = fields
+
+
 class SBOMDocumentSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = SBOMDocument
@@ -185,6 +235,10 @@ class ComponentListSerializer(
     id = serializers.IntegerField(read_only=True)
     image = ImageReferenceSerializer(
         source="sbom_document.docker_image",
+        read_only=True,
+    )
+    sbom = SBOMReferenceSerializer(
+        source="sbom_document",
         read_only=True,
     )
     sbom_document_id = serializers.IntegerField(read_only=True)

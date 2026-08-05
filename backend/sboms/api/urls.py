@@ -11,6 +11,8 @@ from sboms.api.views import (
     GroundTruthCorrectionTypeDetailAPIView,
     GroundTruthCorrectionTypeListCreateAPIView,
     HealthAPIView,
+    SBOMDocumentDetailAPIView,
+    SBOMDocumentListAPIView,
 )
 
 
@@ -27,6 +29,16 @@ urlpatterns = [
         "images/<int:pk>/",
         DockerImageDetailAPIView.as_view(),
         name="image-detail",
+    ),
+    path(
+        "sboms/",
+        SBOMDocumentListAPIView.as_view(),
+        name="sbom-list",
+    ),
+    path(
+        "sboms/<int:pk>/",
+        SBOMDocumentDetailAPIView.as_view(),
+        name="sbom-detail",
     ),
     path(
         "components/",

@@ -659,6 +659,99 @@ class ReadOnlyAPITests(APITestCase):
                     "image_id must be a positive integer",
                 )
 
+    def test_sbom_id_filter_supports_dockerless_component_summary(
+        self,
+    ) -> None:
+        document = SBOMDocument.objects.create(
+            docker_image=None,
+            manufacturer="NETGEAR",
+            product_name="R7000",
+            product_version="1.0.11.136",
+            original_filename="r7000.cdx.json",
+            source_path="private/storage/r7000.cdx.json",
+            file_sha256="9" * 64,
+            spec_version="1.7",
+            generator_name="uploaded",
+            generator_version="1.0",
+        )
+        component = Component.objects.create(
+            sbom_document=document,
+            bom_ref="dockerless-component",
+            component_type="firmware",
+            name="R7000 firmware",
+            version="1.0.11.136",
+            cpe=self.search_cpe,
+        )
+        expected_sbom = {
+            "id": document.id,
+            "manufacturer": "NETGEAR",
+            "product_name": "R7000",
+            "product_version": "1.0.11.136",
+            "original_filename": "r7000.cdx.json",
+        }
+
+        list_response = self.client.get(
+            reverse("sboms_api:component-list"),
+            {"sbom_id": document.id},
+        )
+        list_body = list_response.json()
+
+        self.assertEqual(
+            list_response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(list_body["count"], 1)
+        self.assertEqual(list_body["results"][0]["id"], component.id)
+        self.assertEqual(list_body["results"][0]["sbom"], expected_sbom)
+        self.assertIsNone(list_body["results"][0]["image"])
+
+        detail_response = self.client.get(
+            reverse(
+                "sboms_api:component-detail",
+                args=[component.id],
+            )
+        )
+        self.assertEqual(
+            detail_response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(detail_response.json()["sbom"], expected_sbom)
+        self.assertIsNone(detail_response.json()["image"])
+
+    def test_invalid_sbom_id_returns_400(self) -> None:
+        for sbom_id in ("not-a-number", "0", "-1"):
+            with self.subTest(sbom_id=sbom_id):
+                response = self.client.get(
+                    reverse("sboms_api:component-list"),
+                    {"sbom_id": sbom_id},
+                )
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+                self.assertEqual(
+                    response.json()["detail"],
+                    "sbom_id must be a positive integer",
+                )
+
+    def test_component_list_rejects_image_and_sbom_filters(self) -> None:
+        response = self.client.get(
+            reverse("sboms_api:component-list"),
+            {
+                "image_id": self.alpha_image.id,
+                "sbom_id": self.alpha_sbom.id,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertEqual(
+            response.json()["detail"],
+            "image_id and sbom_id cannot be used together",
+        )
+
     def test_search_covers_all_allowed_fields(self) -> None:
         for search_value in (
             "NameNeedle",

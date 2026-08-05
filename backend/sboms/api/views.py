@@ -41,6 +41,8 @@ from sboms.api.serializers import (
     GroundTruthCorrectionTypeCreateSerializer,
     GroundTruthCorrectionTypeSerializer,
     GroundTruthCorrectionTypeUpdateSerializer,
+    SBOMDocumentDetailSerializer,
+    SBOMDocumentListSerializer,
 )
 from sboms.exact_matching import (
     CPEExactMatchStatus,
@@ -93,6 +95,59 @@ def _annotated_image_queryset() -> QuerySet[DockerImage]:
     ).order_by("repository", "tag", "id")
 
 
+def _annotated_sbom_queryset() -> QuerySet[SBOMDocument]:
+    """Return SBOM documents with their component totals."""
+
+    return SBOMDocument.objects.annotate(
+        component_count=Count("components")
+    ).order_by("-imported_at", "-id")
+
+
+def _parse_positive_id_filter(parameters, field_name: str) -> int | None:
+    raw_value = parameters.get(field_name)
+    if raw_value is None:
+        return None
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError) as error:
+        raise ValidationError(
+            {"detail": f"{field_name} must be a positive integer"}
+        ) from error
+    if value < 1:
+        raise ValidationError(
+            {"detail": f"{field_name} must be a positive integer"}
+        )
+    return value
+
+
+def _filter_component_scope(
+    queryset: QuerySet[Component],
+    parameters,
+) -> QuerySet[Component]:
+    if (
+        parameters.get("image_id") is not None
+        and parameters.get("sbom_id") is not None
+    ):
+        raise ValidationError(
+            {
+                "detail": (
+                    "image_id and sbom_id cannot be used together"
+                )
+            }
+        )
+
+    image_id = _parse_positive_id_filter(parameters, "image_id")
+    if image_id is not None:
+        return queryset.filter(
+            sbom_document__docker_image_id=image_id
+        )
+
+    sbom_id = _parse_positive_id_filter(parameters, "sbom_id")
+    if sbom_id is not None:
+        return queryset.filter(sbom_document_id=sbom_id)
+    return queryset
+
+
 class HealthAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -138,6 +193,27 @@ class DockerImageDetailAPIView(generics.RetrieveAPIView):
                 queryset=SBOMDocument.objects.order_by("id"),
             )
         )
+
+
+class SBOMDocumentListAPIView(generics.ListAPIView):
+    serializer_class = SBOMDocumentListSerializer
+    pagination_class = StandardPageNumberPagination
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[SBOMDocument]:
+        return _annotated_sbom_queryset()
+
+
+class SBOMDocumentDetailAPIView(generics.RetrieveAPIView):
+    serializer_class = SBOMDocumentDetailSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[SBOMDocument]:
+        return _annotated_sbom_queryset()
 
 
 class ComponentListAPIView(
@@ -264,21 +340,7 @@ class ComponentListAPIView(
                 snapshot,
             )
 
-        raw_image_id = parameters.get("image_id")
-        if raw_image_id is not None:
-            try:
-                image_id = int(raw_image_id)
-            except (TypeError, ValueError) as error:
-                raise ValidationError(
-                    {"detail": "image_id must be a positive integer"}
-                ) from error
-            if image_id < 1:
-                raise ValidationError(
-                    {"detail": "image_id must be a positive integer"}
-                )
-            queryset = queryset.filter(
-                sbom_document__docker_image_id=image_id
-            )
+        queryset = _filter_component_scope(queryset, parameters)
 
         search = parameters.get("search", "").strip()
         if search:
@@ -440,21 +502,7 @@ def _ground_truth_component_queryset(
             snapshot,
         )
 
-    raw_image_id = parameters.get("image_id")
-    if raw_image_id is not None:
-        try:
-            image_id = int(raw_image_id)
-        except (TypeError, ValueError) as error:
-            raise ValidationError(
-                {"detail": "image_id must be a positive integer"}
-            ) from error
-        if image_id < 1:
-            raise ValidationError(
-                {"detail": "image_id must be a positive integer"}
-            )
-        queryset = queryset.filter(
-            sbom_document__docker_image_id=image_id
-        )
+    queryset = _filter_component_scope(queryset, parameters)
 
     search = parameters.get("search", "").strip()
     if search:
