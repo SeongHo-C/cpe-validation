@@ -62,6 +62,7 @@ export interface GroundTruthComponentSummary
 
 export interface GroundTruthListQuery {
   image_id?: number
+  sbom_id?: number
   ground_truth_status?: GroundTruthStatus
   dictionary_status?: DictionaryStatus
   resolution_outcome?: GroundTruthResolutionOutcomeCode

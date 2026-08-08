@@ -67,6 +67,9 @@ export function buildGroundTruthListApiUrl(
   if (query.image_id !== undefined) {
     parameters.set("image_id", String(query.image_id))
   }
+  if (query.sbom_id !== undefined) {
+    parameters.set("sbom_id", String(query.sbom_id))
+  }
   if (query.ground_truth_status) {
     parameters.set(
       "ground_truth_status",

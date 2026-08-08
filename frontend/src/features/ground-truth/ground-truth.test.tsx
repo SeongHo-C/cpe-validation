@@ -29,6 +29,7 @@ import type {
   GroundTruthResolutionOutcome,
   GroundTruthSource,
 } from "@/features/ground-truth/ground-truth-types"
+import type { SbomDocumentSummary } from "@/features/sboms/sboms-types"
 import {
   renderAppAt,
   renderAppWithHistory,
@@ -43,6 +44,19 @@ const manualCpe =
   "cpe:2.3:a:haxx:curl:8.15.0:*:*:*:*:*:*:*"
 const componentPurl =
   "pkg:apk/alpine/curl@8.14.1-r1?arch=x86_64&distro=alpine-3.24.1&upstream=curl%408.14.1"
+const sbomFixture: SbomDocumentSummary = {
+  id: 11,
+  manufacturer: "Teltonika",
+  product_name: "RUTX11 Firmware",
+  product_version: "00.07.24.1",
+  original_filename: "sbom.cdx.json",
+  format: "CYCLONEDX_JSON",
+  spec_version: "1.5",
+  generator_name: "EMBA binary analysis environment",
+  generator_version: "2.0.3",
+  component_count: 790,
+  uploaded_at: "2026-08-08T00:00:00Z",
+}
 
 const vendorCorrection: GroundTruthCorrectionType = {
   id: 21,
@@ -401,6 +415,19 @@ function installFetch(options: FetchOptions = {}) {
         ]),
       )
     }
+    if (url.pathname === "/api/sboms/") {
+      return Promise.resolve(
+        jsonResponse({
+          count: 1,
+          page: 1,
+          page_size: 200,
+          total_pages: 1,
+          next: null,
+          previous: null,
+          results: [sbomFixture],
+        }),
+      )
+    }
     if (url.pathname === "/api/ground-truth/components/") {
       return Promise.resolve(
         jsonResponse({
@@ -630,12 +657,16 @@ describe("Ground Truth outcome and correction workflow", () => {
       "Component",
       "Version",
       "Original CPE",
-      "Ground Truth Status",
       "Ground Truth",
       "Resolution Outcome",
       "Correction Types",
       "Action",
     ])
+    expect(
+      within(table).queryByRole("columnheader", {
+        name: "Ground Truth Status",
+      }),
+    ).not.toBeInTheDocument()
     expect(
       within(table).queryByRole("columnheader", {
         name: "Exact Match",
@@ -644,7 +675,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(within(table).queryByText("Not in Dictionary"))
       .not.toBeInTheDocument()
     for (const row of within(table).getAllByRole("row").slice(1)) {
-      expect(within(row).getAllByRole("cell")).toHaveLength(8)
+      expect(within(row).getAllByRole("cell")).toHaveLength(7)
     }
     expect(
       within(table).queryByRole("columnheader", {
@@ -659,27 +690,81 @@ describe("Ground Truth outcome and correction workflow", () => {
       .toBeInTheDocument()
     expect(within(table).getByText("No direct official CPE"))
       .toBeInTheDocument()
+    expect(within(table).getByText("Not Assigned"))
+      .toBeInTheDocument()
+    expect(within(table).getByText(manualCpe)).toBeInTheDocument()
     expect(within(table).getAllByText("None")).not.toHaveLength(0)
+    expect(within(table).queryByText("Not Reviewed"))
+      .not.toBeInTheDocument()
+    expect(within(table).queryByText("Completed"))
+      .not.toBeInTheDocument()
+    expect(within(table).getByRole("link", { name: "Review" }))
+      .toBeInTheDocument()
+    expect(within(table).getAllByRole("link", { name: "Edit" }))
+      .toHaveLength(2)
+    expect(
+      screen.getByRole("heading", { name: "Ground Truth" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("Independent human-authored CPE answers"),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Review Components"))
+      .not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        "Review components with a Primary CPE and assign an independent expected CPE.",
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Component Keyword"))
+      .not.toHaveAttribute("placeholder")
+    expect(
+      screen.getByRole("button", { name: "Search" }),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText("Resolution Outcome"))
+      .toBeInTheDocument()
+    expect(screen.getByLabelText("Ground Truth Status"))
       .toBeInTheDocument()
     expect(screen.getByLabelText("Correction Type"))
       .toBeInTheDocument()
-    expect(screen.getByLabelText("Image")).toBeInTheDocument()
-    expect(screen.getByLabelText("Exact Match"))
+    expect(screen.queryByLabelText("Image")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("SBOM")).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", { name: "All SBOMs" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("option", {
+        name: "Teltonika RUTX11 Firmware 00.07.24.1",
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText("Exact Match"))
+      .not.toBeInTheDocument()
+    expect(screen.getByLabelText("Dictionary Status"))
       .toBeInTheDocument()
+    expect(
+      screen.getByRole("option", {
+        name: "All Dictionary Statuses",
+      }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole("option", {
         name: "Primary CPE Not Present",
       }),
     ).toBeInTheDocument()
+    expect(screen.getByLabelText("Sort")).toHaveValue("id")
+    expect(
+      screen.getByRole("option", {
+        name: "Component ID Ascending",
+      }),
+    ).toBeInTheDocument()
   })
 
-  it("keeps new filters in URL state and resets them", async () => {
+  it("keeps SBOM and review filters in URL/API state and resets them", async () => {
     const user = userEvent.setup()
     installFetch()
     renderAppAt("/ground-truth")
     await screen.findByText("curl")
 
+    await user.selectOptions(screen.getByLabelText("SBOM"), "11")
     await user.selectOptions(
       screen.getByLabelText("Resolution Outcome"),
       "MANUAL_FROM_OFFICIAL_FAMILY",
@@ -689,7 +774,7 @@ describe("Ground Truth outcome and correction workflow", () => {
       "vendor_corrected",
     )
     await user.selectOptions(
-      screen.getByLabelText("Exact Match"),
+      screen.getByLabelText("Dictionary Status"),
       "NOT_IN_DICTIONARY",
     )
 
@@ -703,13 +788,38 @@ describe("Ground Truth outcome and correction workflow", () => {
       expect(query.get("resolution_outcome")).toBe(
         "MANUAL_FROM_OFFICIAL_FAMILY",
       )
+      expect(query.get("sbom_id")).toBe("11")
+      expect(query.has("image_id")).toBe(false)
       expect(query.get("correction_type")).toBe(
         "vendor_corrected",
       )
       expect(query.get("dictionary_status")).toBe(
         "NOT_IN_DICTIONARY",
       )
+      const listRequests = vi
+        .mocked(fetch)
+        .mock.calls.map(([input]) =>
+          new URL(String(input), "http://frontend.test"),
+        )
+        .filter(
+          (url) =>
+            url.pathname === "/api/ground-truth/components/",
+        )
+      expect(listRequests.at(-1)?.searchParams.get("sbom_id"))
+        .toBe("11")
     })
+
+    await user.selectOptions(screen.getByLabelText("SBOM"), "")
+    await waitFor(() => {
+      const location =
+        screen.getByTestId("route-location").textContent ?? ""
+      expect(
+        new URL(location, "http://frontend.test").searchParams.has(
+          "sbom_id",
+        ),
+      ).toBe(false)
+    })
+    await user.selectOptions(screen.getByLabelText("SBOM"), "11")
 
     await user.click(
       screen.getByRole("button", { name: "Reset" }),
@@ -724,14 +834,17 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(screen.getByLabelText("Correction Type")).toHaveValue(
       "",
     )
-    expect(screen.getByLabelText("Exact Match")).toHaveValue("")
+    expect(screen.getByLabelText("Dictionary Status"))
+      .toHaveValue("")
+    expect(screen.getByLabelText("SBOM")).toHaveValue("")
+    expect(screen.getByLabelText("Sort")).toHaveValue("id")
   })
 
   it("preserves outcome and correction filters in review navigation", async () => {
     const user = userEvent.setup()
     installFetch()
     renderAppAt(
-      "/ground-truth?resolution_outcome=MANUAL_FROM_OFFICIAL_FAMILY&correction_type=vendor_corrected",
+      "/ground-truth?sbom_id=11&resolution_outcome=MANUAL_FROM_OFFICIAL_FAMILY&correction_type=vendor_corrected",
     )
     const editLinks = await screen.findAllByRole("link", {
       name: "Edit",
@@ -747,6 +860,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(decodeURIComponent(location)).toContain(
       "correction_type=vendor_corrected",
     )
+    expect(decodeURIComponent(location)).toContain("sbom_id=11")
   })
 
   it("shows read-only live outcomes and removes the legacy single-select", async () => {

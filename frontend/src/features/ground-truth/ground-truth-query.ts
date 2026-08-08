@@ -45,6 +45,7 @@ export function parseGroundTruthListQuery(
 
   return {
     image_id: positiveInteger(parameters.get("image_id")),
+    sbom_id: positiveInteger(parameters.get("sbom_id")),
     ground_truth_status: groundTruthStatus,
     dictionary_status: isDictionaryStatus(rawDictionaryStatus)
       ? rawDictionaryStatus
@@ -75,6 +76,9 @@ export function writeGroundTruthListQuery(
   const parameters = new URLSearchParams()
   if (query.image_id !== undefined) {
     parameters.set("image_id", String(query.image_id))
+  }
+  if (query.sbom_id !== undefined) {
+    parameters.set("sbom_id", String(query.sbom_id))
   }
   if (query.ground_truth_status) {
     parameters.set(

@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DataPanelHeader } from "@/components/data-panel-header"
 import {
   formLabelClassName,
   selectControlClassName,
@@ -30,6 +29,7 @@ import {
   Card,
   CardContent,
   CardFooter,
+  CardHeader,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -69,9 +69,8 @@ import {
   resolutionOutcomeCodes,
   resolutionOutcomeLabels,
 } from "@/features/ground-truth/ground-truth-resolution-outcome"
-import { groundTruthStatusLabels } from "@/features/ground-truth/ground-truth-status"
-import { getDockerImages } from "@/features/images/images-api"
-import type { DockerImageSummary } from "@/features/images/images-types"
+import { getSboms } from "@/features/sboms/sboms-query"
+import type { SbomDocumentSummary } from "@/features/sboms/sboms-types"
 import {
   ApiError,
   isAbortError,
@@ -101,6 +100,21 @@ function requestError(error: unknown): string {
   return "Unable to load Ground Truth review components."
 }
 
+function sbomOptionLabel(sbom: SbomDocumentSummary): string {
+  const productIdentity = [
+    sbom.manufacturer,
+    sbom.product_name,
+    sbom.product_version,
+  ]
+    .filter(Boolean)
+    .join(" ")
+  return (
+    productIdentity ||
+    sbom.original_filename ||
+    "Untitled SBOM"
+  )
+}
+
 export function GroundTruthListPage() {
   const [searchParameters, setSearchParameters] =
     useSearchParams()
@@ -122,7 +136,7 @@ export function GroundTruthListPage() {
     total_pages: number
     results: GroundTruthComponentSummary[]
   } | null>(null)
-  const [images, setImages] = useState<DockerImageSummary[]>([])
+  const [sboms, setSboms] = useState<SbomDocumentSummary[]>([])
   const [correctionTypes, setCorrectionTypes] = useState<
     GroundTruthCorrectionType[]
   >([])
@@ -144,9 +158,12 @@ export function GroundTruthListPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    getDockerImages(controller.signal)
-      .then(setImages)
-      .catch(() => setImages([]))
+    getSboms(
+      { page: 1, page_size: 200 },
+      controller.signal,
+    )
+      .then((response) => setSboms(response.results))
+      .catch(() => setSboms([]))
     return () => controller.abort()
   }, [])
 
@@ -188,6 +205,7 @@ export function GroundTruthListPage() {
 
   const hasAppliedSearchState =
     query.image_id !== undefined ||
+    query.sbom_id !== undefined ||
     query.ground_truth_status !== undefined ||
     query.dictionary_status !== undefined ||
     query.resolution_outcome !== undefined ||
@@ -211,12 +229,9 @@ export function GroundTruthListPage() {
   return (
     <PageContent>
       <Card className="gap-0 py-0" aria-busy={loading}>
-        <DataPanelHeader
-          title="Review Components"
-          description="Review components with a Primary CPE and assign an independent expected CPE."
-        >
+        <CardHeader className="border-b p-4">
           <form
-            className="mt-3 space-y-4"
+            className="space-y-4"
             onSubmit={submitSearch}
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
@@ -227,7 +242,6 @@ export function GroundTruthListPage() {
                 <Input
                   aria-label="Component Keyword"
                   value={searchInput}
-                  placeholder="Search by name, version, publisher, PURL, or CPE"
                   onChange={(event) =>
                     setSearchInput(event.target.value)
                   }
@@ -243,148 +257,131 @@ export function GroundTruthListPage() {
               </Button>
             </div>
 
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-              <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap">
-                <label
-                  className={`${formLabelClassName} sm:w-full lg:w-[220px]`}
+            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <label className={formLabelClassName}>
+                <span className="block">SBOM</span>
+                <select
+                  aria-label="SBOM"
+                  className={`${selectControlClassName} w-full`}
+                  value={query.sbom_id ?? ""}
+                  onChange={(event) =>
+                    setQuery({
+                      image_id: undefined,
+                      sbom_id: event.target.value
+                        ? Number(event.target.value)
+                        : undefined,
+                      page: 1,
+                    })
+                  }
                 >
-                  <span className="block">Image</span>
-                  <select
-                    aria-label="Image"
-                    className={`${selectControlClassName} w-full`}
-                    value={query.image_id ?? ""}
-                    onChange={(event) =>
-                      setQuery({
-                        image_id: event.target.value
-                          ? Number(event.target.value)
-                          : undefined,
-                        page: 1,
-                      })
-                    }
-                  >
-                    <option value="">All Images</option>
-                    {images.map((image) => (
-                      <option key={image.id} value={image.id}>
-                        {image.repository}:{image.tag}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label
-                  className={`${formLabelClassName} sm:w-full lg:w-[200px]`}
-                >
-                  <span className="block">Ground Truth Status</span>
-                  <select
-                    aria-label="Ground Truth Status"
-                    className={`${selectControlClassName} w-full`}
-                    value={query.ground_truth_status ?? ""}
-                    onChange={(event) =>
-                      setQuery({
-                        ground_truth_status:
-                          (event.target.value ||
-                            undefined) as
-                            | GroundTruthStatus
-                            | undefined,
-                        page: 1,
-                      })
-                    }
-                  >
-                    <option value="">All Statuses</option>
-                    <option value="UNREVIEWED">Not Reviewed</option>
-                    <option value="COMPLETED">Completed</option>
-                  </select>
-                </label>
-                <label
-                  className={`${formLabelClassName} sm:w-full lg:w-[210px]`}
-                >
-                  <span className="block">Exact Match</span>
-                  <select
-                    aria-label="Exact Match"
-                    className={`${selectControlClassName} w-full`}
-                    value={query.dictionary_status ?? ""}
-                    onChange={(event) =>
-                      setQuery({
-                        dictionary_status:
-                          (event.target.value ||
-                            undefined) as
-                            | DictionaryStatus
-                            | undefined,
-                        page: 1,
-                      })
-                    }
-                  >
-                    <option value="">
-                      All Exact Match Results
+                  <option value="">All SBOMs</option>
+                  {sboms.map((sbom) => (
+                    <option key={sbom.id} value={sbom.id}>
+                      {sbomOptionLabel(sbom)}
                     </option>
-                    {dictionaryStatuses.map((status) => (
-                      <option key={status} value={status}>
-                        {dictionaryStatusLabels[status]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label
-                  className={`${formLabelClassName} sm:w-full lg:w-[250px]`}
+                  ))}
+                </select>
+              </label>
+              <label className={formLabelClassName}>
+                <span className="block">Ground Truth Status</span>
+                <select
+                  aria-label="Ground Truth Status"
+                  className={`${selectControlClassName} w-full`}
+                  value={query.ground_truth_status ?? ""}
+                  onChange={(event) =>
+                    setQuery({
+                      ground_truth_status:
+                        (event.target.value || undefined) as
+                          | GroundTruthStatus
+                          | undefined,
+                      page: 1,
+                    })
+                  }
                 >
-                  <span className="block">Resolution Outcome</span>
-                  <select
-                    aria-label="Resolution Outcome"
-                    className={`${selectControlClassName} w-full`}
-                    value={query.resolution_outcome ?? ""}
-                    onChange={(event) =>
-                      setQuery({
-                        resolution_outcome:
-                          (event.target.value ||
-                            undefined) as
-                            | GroundTruthResolutionOutcomeCode
-                            | undefined,
-                        page: 1,
-                      })
-                    }
-                  >
-                    <option value="">All Resolution Outcomes</option>
-                    {resolutionOutcomeCodes.map((code) => (
-                      <option key={code} value={code}>
-                        {resolutionOutcomeLabels[code]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label
-                  className={`${formLabelClassName} sm:w-full lg:w-[240px]`}
+                  <option value="">All Statuses</option>
+                  <option value="UNREVIEWED">Not Reviewed</option>
+                  <option value="COMPLETED">Completed</option>
+                </select>
+              </label>
+              <label className={formLabelClassName}>
+                <span className="block">Dictionary Status</span>
+                <select
+                  aria-label="Dictionary Status"
+                  className={`${selectControlClassName} w-full`}
+                  value={query.dictionary_status ?? ""}
+                  onChange={(event) =>
+                    setQuery({
+                      dictionary_status:
+                        (event.target.value || undefined) as
+                          | DictionaryStatus
+                          | undefined,
+                      page: 1,
+                    })
+                  }
                 >
-                  <span className="block">Correction Type</span>
-                  <select
-                    aria-label="Correction Type"
-                    className={`${selectControlClassName} w-full`}
-                    value={query.correction_type ?? ""}
-                    onChange={(event) =>
-                      setQuery({
-                        correction_type:
-                          event.target.value || undefined,
-                        page: 1,
-                      })
-                    }
-                  >
-                    <option value="">All Correction Types</option>
-                    {correctionTypes.map((correctionType) => (
-                      <option
-                        key={correctionType.id}
-                        value={correctionType.code}
-                      >
-                        {correctionType.name}
-                        {!correctionType.is_active
-                          ? " (Inactive)"
-                          : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end xl:ml-auto xl:shrink-0">
+                  <option value="">All Dictionary Statuses</option>
+                  {dictionaryStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {dictionaryStatusLabels[status]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={formLabelClassName}>
+                <span className="block">Resolution Outcome</span>
+                <select
+                  aria-label="Resolution Outcome"
+                  className={`${selectControlClassName} w-full`}
+                  value={query.resolution_outcome ?? ""}
+                  onChange={(event) =>
+                    setQuery({
+                      resolution_outcome:
+                        (event.target.value || undefined) as
+                          | GroundTruthResolutionOutcomeCode
+                          | undefined,
+                      page: 1,
+                    })
+                  }
+                >
+                  <option value="">All Resolution Outcomes</option>
+                  {resolutionOutcomeCodes.map((code) => (
+                    <option key={code} value={code}>
+                      {resolutionOutcomeLabels[code]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={formLabelClassName}>
+                <span className="block">Correction Type</span>
+                <select
+                  aria-label="Correction Type"
+                  className={`${selectControlClassName} w-full`}
+                  value={query.correction_type ?? ""}
+                  onChange={(event) =>
+                    setQuery({
+                      correction_type:
+                        event.target.value || undefined,
+                      page: 1,
+                    })
+                  }
+                >
+                  <option value="">All Correction Types</option>
+                  {correctionTypes.map((correctionType) => (
+                    <option
+                      key={correctionType.id}
+                      value={correctionType.code}
+                    >
+                      {correctionType.name}
+                      {!correctionType.is_active
+                        ? " (Inactive)"
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end">
                 <label
-                  className={`${formLabelClassName} sm:w-[220px]`}
+                  className={`${formLabelClassName} min-w-0 flex-1`}
                 >
                   <span className="block">Sort</span>
                   <select
@@ -420,7 +417,7 @@ export function GroundTruthListPage() {
               </div>
             </div>
           </form>
-        </DataPanelHeader>
+        </CardHeader>
 
         {error ? (
           <div className="p-4">
@@ -459,25 +456,27 @@ export function GroundTruthListPage() {
                 Ground Truth review components
               </TableCaption>
               <colgroup>
-                <col className="w-[8%]" />
-                <col className="w-[6%]" />
-                <col className="w-[18%]" />
-                <col className="w-[10%]" />
-                <col className="w-[19%]" />
-                <col className="w-[15%]" />
-                <col className="w-[17%]" />
+                <col className="w-[11%]" />
                 <col className="w-[7%]" />
+                <col className="w-[24%]" />
+                <col className="w-[24%]" />
+                <col className="w-[14%]" />
+                <col className="w-[14%]" />
+                <col className="w-[6%]" />
               </colgroup>
               <TableHeader className="bg-muted/45">
                 <TableRow>
-                  <TableHead>Component</TableHead>
-                  <TableHead>Version</TableHead>
-                  <TableHead>Original CPE</TableHead>
-                  <TableHead>Ground Truth Status</TableHead>
-                  <TableHead>Ground Truth</TableHead>
-                  <TableHead>Resolution Outcome</TableHead>
-                  <TableHead>Correction Types</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead className="text-left">Component</TableHead>
+                  <TableHead className="text-center">Version</TableHead>
+                  <TableHead className="text-left">Original CPE</TableHead>
+                  <TableHead className="text-left">Ground Truth</TableHead>
+                  <TableHead className="text-center">
+                    Resolution Outcome
+                  </TableHead>
+                  <TableHead className="text-center">
+                    Correction Types
+                  </TableHead>
+                  <TableHead className="text-center">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -485,7 +484,7 @@ export function GroundTruthListPage() {
                   const value = groundTruthValue(component)
                   return (
                     <TableRow key={component.id}>
-                      <TableCell className="min-w-0 font-medium">
+                      <TableCell className="min-w-0 text-left font-medium">
                         <p
                           className="truncate"
                           title={component.name}
@@ -493,7 +492,7 @@ export function GroundTruthListPage() {
                           {component.name}
                         </p>
                       </TableCell>
-                      <TableCell className="min-w-0">
+                      <TableCell className="min-w-0 text-center">
                         <p
                           className="truncate"
                           title={component.version || "—"}
@@ -501,7 +500,7 @@ export function GroundTruthListPage() {
                           {component.version || "—"}
                         </p>
                       </TableCell>
-                      <TableCell className="min-w-0">
+                      <TableCell className="min-w-0 text-left">
                         <p
                           className="w-full truncate font-mono text-xs"
                           title={component.cpe}
@@ -509,24 +508,7 @@ export function GroundTruthListPage() {
                           {component.cpe}
                         </p>
                       </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            component.ground_truth_status ===
-                            "COMPLETED"
-                              ? "secondary"
-                              : "outline"
-                          }
-                          className="shrink-0"
-                        >
-                          {
-                            groundTruthStatusLabels[
-                              component.ground_truth_status
-                            ]
-                          }
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="min-w-0">
+                      <TableCell className="min-w-0 text-left">
                         <p
                           className="w-full truncate font-mono text-xs"
                           title={value}
@@ -534,7 +516,7 @@ export function GroundTruthListPage() {
                           {value}
                         </p>
                       </TableCell>
-                      <TableCell className="min-w-0">
+                      <TableCell className="min-w-0 text-center">
                         {component.resolution_outcome ? (
                           <Badge
                             className="max-w-full truncate"
@@ -549,9 +531,9 @@ export function GroundTruthListPage() {
                           "—"
                         )}
                       </TableCell>
-                      <TableCell className="min-w-0">
+                      <TableCell className="min-w-0 text-center">
                         {component.correction_types.length ? (
-                          <div className="flex min-w-0 flex-wrap gap-1">
+                          <div className="flex min-w-0 flex-wrap justify-center gap-1">
                             {component.correction_types.map(
                               (correctionType) => (
                                 <Badge
@@ -572,7 +554,7 @@ export function GroundTruthListPage() {
                           "None"
                         )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap text-center">
                         <Button asChild size="sm" variant="outline">
                           <Link
                             to={groundTruthDetailPath(
