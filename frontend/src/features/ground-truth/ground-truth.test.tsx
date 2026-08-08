@@ -876,9 +876,21 @@ describe("Ground Truth outcome and correction workflow", () => {
     ).toBeInTheDocument()
     expect(
       within(editor).getByText(
-        "Select a Dictionary CPE, enter a Manual CPE, or save the reviewed result.",
+        "Select a Dictionary CPE, enter a Manual CPE, or confirm that no direct official CPE was found.",
       ),
     ).toBeInTheDocument()
+    const noDirectDecision = within(editor).getByRole("checkbox", {
+      name: "Direct official CPE not confirmed",
+    })
+    const save = within(editor).getByRole("button", {
+      name: "Save Ground Truth",
+    })
+    const saveAndNext = within(editor).getByRole("button", {
+      name: "Save and Next",
+    })
+    expect(noDirectDecision).not.toBeChecked()
+    expect(save).toBeDisabled()
+    expect(saveAndNext).toBeDisabled()
     expect(
       within(editor).queryByRole("combobox", {
         name: "Decision Type",
@@ -904,6 +916,9 @@ describe("Ground Truth outcome and correction workflow", () => {
       ),
     ).toBeInTheDocument()
     expect(corrections).toBeEnabled()
+    expect(noDirectDecision).not.toBeChecked()
+    expect(save).toBeEnabled()
+    expect(saveAndNext).toBeEnabled()
 
     await user.clear(manual)
     expect(
@@ -912,6 +927,9 @@ describe("Ground Truth outcome and correction workflow", () => {
       ),
     ).toBeInTheDocument()
     expect(corrections).toBeDisabled()
+    expect(noDirectDecision).not.toBeChecked()
+    expect(save).toBeDisabled()
+    expect(saveAndNext).toBeDisabled()
   })
 
   it("shows a saved no-direct-CPE result as server-confirmed", async () => {
@@ -922,6 +940,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(
       await within(editor).findByText(
         "Direct official CPE not confirmed",
+        { selector: "[data-slot='badge']" },
       ),
     ).toBeInTheDocument()
     expect(
@@ -931,6 +950,91 @@ describe("Ground Truth outcome and correction workflow", () => {
     ).toBeInTheDocument()
     expect(within(editor).queryByText("Pending review"))
       .not.toBeInTheDocument()
+    expect(
+      within(editor).getByRole("checkbox", {
+        name: "Direct official CPE not confirmed",
+      }),
+    ).toBeChecked()
+    expect(
+      within(editor).getByRole("button", {
+        name: "Save Ground Truth",
+      }),
+    ).toBeEnabled()
+  })
+
+  it("treats clearing a saved no-direct decision as an undecided dirty edit", async () => {
+    const user = userEvent.setup()
+    installFetch({ restoredSource: "NONE" })
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    const noDirectDecision = await within(editor).findByRole(
+      "checkbox",
+      { name: "Direct official CPE not confirmed" },
+    )
+    const save = within(editor).getByRole("button", {
+      name: "Save Ground Truth",
+    })
+
+    await user.click(noDirectDecision)
+    expect(noDirectDecision).not.toBeChecked()
+    expect(within(editor).getByText("Pending review"))
+      .toBeInTheDocument()
+    expect(save).toBeDisabled()
+
+    vi.mocked(confirm).mockReturnValueOnce(false)
+    await user.click(screen.getByRole("button", { name: "Next" }))
+    expect(confirm).toHaveBeenCalledWith(
+      "You have unsaved changes. Leave this component?",
+    )
+    expect(screen.getByTestId("route-location").textContent)
+      .toContain("/101")
+  })
+
+  it("requires an explicit no-direct decision while preserving Notes", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+    const noDirectDecision = await within(editor).findByRole(
+      "checkbox",
+      { name: "Direct official CPE not confirmed" },
+    )
+    const save = within(editor).getByRole("button", {
+      name: "Save Ground Truth",
+    })
+    const saveAndNext = within(editor).getByRole("button", {
+      name: "Save and Next",
+    })
+
+    await user.click(noDirectDecision)
+    expect(noDirectDecision).toBeChecked()
+    expect(
+      within(editor).getByText(
+        "Direct official CPE not confirmed",
+        { selector: "[data-slot='badge']" },
+      ),
+    ).toBeInTheDocument()
+    expect(save).toBeEnabled()
+    expect(saveAndNext).toBeEnabled()
+    expect(
+      within(editor).getByRole("combobox", {
+        name: "Correction Types",
+      }),
+    ).toBeDisabled()
+
+    await user.click(within(editor).getByText("Add Note"))
+    const note = within(editor).getByPlaceholderText("Optional")
+    await user.type(note, "No direct official record found.")
+    expect(note).toHaveValue("No direct official record found.")
+    expect(noDirectDecision).toBeChecked()
+
+    await user.click(noDirectDecision)
+    expect(noDirectDecision).not.toBeChecked()
+    expect(within(editor).getByText("Pending review"))
+      .toBeInTheDocument()
+    expect(note).toHaveValue("No direct official record found.")
+    expect(save).toBeDisabled()
+    expect(saveAndNext).toBeDisabled()
   })
 
   it("supports multi-select, badge removal, outside click, and Escape", async () => {
@@ -1034,7 +1138,12 @@ describe("Ground Truth outcome and correction workflow", () => {
       }),
     ).toBeInTheDocument()
 
-    await user.clear(manual)
+    const noDirectDecision = within(editor).getByRole("checkbox", {
+      name: "Direct official CPE not confirmed",
+    })
+    await user.click(noDirectDecision)
+    expect(noDirectDecision).toBeChecked()
+    expect(manual).toHaveValue("")
     expect(
       await within(editor).findByText(
         "Correction Types were cleared because this Resolution Outcome does not allow them.",
@@ -1109,13 +1218,18 @@ describe("Ground Truth outcome and correction workflow", () => {
     const manual = await within(editor).findByPlaceholderText(
       /cpe:2\.3:a:vendor/,
     )
+    const noDirectDecision = within(editor).getByRole("checkbox", {
+      name: "Direct official CPE not confirmed",
+    })
     expect(within(editor).getByText(correctedCpe))
       .toBeInTheDocument()
+    expect(noDirectDecision).not.toBeChecked()
 
     await user.type(manual, manualCpe)
     expect(within(editor).getByText("No Dictionary CPE selected"))
       .toBeInTheDocument()
     expect(manual).toHaveValue(manualCpe)
+    expect(noDirectDecision).not.toBeChecked()
 
     const correctedRow = screen.getByText(correctedCpe).closest("tr")
     if (!correctedRow) throw new Error("Dictionary result row missing")
@@ -1127,6 +1241,69 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(manual).toHaveValue("")
     expect(within(editor).getByText(correctedCpe))
       .toBeInTheDocument()
+    expect(noDirectDecision).not.toBeChecked()
+  })
+
+  it("keeps no-direct, Dictionary, and Manual decisions mutually exclusive", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101?q=curl")
+    const editor = groundTruthEditor()
+    const noDirectDecision = await within(editor).findByRole(
+      "checkbox",
+      { name: "Direct official CPE not confirmed" },
+    )
+    const manual = within(editor).getByPlaceholderText(
+      /cpe:2\.3:a:vendor/,
+    )
+    const save = within(editor).getByRole("button", {
+      name: "Save Ground Truth",
+    })
+    expect(await screen.findByText("2 results"))
+      .toBeInTheDocument()
+    const correctedRow = screen.getByText(correctedCpe).closest("tr")
+    if (!correctedRow) throw new Error("Dictionary result row missing")
+
+    await user.click(noDirectDecision)
+    await user.click(
+      within(correctedRow).getByRole("button", {
+        name: "Select as Ground Truth",
+      }),
+    )
+    expect(noDirectDecision).not.toBeChecked()
+    expect(manual).toHaveValue("")
+    expect(within(editor).getByText(correctedCpe))
+      .toBeInTheDocument()
+
+    await user.click(
+      within(editor).getByRole("button", {
+        name: "Remove Selection",
+      }),
+    )
+    expect(noDirectDecision).not.toBeChecked()
+    expect(within(editor).getByText("Pending review"))
+      .toBeInTheDocument()
+    expect(save).toBeDisabled()
+
+    await user.click(noDirectDecision)
+    await user.type(manual, manualCpe)
+    expect(noDirectDecision).not.toBeChecked()
+    expect(within(editor).getByText("No Dictionary CPE selected"))
+      .toBeInTheDocument()
+    expect(manual).toHaveValue(manualCpe)
+
+    await user.click(noDirectDecision)
+    expect(noDirectDecision).toBeChecked()
+    expect(manual).toHaveValue("")
+    expect(within(editor).getByText("No Dictionary CPE selected"))
+      .toBeInTheDocument()
+    expect(save).toBeEnabled()
+
+    await user.click(noDirectDecision)
+    expect(noDirectDecision).not.toBeChecked()
+    expect(within(editor).getByText("Pending review"))
+      .toBeInTheDocument()
+    expect(save).toBeDisabled()
   })
 
   it("creates and manages Correction Types without a delete action", async () => {
@@ -1264,6 +1441,11 @@ describe("Ground Truth outcome and correction workflow", () => {
       "Pending review",
     )
     await user.click(
+      within(editor).getByRole("checkbox", {
+        name: "Direct official CPE not confirmed",
+      }),
+    )
+    await user.click(
       within(editor).getByRole("button", {
         name: "Save Ground Truth",
       }),
@@ -1279,9 +1461,14 @@ describe("Ground Truth outcome and correction workflow", () => {
       correction_type_ids: [],
     })
     expect(JSON.stringify(payload)).not.toContain("Pending review")
+    expect(payload).not.toHaveProperty(
+      "no_direct_official_cpe_confirmed",
+    )
+    expect(payload).not.toHaveProperty("decision")
     expect(
       await within(editor).findByText(
         "Direct official CPE not confirmed",
+        { selector: "[data-slot='badge']" },
       ),
     ).toBeInTheDocument()
     expect(within(editor).queryByText("Pending review"))
@@ -1291,6 +1478,11 @@ describe("Ground Truth outcome and correction workflow", () => {
         "Server-confirmed outcome from the saved Ground Truth.",
       ),
     ).toBeInTheDocument()
+    expect(
+      within(editor).getByRole("checkbox", {
+        name: "Direct official CPE not confirmed",
+      }),
+    ).toBeChecked()
   })
 
   it("preserves invalid manual input after server validation", async () => {
@@ -1324,6 +1516,11 @@ describe("Ground Truth outcome and correction workflow", () => {
     await within(editor).findByText(
       "Pending review",
     )
+    await user.click(
+      within(editor).getByRole("checkbox", {
+        name: "Direct official CPE not confirmed",
+      }),
+    )
     const save = within(editor).getByRole("button", {
       name: "Save Ground Truth",
     })
@@ -1354,6 +1551,11 @@ describe("Ground Truth outcome and correction workflow", () => {
     )
     expect(await screen.findByText("2 results")).toBeInTheDocument()
     await user.click(
+      within(editor).getByRole("checkbox", {
+        name: "Direct official CPE not confirmed",
+      }),
+    )
+    await user.click(
       within(editor).getByRole("button", {
         name: "Save and Next",
       }),
@@ -1374,6 +1576,14 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(screen.getByLabelText("Part")).toHaveValue("")
     expect(screen.getByLabelText("Status")).toHaveValue("active")
     expect(screen.queryByText("2 results")).not.toBeInTheDocument()
+    expect(
+      await within(groundTruthEditor()).findByRole("checkbox", {
+        name: "Direct official CPE not confirmed",
+      }),
+    ).not.toBeChecked()
+    expect(
+      await within(groundTruthEditor()).findByText("Pending review"),
+    ).toBeInTheDocument()
   })
 
   it("preserves Component evidence and the existing review layout", async () => {

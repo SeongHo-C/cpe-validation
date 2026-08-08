@@ -56,12 +56,15 @@ function requestError(error: unknown): string {
 function stateSignature(
   selectedCpe: CpeDictionaryCandidate | null,
   manualCpe: string,
+  noDirectOfficialCpeConfirmed: boolean,
   correctionTypes: GroundTruthCorrectionType[],
   note: string,
 ): string {
   return JSON.stringify({
     dictionary_cpe_id: selectedCpe?.id ?? null,
     manual_cpe: manualCpe,
+    no_direct_official_cpe_confirmed:
+      noDirectOfficialCpeConfirmed,
     correction_type_ids: correctionTypes
       .map((correctionType) => correctionType.id)
       .sort((left, right) => left - right),
@@ -100,6 +103,8 @@ export function GroundTruthEditor({
   >(null)
   const [note, setNote] = useState("")
   const [snapshotId, setSnapshotId] = useState("")
+  const [noDirectOfficialCpeConfirmed, setNoDirectOfficialCpeConfirmed] =
+    useState(false)
   const [serverGroundTruth, setServerGroundTruth] =
     useState<ComponentCpeGroundTruthRecord | null>(null)
   const [loading, setLoading] = useState(true)
@@ -110,15 +115,26 @@ export function GroundTruthEditor({
     string | null
   >(null)
 
+  const noDirectDecisionActive =
+    noDirectOfficialCpeConfirmed &&
+    selectedCpe === null &&
+    !manualCpe.trim()
   const currentSignature = useMemo(
     () =>
       stateSignature(
         selectedCpe,
         manualCpe,
+        noDirectDecisionActive,
         correctionTypes,
         note,
       ),
-    [correctionTypes, manualCpe, note, selectedCpe],
+    [
+      correctionTypes,
+      manualCpe,
+      noDirectDecisionActive,
+      note,
+      selectedCpe,
+    ],
   )
   const resolutionOutcome = useMemo(
     () =>
@@ -134,21 +150,33 @@ export function GroundTruthEditor({
   )
   const editorPristine =
     savedSignature !== null && currentSignature === savedSignature
-  const pendingReview =
-    serverGroundTruth === null &&
-    editorPristine &&
-    selectedCpe === null &&
-    !manualCpe.trim()
+  const hasGroundTruthDecision = Boolean(
+    selectedCpe || manualCpe.trim() || noDirectDecisionActive,
+  )
+  const pendingReview = !hasGroundTruthDecision
   const showingSavedOutcome =
     serverGroundTruth !== null && editorPristine
   const displayedResolutionOutcome = showingSavedOutcome
     ? serverGroundTruth.resolution_outcome
     : resolutionOutcome
   const resolutionDescription = pendingReview
-    ? "Select a Dictionary CPE, enter a Manual CPE, or save the reviewed result."
+    ? "Select a Dictionary CPE, enter a Manual CPE, or confirm that no direct official CPE was found."
     : showingSavedOutcome
       ? "Server-confirmed outcome from the saved Ground Truth."
       : "Preview calculated from the current Ground Truth result and confirmed by the server when saved."
+
+  useEffect(() => {
+    if (
+      noDirectOfficialCpeConfirmed &&
+      (selectedCpe !== null || manualCpe.trim())
+    ) {
+      setNoDirectOfficialCpeConfirmed(false)
+    }
+  }, [
+    manualCpe,
+    noDirectOfficialCpeConfirmed,
+    selectedCpe,
+  ])
 
   useEffect(() => {
     onDirtyChange(
@@ -176,6 +204,7 @@ export function GroundTruthEditor({
     setCorrectionNotice(null)
     setNote("")
     setSnapshotId("")
+    setNoDirectOfficialCpeConfirmed(false)
     setServerGroundTruth(null)
     setLoading(true)
     setSaving(false)
@@ -194,7 +223,12 @@ export function GroundTruthEditor({
         const restoredCorrectionTypes =
           groundTruth?.correction_types ?? []
         const restoredNote = groundTruth?.note ?? ""
+        const restoredNoDirectDecision =
+          groundTruth?.source === "NONE"
         setSnapshotId(response.snapshot_id)
+        setNoDirectOfficialCpeConfirmed(
+          restoredNoDirectDecision,
+        )
         setServerGroundTruth(groundTruth)
         setCorrectionTypes(restoredCorrectionTypes)
         setNote(restoredNote)
@@ -204,6 +238,7 @@ export function GroundTruthEditor({
           stateSignature(
             restoredCandidate,
             restoredManual,
+            restoredNoDirectDecision,
             restoredCorrectionTypes,
             restoredNote,
           ),
@@ -231,6 +266,7 @@ export function GroundTruthEditor({
   const saveGroundTruth = async (
     moveNext: boolean,
   ): Promise<void> => {
+    if (!hasGroundTruthDecision) return
     setSaving(true)
     setError(null)
     setSuccess(null)
@@ -251,7 +287,12 @@ export function GroundTruthEditor({
       const restoredCorrectionTypes =
         groundTruth?.correction_types ?? []
       const restoredNote = groundTruth?.note ?? ""
+      const restoredNoDirectDecision =
+        groundTruth?.source === "NONE"
       setSnapshotId(response.snapshot_id)
+      setNoDirectOfficialCpeConfirmed(
+        restoredNoDirectDecision,
+      )
       setServerGroundTruth(groundTruth)
       setCorrectionTypes(restoredCorrectionTypes)
       setNote(restoredNote)
@@ -261,6 +302,7 @@ export function GroundTruthEditor({
         stateSignature(
           restoredCandidate,
           restoredManual,
+          restoredNoDirectDecision,
           restoredCorrectionTypes,
           restoredNote,
         ),
@@ -384,6 +426,43 @@ export function GroundTruthEditor({
             </label>
 
             <section className="rounded-lg border bg-muted/20 p-3">
+              <div className="flex items-start gap-3">
+                <input
+                  id={`no-direct-official-cpe-${componentId}`}
+                  type="checkbox"
+                  className="mt-0.5 size-4 shrink-0 cursor-pointer accent-cyan-600 outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2"
+                  checked={noDirectDecisionActive}
+                  aria-describedby={`no-direct-official-cpe-description-${componentId}`}
+                  onChange={(event) => {
+                    const checked = event.target.checked
+                    setNoDirectOfficialCpeConfirmed(checked)
+                    if (checked) {
+                      onSelectedCpeChange(null)
+                      onManualCpeChange("")
+                    }
+                    setError(null)
+                    setSuccess(null)
+                  }}
+                />
+                <div className="min-w-0">
+                  <label
+                    htmlFor={`no-direct-official-cpe-${componentId}`}
+                    className="cursor-pointer text-sm font-medium"
+                  >
+                    Direct official CPE not confirmed
+                  </label>
+                  <p
+                    id={`no-direct-official-cpe-description-${componentId}`}
+                    className="mt-1 text-xs leading-5 text-muted-foreground"
+                  >
+                    Use only after reviewing the available SBOM evidence
+                    and official Dictionary records.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-lg border bg-muted/20 p-3">
               <p className="text-xs font-medium text-muted-foreground">
                 Resolution Outcome
               </p>
@@ -454,7 +533,7 @@ export function GroundTruthEditor({
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                disabled={saving}
+                disabled={saving || !hasGroundTruthDecision}
                 onClick={() => void saveGroundTruth(false)}
               >
                 {saving ? (
@@ -470,7 +549,11 @@ export function GroundTruthEditor({
               <Button
                 type="button"
                 variant="outline"
-                disabled={saving || !canMoveNext}
+                disabled={
+                  saving ||
+                  !canMoveNext ||
+                  !hasGroundTruthDecision
+                }
                 onClick={() => void saveGroundTruth(true)}
               >
                 Save and Next
