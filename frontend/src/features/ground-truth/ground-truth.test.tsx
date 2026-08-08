@@ -863,7 +863,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(decodeURIComponent(location)).toContain("sbom_id=11")
   })
 
-  it("shows read-only live outcomes and removes the legacy single-select", async () => {
+  it("shows Pending review until a new reviewer creates a preview", async () => {
     const user = userEvent.setup()
     installFetch()
     renderAppAt("/ground-truth/components/101")
@@ -871,7 +871,12 @@ describe("Ground Truth outcome and correction workflow", () => {
 
     expect(
       await within(editor).findByText(
-        "Direct official CPE not confirmed",
+        "Pending review",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(editor).getByText(
+        "Select a Dictionary CPE, enter a Manual CPE, or save the reviewed result.",
       ),
     ).toBeInTheDocument()
     expect(
@@ -893,15 +898,39 @@ describe("Ground Truth outcome and correction workflow", () => {
         "Manual CPE from official family",
       ),
     ).toBeInTheDocument()
+    expect(
+      within(editor).getByText(
+        "Preview calculated from the current Ground Truth result and confirmed by the server when saved.",
+      ),
+    ).toBeInTheDocument()
     expect(corrections).toBeEnabled()
 
     await user.clear(manual)
     expect(
       within(editor).getByText(
-        "Direct official CPE not confirmed",
+        "Pending review",
       ),
     ).toBeInTheDocument()
     expect(corrections).toBeDisabled()
+  })
+
+  it("shows a saved no-direct-CPE result as server-confirmed", async () => {
+    installFetch({ restoredSource: "NONE" })
+    renderAppAt("/ground-truth/components/101")
+    const editor = groundTruthEditor()
+
+    expect(
+      await within(editor).findByText(
+        "Direct official CPE not confirmed",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(editor).getByText(
+        "Server-confirmed outcome from the saved Ground Truth.",
+      ),
+    ).toBeInTheDocument()
+    expect(within(editor).queryByText("Pending review"))
+      .not.toBeInTheDocument()
   })
 
   it("supports multi-select, badge removal, outside click, and Escape", async () => {
@@ -1072,6 +1101,34 @@ describe("Ground Truth outcome and correction workflow", () => {
     ).toBeDisabled()
   })
 
+  it("keeps restored Dictionary and Manual CPE values mutually exclusive", async () => {
+    const user = userEvent.setup()
+    installFetch({ restoredSource: "DICTIONARY" })
+    renderAppAt("/ground-truth/components/101?q=curl")
+    const editor = groundTruthEditor()
+    const manual = await within(editor).findByPlaceholderText(
+      /cpe:2\.3:a:vendor/,
+    )
+    expect(within(editor).getByText(correctedCpe))
+      .toBeInTheDocument()
+
+    await user.type(manual, manualCpe)
+    expect(within(editor).getByText("No Dictionary CPE selected"))
+      .toBeInTheDocument()
+    expect(manual).toHaveValue(manualCpe)
+
+    const correctedRow = screen.getByText(correctedCpe).closest("tr")
+    if (!correctedRow) throw new Error("Dictionary result row missing")
+    await user.click(
+      within(correctedRow).getByRole("button", {
+        name: "Select as Ground Truth",
+      }),
+    )
+    expect(manual).toHaveValue("")
+    expect(within(editor).getByText(correctedCpe))
+      .toBeInTheDocument()
+  })
+
   it("creates and manages Correction Types without a delete action", async () => {
     const user = userEvent.setup()
     installFetch()
@@ -1204,7 +1261,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     renderAppAt("/ground-truth/components/101")
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "Direct official CPE not confirmed",
+      "Pending review",
     )
     await user.click(
       within(editor).getByRole("button", {
@@ -1213,13 +1270,27 @@ describe("Ground Truth outcome and correction workflow", () => {
     )
 
     await waitFor(() => expect(putRequests()).toHaveLength(1))
-    expect(
-      JSON.parse(String(putRequests()[0][1]?.body)),
-    ).toMatchObject({
+    const payload = JSON.parse(
+      String(putRequests()[0][1]?.body),
+    ) as Record<string, unknown>
+    expect(payload).toMatchObject({
       dictionary_cpe_id: null,
       manual_cpe: null,
       correction_type_ids: [],
     })
+    expect(JSON.stringify(payload)).not.toContain("Pending review")
+    expect(
+      await within(editor).findByText(
+        "Direct official CPE not confirmed",
+      ),
+    ).toBeInTheDocument()
+    expect(within(editor).queryByText("Pending review"))
+      .not.toBeInTheDocument()
+    expect(
+      within(editor).getByText(
+        "Server-confirmed outcome from the saved Ground Truth.",
+      ),
+    ).toBeInTheDocument()
   })
 
   it("preserves invalid manual input after server validation", async () => {
@@ -1251,7 +1322,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     renderAppAt("/ground-truth/components/101")
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "Direct official CPE not confirmed",
+      "Pending review",
     )
     const save = within(editor).getByRole("button", {
       name: "Save Ground Truth",
@@ -1274,7 +1345,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     )
     const editor = groundTruthEditor()
     await within(editor).findByText(
-      "Direct official CPE not confirmed",
+      "Pending review",
     )
     await user.type(screen.getByLabelText("Vendor"), "haxx")
     await user.type(screen.getByLabelText("Product"), "curl")
@@ -1386,7 +1457,7 @@ describe("Ground Truth outcome and correction workflow", () => {
       "/ground-truth/components/101?queue=sbom_id%3D11%26page%3D2",
     )
     await within(groundTruthEditor()).findByText(
-      "Direct official CPE not confirmed",
+      "Pending review",
     )
 
     await user.type(screen.getByLabelText("Keyword"), "curl")
@@ -1484,7 +1555,7 @@ describe("Ground Truth outcome and correction workflow", () => {
     })
     expect(
       await within(groundTruthEditor()).findByText(
-        "Direct official CPE not confirmed",
+        "Pending review",
       ),
     ).toBeInTheDocument()
     expect(

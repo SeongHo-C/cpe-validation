@@ -37,6 +37,7 @@ import {
   resolutionAllowsCorrections,
 } from "@/features/ground-truth/ground-truth-resolution-outcome"
 import type {
+  ComponentCpeGroundTruthRecord,
   ComponentCpeGroundTruthResponse,
   GroundTruthCorrectionType,
 } from "@/features/ground-truth/ground-truth-types"
@@ -99,6 +100,8 @@ export function GroundTruthEditor({
   >(null)
   const [note, setNote] = useState("")
   const [snapshotId, setSnapshotId] = useState("")
+  const [serverGroundTruth, setServerGroundTruth] =
+    useState<ComponentCpeGroundTruthRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -129,6 +132,23 @@ export function GroundTruthEditor({
   const correctionsAllowed = resolutionAllowsCorrections(
     resolutionOutcome.code,
   )
+  const editorPristine =
+    savedSignature !== null && currentSignature === savedSignature
+  const pendingReview =
+    serverGroundTruth === null &&
+    editorPristine &&
+    selectedCpe === null &&
+    !manualCpe.trim()
+  const showingSavedOutcome =
+    serverGroundTruth !== null && editorPristine
+  const displayedResolutionOutcome = showingSavedOutcome
+    ? serverGroundTruth.resolution_outcome
+    : resolutionOutcome
+  const resolutionDescription = pendingReview
+    ? "Select a Dictionary CPE, enter a Manual CPE, or save the reviewed result."
+    : showingSavedOutcome
+      ? "Server-confirmed outcome from the saved Ground Truth."
+      : "Preview calculated from the current Ground Truth result and confirmed by the server when saved."
 
   useEffect(() => {
     onDirtyChange(
@@ -156,6 +176,7 @@ export function GroundTruthEditor({
     setCorrectionNotice(null)
     setNote("")
     setSnapshotId("")
+    setServerGroundTruth(null)
     setLoading(true)
     setSaving(false)
     setError(null)
@@ -174,6 +195,7 @@ export function GroundTruthEditor({
           groundTruth?.correction_types ?? []
         const restoredNote = groundTruth?.note ?? ""
         setSnapshotId(response.snapshot_id)
+        setServerGroundTruth(groundTruth)
         setCorrectionTypes(restoredCorrectionTypes)
         setNote(restoredNote)
         onSelectedCpeChange(restoredCandidate)
@@ -230,6 +252,7 @@ export function GroundTruthEditor({
         groundTruth?.correction_types ?? []
       const restoredNote = groundTruth?.note ?? ""
       setSnapshotId(response.snapshot_id)
+      setServerGroundTruth(groundTruth)
       setCorrectionTypes(restoredCorrectionTypes)
       setNote(restoredNote)
       onSelectedCpeChange(restoredCandidate)
@@ -365,11 +388,12 @@ export function GroundTruthEditor({
                 Resolution Outcome
               </p>
               <Badge className="mt-2" variant="secondary">
-                {resolutionOutcome.label}
+                {pendingReview
+                  ? "Pending review"
+                  : displayedResolutionOutcome.label}
               </Badge>
               <p className="mt-2 text-xs text-muted-foreground">
-                Calculated from the Ground Truth result and confirmed
-                by the server when saved.
+                {resolutionDescription}
               </p>
             </section>
 
