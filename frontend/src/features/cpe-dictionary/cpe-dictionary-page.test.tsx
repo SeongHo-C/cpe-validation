@@ -307,6 +307,17 @@ describe("read-only CPE Dictionary", () => {
       screen.getByRole("button", { name: "View details" }),
     )
     const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).getByText("Active"))
+      .toBeInTheDocument()
+    expect(
+      within(dialog).getByRole("heading", {
+        name: "CPE Identity",
+      }),
+    ).toBeInTheDocument()
+    const part = within(dialog).getByText("Part", {
+      selector: "dt",
+    })
+    expect(part.parentElement).toHaveTextContent("Application")
     expect(
       within(dialog).getByText("https://curl.se/"),
     ).toBeInTheDocument()
@@ -329,6 +340,12 @@ describe("read-only CPE Dictionary", () => {
     const rawCpe = within(dialog).getByText(cpeName)
     expect(rawCpe).toHaveClass("break-all")
     expect(rawCpe).toHaveClass("max-w-full")
+    const additionalFieldsTrigger = within(dialog).getByText(
+      "Additional CPE 2.3 Fields",
+    )
+    const additionalFields = additionalFieldsTrigger.closest("details")
+    expect(additionalFields).not.toBeNull()
+    expect(additionalFields).not.toHaveAttribute("open")
     const update = within(dialog).getByText("update", {
       selector: "dt",
     })
@@ -337,18 +354,41 @@ describe("read-only CPE Dictionary", () => {
       selector: "dt",
     })
     expect(targetSw.parentElement).toHaveTextContent("*")
+    expect(update).not.toBeVisible()
+    expect(targetSw).not.toBeVisible()
+    await user.click(additionalFieldsTrigger)
+    expect(additionalFields).toHaveAttribute("open")
+    expect(update).toBeVisible()
+    expect(targetSw).toBeVisible()
+
+    const provenanceTrigger = within(dialog).getByText(
+      "Record Provenance",
+    )
+    const provenance = provenanceTrigger.closest("details")
+    expect(provenance).not.toBeNull()
+    expect(provenance).not.toHaveAttribute("open")
     const uuid = within(dialog).getByText("CPE UUID", {
       selector: "dt",
     })
     expect(uuid.parentElement).toHaveTextContent(cpeNameId)
+    const manifest = within(dialog).getByText("Manifest SHA-256", {
+      selector: "dt",
+    })
+    expect(manifest.parentElement).toHaveTextContent("d".repeat(64))
+    expect(uuid).not.toBeVisible()
+    expect(manifest).not.toBeVisible()
+    expect(
+      within(dialog).queryByRole("button", {
+        name: "Copy CPE UUID",
+      }),
+    ).not.toBeInTheDocument()
+    await user.click(provenanceTrigger)
+    expect(provenance).toHaveAttribute("open")
+    expect(uuid).toBeVisible()
+    expect(manifest).toBeVisible()
     await user.click(
       within(dialog).getByRole("button", {
         name: "Copy raw CPE",
-      }),
-    )
-    await user.click(
-      within(dialog).getByRole("button", {
-        name: "Copy CPE UUID",
       }),
     )
   })

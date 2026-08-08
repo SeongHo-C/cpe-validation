@@ -1300,6 +1300,37 @@ describe("Ground Truth outcome and correction workflow", () => {
     ).not.toBeInTheDocument()
     await user.click(
       within(correctedRow).getByRole("button", {
+        name: "View details",
+      }),
+    )
+    const dialog = await screen.findByRole("dialog")
+    expect(
+      within(dialog).getByRole("button", {
+        name: "Select as Ground Truth",
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole("button", {
+        name: "Copy to Manual CPE",
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole("button", {
+        name: "Copy raw CPE",
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).queryByRole("button", {
+        name: "Copy CPE UUID",
+      }),
+    ).not.toBeInTheDocument()
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Close CPE details",
+      }),
+    )
+    await user.click(
+      within(correctedRow).getByRole("button", {
         name: "Copy to Manual CPE",
       }),
     )
