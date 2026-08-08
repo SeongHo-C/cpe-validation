@@ -45,12 +45,20 @@ import {
   ApiError,
   isAbortError,
 } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 
 function requestError(error: unknown): string {
   if (error instanceof ApiError) {
     return error.detail ?? error.message
   }
   return "Unable to complete the Ground Truth request."
+}
+
+function decisionPathClassName(active: boolean): string {
+  return cn(
+    "rounded-lg border p-3 transition-colors",
+    active ? "border-ring bg-accent/40" : "bg-muted/20",
+  )
 }
 
 function stateSignature(
@@ -344,123 +352,189 @@ export function GroundTruthEditor({
           </div>
         ) : (
           <>
-            <section className="rounded-lg border bg-muted/20 p-3">
-              <p className="text-xs font-medium text-muted-foreground">
-                Dictionary CPE
-              </p>
-              {selectedCpe ? (
-                <div className="mt-2 space-y-2">
-                  <p className="break-all font-mono text-xs leading-5">
-                    {selectedCpe.cpe_name}
-                  </p>
-                  <p className="break-all font-mono text-[11px] text-muted-foreground">
-                    UUID: {selectedCpe.cpe_uuid}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      selectedCpe.part,
-                      selectedCpe.vendor,
-                      selectedCpe.product,
-                      selectedCpe.version,
-                    ].map((value) => (
-                      <Badge key={value} variant="outline">
-                        {value}
-                      </Badge>
-                    ))}
-                    <Badge variant="secondary">
-                      {selectedCpe.deprecated
-                        ? "Deprecated"
-                        : "Active"}
+            <div
+              role="group"
+              aria-label="Ground Truth decision paths"
+              className="space-y-3"
+            >
+              <section
+                aria-labelledby={`dictionary-decision-title-${componentId}`}
+                data-state={selectedCpe ? "active" : "inactive"}
+                className={decisionPathClassName(Boolean(selectedCpe))}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3
+                      id={`dictionary-decision-title-${componentId}`}
+                      className="text-sm font-medium"
+                    >
+                      Official Dictionary CPE
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Select an official CPE Dictionary record.
+                    </p>
+                  </div>
+                  {selectedCpe ? (
+                    <Badge variant="outline" className="bg-background">
+                      Selected
                     </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        onManualCpeChange(selectedCpe.cpe_name)
-                        onSelectedCpeChange(null)
-                      }}
-                    >
-                      Copy to Manual CPE
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        onSelectedCpeChange(null)
-                      }
-                    >
-                      <X aria-hidden="true" />
-                      Remove Selection
-                    </Button>
-                  </div>
+                  ) : null}
                 </div>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No Dictionary CPE selected
-                </p>
-              )}
-            </section>
+                {selectedCpe ? (
+                  <div className="mt-3 space-y-2">
+                    <p className="break-all font-mono text-xs leading-5">
+                      {selectedCpe.cpe_name}
+                    </p>
+                    <p className="break-all font-mono text-[11px] text-muted-foreground">
+                      UUID: {selectedCpe.cpe_uuid}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        selectedCpe.part,
+                        selectedCpe.vendor,
+                        selectedCpe.product,
+                        selectedCpe.version,
+                      ].map((value) => (
+                        <Badge key={value} variant="outline">
+                          {value}
+                        </Badge>
+                      ))}
+                      <Badge variant="secondary">
+                        {selectedCpe.deprecated
+                          ? "Deprecated"
+                          : "Active"}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          onManualCpeChange(selectedCpe.cpe_name)
+                          onSelectedCpeChange(null)
+                        }}
+                      >
+                        Copy to Manual CPE
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          onSelectedCpeChange(null)
+                        }
+                      >
+                        <X aria-hidden="true" />
+                        Remove Selection
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    No Dictionary CPE selected
+                  </p>
+                )}
+              </section>
 
-            <label className="block space-y-1.5 text-sm font-medium">
-              <span>Manual CPE 2.3</span>
-              <textarea
-                className="min-h-24 w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 font-mono text-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={manualCpe}
-                placeholder="cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*"
-                onChange={(event) => {
-                  onManualCpeChange(event.target.value)
-                  if (event.target.value) {
-                    onSelectedCpeChange(null)
-                  }
-                  setSuccess(null)
-                }}
-              />
-              <span className="block text-xs font-normal text-muted-foreground">
-                You may enter a CPE that is not in the Dictionary. The
-                server validates its CPE 2.3 structure.
-              </span>
-            </label>
-
-            <section className="rounded-lg border bg-muted/20 p-3">
-              <div className="flex items-start gap-3">
-                <input
-                  id={`no-direct-official-cpe-${componentId}`}
-                  type="checkbox"
-                  className="mt-0.5 size-4 shrink-0 cursor-pointer accent-cyan-600 outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2"
-                  checked={noDirectDecisionActive}
-                  aria-describedby={`no-direct-official-cpe-description-${componentId}`}
+              <section
+                aria-labelledby={`manual-decision-title-${componentId}`}
+                data-state={manualCpe.trim() ? "active" : "inactive"}
+                className={decisionPathClassName(Boolean(manualCpe.trim()))}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <label
+                      id={`manual-decision-title-${componentId}`}
+                      htmlFor={`manual-ground-truth-cpe-${componentId}`}
+                      className="text-sm font-medium"
+                    >
+                      Manual CPE 2.3
+                    </label>
+                    <p
+                      id={`manual-decision-description-${componentId}`}
+                      className="mt-1 text-xs text-muted-foreground"
+                    >
+                      Enter a CPE manually when an official family is
+                      identified.
+                    </p>
+                  </div>
+                  {manualCpe.trim() ? (
+                    <Badge variant="outline" className="bg-background">
+                      Selected
+                    </Badge>
+                  ) : null}
+                </div>
+                <textarea
+                  id={`manual-ground-truth-cpe-${componentId}`}
+                  className="mt-3 min-h-24 w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 font-mono text-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  value={manualCpe}
+                  aria-describedby={`manual-decision-description-${componentId}`}
+                  placeholder="cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*"
                   onChange={(event) => {
-                    const checked = event.target.checked
-                    setNoDirectOfficialCpeConfirmed(checked)
-                    if (checked) {
+                    onManualCpeChange(event.target.value)
+                    if (event.target.value) {
                       onSelectedCpeChange(null)
-                      onManualCpeChange("")
                     }
-                    setError(null)
                     setSuccess(null)
                   }}
                 />
-                <div className="min-w-0">
-                  <label
-                    htmlFor={`no-direct-official-cpe-${componentId}`}
-                    className="cursor-pointer text-sm font-medium"
+              </section>
+
+              <section
+                aria-labelledby={`no-direct-decision-title-${componentId}`}
+                data-state={noDirectDecisionActive ? "active" : "inactive"}
+                className={decisionPathClassName(noDirectDecisionActive)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <h3
+                    id={`no-direct-decision-title-${componentId}`}
+                    className="text-sm font-medium"
                   >
-                    Direct official CPE not confirmed
-                  </label>
-                  <p
-                    id={`no-direct-official-cpe-description-${componentId}`}
-                    className="mt-1 text-xs leading-5 text-muted-foreground"
-                  >
-                    Use only after reviewing the available SBOM evidence
-                    and official Dictionary records.
-                  </p>
+                    No direct official CPE
+                  </h3>
+                  {noDirectDecisionActive ? (
+                    <Badge variant="outline" className="bg-background">
+                      Selected
+                    </Badge>
+                  ) : null}
                 </div>
-              </div>
-            </section>
+                <div className="mt-3 flex items-start gap-3">
+                  <input
+                    id={`no-direct-official-cpe-${componentId}`}
+                    type="checkbox"
+                    className="mt-0.5 size-4 shrink-0 cursor-pointer accent-cyan-600 outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2"
+                    checked={noDirectDecisionActive}
+                    aria-describedby={`no-direct-official-cpe-description-${componentId}`}
+                    onChange={(event) => {
+                      const checked = event.target.checked
+                      setNoDirectOfficialCpeConfirmed(checked)
+                      if (checked) {
+                        onSelectedCpeChange(null)
+                        onManualCpeChange("")
+                      }
+                      setError(null)
+                      setSuccess(null)
+                    }}
+                  />
+                  <div className="min-w-0">
+                    <label
+                      htmlFor={`no-direct-official-cpe-${componentId}`}
+                      className="cursor-pointer text-sm font-medium"
+                    >
+                      Direct official CPE not confirmed
+                    </label>
+                    <p
+                      id={`no-direct-official-cpe-description-${componentId}`}
+                      className="mt-1 text-xs leading-5 text-muted-foreground"
+                    >
+                      Use only after reviewing the available SBOM evidence
+                      and official Dictionary records.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
 
             <section className="rounded-lg border bg-muted/20 p-3">
               <p className="text-xs font-medium text-muted-foreground">

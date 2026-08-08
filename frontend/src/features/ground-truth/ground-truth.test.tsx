@@ -607,6 +607,24 @@ function groundTruthEditor(): HTMLElement {
   return card as HTMLElement
 }
 
+function groundTruthDecisionPaths(editor = groundTruthEditor()) {
+  const group = within(editor).getByRole("group", {
+    name: "Ground Truth decision paths",
+  })
+  return {
+    group,
+    dictionary: within(group).getByRole("region", {
+      name: "Official Dictionary CPE",
+    }),
+    manual: within(group).getByRole("region", {
+      name: "Manual CPE 2.3",
+    }),
+    noDirect: within(group).getByRole("region", {
+      name: "No direct official CPE",
+    }),
+  }
+}
+
 function componentContext(): HTMLElement {
   const title = screen.getByText("Component context", {
     selector: "[data-slot='card-title']",
@@ -888,6 +906,23 @@ describe("Ground Truth outcome and correction workflow", () => {
     const saveAndNext = within(editor).getByRole("button", {
       name: "Save and Next",
     })
+    const decisionPaths = groundTruthDecisionPaths(editor)
+    expect(within(decisionPaths.group).getAllByRole("region"))
+      .toHaveLength(3)
+    expect(decisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(within(decisionPaths.group).queryByText("Selected"))
+      .not.toBeInTheDocument()
     expect(noDirectDecision).not.toBeChecked()
     expect(save).toBeDisabled()
     expect(saveAndNext).toBeDisabled()
@@ -919,6 +954,20 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(noDirectDecision).not.toBeChecked()
     expect(save).toBeEnabled()
     expect(saveAndNext).toBeEnabled()
+    expect(decisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "active",
+    )
+    expect(decisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(within(decisionPaths.manual).getByText("Selected"))
+      .toBeInTheDocument()
 
     await user.clear(manual)
     expect(
@@ -930,6 +979,18 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(noDirectDecision).not.toBeChecked()
     expect(save).toBeDisabled()
     expect(saveAndNext).toBeDisabled()
+    expect(decisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
   })
 
   it("shows a saved no-direct-CPE result as server-confirmed", async () => {
@@ -960,6 +1021,21 @@ describe("Ground Truth outcome and correction workflow", () => {
         name: "Save Ground Truth",
       }),
     ).toBeEnabled()
+    const decisionPaths = groundTruthDecisionPaths(editor)
+    expect(decisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "active",
+    )
+    expect(within(decisionPaths.noDirect).getByText("Selected"))
+      .toBeInTheDocument()
   })
 
   it("treats clearing a saved no-direct decision as an undecided dirty edit", async () => {
@@ -1008,6 +1084,21 @@ describe("Ground Truth outcome and correction workflow", () => {
 
     await user.click(noDirectDecision)
     expect(noDirectDecision).toBeChecked()
+    const decisionPaths = groundTruthDecisionPaths(editor)
+    expect(decisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "active",
+    )
+    expect(within(decisionPaths.noDirect).getByText("Selected"))
+      .toBeInTheDocument()
     expect(
       within(editor).getByText(
         "Direct official CPE not confirmed",
@@ -1110,6 +1201,22 @@ describe("Ground Truth outcome and correction workflow", () => {
     ).toBeInTheDocument()
     expect(within(editor).getByText("Inactive"))
       .toBeInTheDocument()
+    const restoredDecisionPaths = groundTruthDecisionPaths(editor)
+    expect(restoredDecisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(restoredDecisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "active",
+    )
+    expect(restoredDecisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(
+      within(restoredDecisionPaths.manual).getByText("Selected"),
+    ).toBeInTheDocument()
     const combobox = within(editor).getByRole("combobox", {
       name: "Correction Types",
     })
@@ -1221,15 +1328,42 @@ describe("Ground Truth outcome and correction workflow", () => {
     const noDirectDecision = within(editor).getByRole("checkbox", {
       name: "Direct official CPE not confirmed",
     })
+    const decisionPaths = groundTruthDecisionPaths(editor)
     expect(within(editor).getByText(correctedCpe))
       .toBeInTheDocument()
     expect(noDirectDecision).not.toBeChecked()
+    expect(decisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "active",
+    )
+    expect(decisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(within(decisionPaths.dictionary).getByText("Selected"))
+      .toBeInTheDocument()
 
     await user.type(manual, manualCpe)
     expect(within(editor).getByText("No Dictionary CPE selected"))
       .toBeInTheDocument()
     expect(manual).toHaveValue(manualCpe)
     expect(noDirectDecision).not.toBeChecked()
+    expect(decisionPaths.dictionary).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
+    expect(decisionPaths.manual).toHaveAttribute(
+      "data-state",
+      "active",
+    )
+    expect(decisionPaths.noDirect).toHaveAttribute(
+      "data-state",
+      "inactive",
+    )
 
     const correctedRow = screen.getByText(correctedCpe).closest("tr")
     if (!correctedRow) throw new Error("Dictionary result row missing")
