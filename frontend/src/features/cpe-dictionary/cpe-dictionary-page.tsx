@@ -4,7 +4,7 @@ import { CpeDictionarySearch } from "@/features/cpe-dictionary/cpe-dictionary-se
 export function CpeDictionaryPage() {
   return (
     <PageContent className="space-y-6">
-      <CpeDictionarySearch />
+      <CpeDictionarySearch variant="standalone" />
     </PageContent>
   )
 }

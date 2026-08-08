@@ -24,6 +24,10 @@ import {
 } from "@/components/ui/table"
 import type { CpeDictionaryResult } from "@/features/cpe-dictionary/cpe-dictionary-types"
 
+export type CpeDictionaryPresentationVariant =
+  | "standalone"
+  | "groundTruth"
+
 const cpePartLabels: Record<string, string | undefined> = {
   a: "Application",
   o: "Operating System",
@@ -37,44 +41,46 @@ function cpePartLabel(part: string): string {
 
 function columnLayoutClassName(
   columnId: string,
-  hasReviewActions: boolean,
+  variant: CpeDictionaryPresentationVariant,
 ): string {
+  const standalone = variant === "standalone"
   switch (columnId) {
     case "status":
       return "w-24 text-center"
     case "part":
-      return "w-32 text-center"
+      return standalone
+        ? "w-36 text-center"
+        : "w-32 text-center"
     case "vendor":
-      return "w-20 text-left"
+      return standalone ? "w-28 text-left" : "w-20 text-left"
     case "product":
-      return "w-24 text-left"
+      return standalone ? "w-32 text-left" : "w-24 text-left"
     case "version":
-      return "w-20 text-center"
+      return standalone
+        ? "w-24 text-center"
+        : "w-20 text-center"
     case "cpe_name":
       return "text-left"
     case "actions":
-      return hasReviewActions
-        ? "w-64 text-center"
-        : "w-36 text-center"
+      return standalone ? "w-36 text-center" : "w-64 text-center"
     default:
       return "text-left"
   }
 }
 
 export function CpeDictionaryResultsTable({
+  variant,
   results,
   onViewDetails,
   onSelectCandidate,
   onCopyToManual,
 }: {
+  variant: CpeDictionaryPresentationVariant
   results: CpeDictionaryResult[]
   onViewDetails: (cpeNameId: string) => void
   onSelectCandidate?: (record: CpeDictionaryResult) => void
   onCopyToManual?: (rawCpe: string) => void
 }) {
-  const hasReviewActions = Boolean(
-    onSelectCandidate || onCopyToManual,
-  )
   const columns = useMemo<ColumnDef<CpeDictionaryResult>[]>(
     () => [
       {
@@ -203,7 +209,14 @@ export function CpeDictionaryResultsTable({
   })
 
   return (
-    <Table className="min-w-[1080px] table-fixed">
+    <Table
+      className={
+        variant === "standalone"
+          ? "min-w-[960px] table-fixed"
+          : "min-w-[1080px] table-fixed"
+      }
+      data-variant={variant}
+    >
       <TableCaption className="sr-only">
         CPE Dictionary search results
       </TableCaption>
@@ -215,7 +228,7 @@ export function CpeDictionaryResultsTable({
                 key={header.id}
                 className={columnLayoutClassName(
                   header.column.id,
-                  hasReviewActions,
+                  variant,
                 )}
               >
                 {header.isPlaceholder
@@ -237,7 +250,7 @@ export function CpeDictionaryResultsTable({
                 key={cell.id}
                 className={columnLayoutClassName(
                   cell.column.id,
-                  hasReviewActions,
+                  variant,
                 )}
               >
                 {flexRender(

@@ -258,10 +258,9 @@ export function GroundTruthEditorPage() {
       <div className="grid min-w-0 grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
         <CpeDictionarySearch
           key={componentId}
+          variant="groundTruth"
           compactInitialState
           preserveQueryKeys={preservedGroundTruthQueryKeys}
-          showExamplePlaceholders={false}
-          showSnapshotSummary={false}
           onSelectCandidate={(candidate) => {
             setManualCpe("")
             setSelectedCpe(candidate)

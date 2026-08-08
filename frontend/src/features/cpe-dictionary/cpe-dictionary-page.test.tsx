@@ -157,14 +157,51 @@ describe("read-only CPE Dictionary", () => {
       screen.getByRole("heading", { name: "CPE Dictionary" }),
     ).toBeInTheDocument()
     expect(
+      screen.getByText("NVD CPE Dictionary exploration"),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Official Reference"))
+      .toBeInTheDocument()
+    expect(await screen.findByText("API Connected"))
+      .toBeInTheDocument()
+    expect(
       screen.queryByText("Expected Ground Truth CPE"),
     ).not.toBeInTheDocument()
     expect(
       screen.queryByText("Component context"),
     ).not.toBeInTheDocument()
+    const searchTitle = screen.getByText("Search Official CPE Names")
+    const searchHeader = searchTitle.closest<HTMLElement>(
+      "[data-slot='card-header']",
+    )
+    const search = searchTitle.closest<HTMLElement>("[data-variant]")
+    if (!searchHeader || !search) {
+      throw new Error("Standalone Dictionary search layout missing")
+    }
+    expect(search).toHaveAttribute("data-variant", "standalone")
+    expect(within(searchHeader).getByText("Dictionary Snapshot"))
+      .toBeInTheDocument()
     expect(
-      await screen.findByText("20260725T035002Z"),
+      await within(searchHeader).findByText("20260725T035002Z"),
     ).toBeInTheDocument()
+    expect(within(searchHeader).getByText(/Manifest SHA-256:/))
+      .toHaveAttribute("title", "d".repeat(64))
+    expect(screen.queryByText("CPE Dictionary Snapshot"))
+      .not.toBeInTheDocument()
+    for (const field of [
+      "Keyword",
+      "Vendor",
+      "Product",
+      "Version",
+    ]) {
+      expect(screen.getByLabelText(field))
+        .not.toHaveAttribute("placeholder")
+    }
+    expect(screen.getByLabelText("Part")).toHaveValue("")
+    expect(screen.getByLabelText("Status")).toHaveValue("active")
+    expect(screen.getByRole("button", { name: "Search" }))
+      .toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Reset" }))
+      .toBeInTheDocument()
   })
 
   it("submits keyword and structured filters into URL state", async () => {
@@ -190,7 +227,8 @@ describe("read-only CPE Dictionary", () => {
     const table = await screen.findByRole("table", {
       name: "CPE Dictionary search results",
     })
-    expect(table).toHaveClass("min-w-[1080px]", "table-fixed")
+    expect(table).toHaveClass("min-w-[960px]", "table-fixed")
+    expect(table).toHaveAttribute("data-variant", "standalone")
     expect(
       within(table)
         .getAllByRole("columnheader")
@@ -221,6 +259,18 @@ describe("read-only CPE Dictionary", () => {
     expect(
       within(table).queryByRole("button", {
         name: `Copy CPE ${cpeName}`,
+      }),
+    ).not.toBeInTheDocument()
+    expect(within(table).getByRole("button", { name: "View details" }))
+      .toBeInTheDocument()
+    expect(
+      within(table).queryByRole("button", {
+        name: "Select as Ground Truth",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(table).queryByRole("button", {
+        name: "Copy to Manual CPE",
       }),
     ).not.toBeInTheDocument()
   })

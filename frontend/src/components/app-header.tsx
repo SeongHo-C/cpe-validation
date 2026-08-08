@@ -27,7 +27,7 @@ const routeMetadata = {
   "/cpe-dictionary": {
     eyebrow: "Official Reference",
     title: "CPE Dictionary",
-    description: "Read-only NVD CPE Dictionary exploration",
+    description: "NVD CPE Dictionary exploration",
   },
 } as const
 

@@ -13,11 +13,13 @@ export function DataPanelHeader({
   description,
   children,
   className,
+  actionClassName,
 }: {
   title: ReactNode
   description?: ReactNode
   children?: ReactNode
   className?: string
+  actionClassName?: string
 }) {
   return (
     <CardHeader className={cn("border-b p-4", className)}>
@@ -25,7 +27,11 @@ export function DataPanelHeader({
       {description ? (
         <CardDescription>{description}</CardDescription>
       ) : null}
-      {children ? <CardAction>{children}</CardAction> : null}
+      {children ? (
+        <CardAction className={actionClassName}>
+          {children}
+        </CardAction>
+      ) : null}
     </CardHeader>
   )
 }

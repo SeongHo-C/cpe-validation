@@ -1274,6 +1274,17 @@ describe("Ground Truth outcome and correction workflow", () => {
     renderAppAt("/ground-truth/components/101?q=curl")
     expect(await screen.findByText("2 results"))
       .toBeInTheDocument()
+    const resultsTable = screen.getByRole("table", {
+      name: "CPE Dictionary search results",
+    })
+    expect(resultsTable).toHaveClass(
+      "min-w-[1080px]",
+      "table-fixed",
+    )
+    expect(resultsTable).toHaveAttribute(
+      "data-variant",
+      "groundTruth",
+    )
     const correctedRow = screen
       .getByText(correctedCpe)
       .closest("tr")
@@ -1793,6 +1804,13 @@ describe("Ground Truth outcome and correction workflow", () => {
     ).toBeInTheDocument()
     expect(screen.getByText("Search Official CPE Names"))
       .toBeInTheDocument()
+    const dictionarySearch = screen
+      .getByText("Search Official CPE Names")
+      .closest("[data-variant]")
+    expect(dictionarySearch).toHaveAttribute(
+      "data-variant",
+      "groundTruth",
+    )
     const context = componentContext()
     expect(within(context).queryByText("Read only"))
       .not.toBeInTheDocument()

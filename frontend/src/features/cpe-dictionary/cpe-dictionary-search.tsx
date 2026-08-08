@@ -41,7 +41,10 @@ import {
   parseCpeDictionaryUrlQuery,
   writeCpeDictionaryUrlQuery,
 } from "@/features/cpe-dictionary/cpe-dictionary-query"
-import { CpeDictionaryResultsTable } from "@/features/cpe-dictionary/cpe-dictionary-table"
+import {
+  CpeDictionaryResultsTable,
+  type CpeDictionaryPresentationVariant,
+} from "@/features/cpe-dictionary/cpe-dictionary-table"
 import type {
   CpeDictionaryDetail,
   CpeDictionaryCandidate,
@@ -116,21 +119,19 @@ function candidateFromDetail(
 const emptyPreservedQueryKeys: readonly string[] = []
 
 export function CpeDictionarySearch({
+  variant,
   onSelectCandidate,
   onCopyToManual,
   compactInitialState = false,
   preserveQueryKeys = emptyPreservedQueryKeys,
-  showExamplePlaceholders = true,
-  showSnapshotSummary = true,
 }: {
+  variant: CpeDictionaryPresentationVariant
   onSelectCandidate?: (
     candidate: CpeDictionaryCandidate,
   ) => void
   onCopyToManual?: (rawCpe: string) => void
   compactInitialState?: boolean
   preserveQueryKeys?: readonly string[]
-  showExamplePlaceholders?: boolean
-  showSnapshotSummary?: boolean
 }) {
   const [searchParameters, setSearchParameters] =
     useSearchParams()
@@ -259,47 +260,44 @@ export function CpeDictionarySearch({
   const viewDetails = useCallback((cpeNameId: string) => {
     setSelectedCpeNameId(cpeNameId)
   }, [])
+  const selectedSnapshot = response?.snapshot ?? snapshot
 
   return (
-    <div className="space-y-6">
-      {showSnapshotSummary ? (
-        <div className="flex justify-end">
-          <div className="max-w-sm rounded-lg border bg-card px-4 py-3 text-right">
-            <p className="text-xs font-medium text-muted-foreground">
-              CPE Dictionary Snapshot
-            </p>
-            <p className="mt-1 font-mono text-sm font-semibold">
-              {response?.snapshot.snapshot_id ??
-                snapshot?.snapshot_id ??
-                "Unavailable"}
-            </p>
-            {response || snapshot ? (
-              <p
-                className="mt-1 max-w-72 truncate font-mono text-[10px] text-muted-foreground"
-                title={
-                  response?.snapshot.manifest_sha256 ??
-                  snapshot?.manifest_sha256
-                }
-              >
-                Manifest SHA-256:{" "}
-                {response?.snapshot.manifest_sha256 ??
-                  snapshot?.manifest_sha256}
-              </p>
-            ) : null}
-            {snapshotError ? (
-              <p className="mt-1 text-xs text-red-700">
-                {snapshotError}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
+    <div className="space-y-6" data-variant={variant}>
       <Card className="gap-0 py-0">
         <DataPanelHeader
           title="Search Official CPE Names"
           description="Enter a keyword or a structured CPE field. Structured fields use case-insensitive exact equality."
-        />
+          actionClassName="max-sm:col-span-full max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-3 max-sm:mt-2 max-sm:justify-self-stretch"
+        >
+          {variant === "standalone" ? (
+            <div
+              className="max-w-72 text-right max-sm:max-w-none max-sm:text-left"
+              aria-label="Dictionary Snapshot"
+            >
+              <p className="text-xs font-medium text-muted-foreground">
+                Dictionary Snapshot
+              </p>
+              <p className="mt-1 font-mono text-sm font-semibold">
+                {selectedSnapshot?.snapshot_id ?? "Unavailable"}
+              </p>
+              {selectedSnapshot ? (
+                <p
+                  className="mt-1 truncate font-mono text-[10px] text-muted-foreground"
+                  title={selectedSnapshot.manifest_sha256}
+                >
+                  Manifest SHA-256:{" "}
+                  {selectedSnapshot.manifest_sha256}
+                </p>
+              ) : null}
+              {snapshotError ? (
+                <p className="mt-1 text-xs text-red-700">
+                  {snapshotError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </DataPanelHeader>
         <CardContent className="p-4">
           <form
             className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-6"
@@ -309,11 +307,6 @@ export function CpeDictionarySearch({
               <Input
                 name="q"
                 value={draft.q}
-                placeholder={
-                  showExamplePlaceholders
-                    ? "curl, openssl, or a title"
-                    : undefined
-                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -345,9 +338,6 @@ export function CpeDictionarySearch({
               <Input
                 name="vendor"
                 value={draft.vendor}
-                placeholder={
-                  showExamplePlaceholders ? "haxx" : undefined
-                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -360,9 +350,6 @@ export function CpeDictionarySearch({
               <Input
                 name="product"
                 value={draft.product}
-                placeholder={
-                  showExamplePlaceholders ? "curl" : undefined
-                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -375,9 +362,6 @@ export function CpeDictionarySearch({
               <Input
                 name="version"
                 value={draft.version}
-                placeholder={
-                  showExamplePlaceholders ? "8.14.1" : undefined
-                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -508,6 +492,7 @@ export function CpeDictionarySearch({
           />
           {response.results.length > 0 ? (
             <CpeDictionaryResultsTable
+              variant={variant}
               results={response.results}
               onViewDetails={viewDetails}
               onSelectCandidate={
