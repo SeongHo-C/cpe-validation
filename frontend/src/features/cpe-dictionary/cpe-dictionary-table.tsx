@@ -24,6 +24,43 @@ import {
 } from "@/components/ui/table"
 import type { CpeDictionaryResult } from "@/features/cpe-dictionary/cpe-dictionary-types"
 
+const cpePartLabels: Record<string, string | undefined> = {
+  a: "Application",
+  o: "Operating System",
+  h: "Hardware",
+}
+
+function cpePartLabel(part: string): string {
+  const rawPart = part.trim()
+  return cpePartLabels[rawPart] ?? (rawPart || "Not provided")
+}
+
+function columnLayoutClassName(
+  columnId: string,
+  hasReviewActions: boolean,
+): string {
+  switch (columnId) {
+    case "status":
+      return "w-24 text-center"
+    case "part":
+      return "w-32 text-center"
+    case "vendor":
+      return "w-20 text-left"
+    case "product":
+      return "w-24 text-left"
+    case "version":
+      return "w-20 text-center"
+    case "cpe_name":
+      return "text-left"
+    case "actions":
+      return hasReviewActions
+        ? "w-64 text-center"
+        : "w-36 text-center"
+    default:
+      return "text-left"
+  }
+}
+
 export function CpeDictionaryResultsTable({
   results,
   onViewDetails,
@@ -35,6 +72,9 @@ export function CpeDictionaryResultsTable({
   onSelectCandidate?: (record: CpeDictionaryResult) => void
   onCopyToManual?: (rawCpe: string) => void
 }) {
+  const hasReviewActions = Boolean(
+    onSelectCandidate || onCopyToManual,
+  )
   const columns = useMemo<ColumnDef<CpeDictionaryResult>[]>(
     () => [
       {
@@ -54,36 +94,52 @@ export function CpeDictionaryResultsTable({
         ),
       },
       {
-        accessorKey: "title",
-        header: "Title",
+        accessorKey: "part",
+        header: "Part",
+        cell: ({ row }) => cpePartLabel(row.original.part),
+      },
+      {
+        accessorKey: "vendor",
+        header: "Vendor",
         cell: ({ row }) => (
           <div
-            className="max-w-60 truncate font-medium"
-            title={row.original.title}
+            className="w-full truncate"
+            title={row.original.vendor}
           >
-            {row.original.title || "No title"}
+            {row.original.vendor}
           </div>
         ),
       },
-      { accessorKey: "vendor", header: "Vendor" },
-      { accessorKey: "product", header: "Product" },
+      {
+        accessorKey: "product",
+        header: "Product",
+        cell: ({ row }) => (
+          <div
+            className="w-full truncate"
+            title={row.original.product}
+          >
+            {row.original.product}
+          </div>
+        ),
+      },
       {
         accessorKey: "version",
         header: "Version",
         cell: ({ row }) => (
-          <span className="font-mono text-xs">
+          <span
+            className="block w-full truncate font-mono text-xs"
+            title={row.original.version}
+          >
             {row.original.version}
           </span>
         ),
       },
-      { accessorKey: "update", header: "Update" },
-      { accessorKey: "target_sw", header: "Target SW" },
       {
         accessorKey: "cpe_name",
         header: "CPE name",
         cell: ({ row }) => (
           <div
-            className="max-w-80 truncate font-mono text-xs"
+            className="w-full truncate font-mono text-xs"
             title={row.original.cpe_name}
           >
             {row.original.cpe_name}
@@ -94,7 +150,7 @@ export function CpeDictionaryResultsTable({
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <div className="flex gap-1">
+          <div className="flex items-center justify-center gap-1 whitespace-nowrap">
             <Button
               type="button"
               size="sm"
@@ -111,40 +167,29 @@ export function CpeDictionaryResultsTable({
                 type="button"
                 size="sm"
                 variant="outline"
+                aria-label="Select as Ground Truth"
                 onClick={() =>
                   onSelectCandidate(row.original)
                 }
               >
                 <BadgeCheck aria-hidden="true" />
-                Select as Ground Truth
+                Select
               </Button>
             ) : null}
             {onCopyToManual ? (
               <Button
                 type="button"
-                size="sm"
+                size="icon-sm"
                 variant="outline"
+                aria-label="Copy to Manual CPE"
+                title="Copy to Manual CPE"
                 onClick={() =>
                   onCopyToManual(row.original.cpe_name)
                 }
               >
                 <Clipboard aria-hidden="true" />
-                Copy to Manual CPE
               </Button>
             ) : null}
-            <Button
-              type="button"
-              size="icon-sm"
-              variant="ghost"
-              aria-label={`Copy CPE ${row.original.cpe_name}`}
-              onClick={() =>
-                void navigator.clipboard.writeText(
-                  row.original.cpe_name,
-                )
-              }
-            >
-              <Clipboard aria-hidden="true" />
-            </Button>
           </div>
         ),
       },
@@ -158,7 +203,7 @@ export function CpeDictionaryResultsTable({
   })
 
   return (
-    <Table className="min-w-[1180px]">
+    <Table className="min-w-[1080px] table-fixed">
       <TableCaption className="sr-only">
         CPE Dictionary search results
       </TableCaption>
@@ -166,7 +211,13 @@ export function CpeDictionaryResultsTable({
         {table.getHeaderGroups().map((group) => (
           <TableRow key={group.id}>
             {group.headers.map((header) => (
-              <TableHead key={header.id}>
+              <TableHead
+                key={header.id}
+                className={columnLayoutClassName(
+                  header.column.id,
+                  hasReviewActions,
+                )}
+              >
                 {header.isPlaceholder
                   ? null
                   : flexRender(
@@ -182,7 +233,13 @@ export function CpeDictionaryResultsTable({
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.original.cpe_name_id}>
             {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id}>
+              <TableCell
+                key={cell.id}
+                className={columnLayoutClassName(
+                  cell.column.id,
+                  hasReviewActions,
+                )}
+              >
                 {flexRender(
                   cell.column.columnDef.cell,
                   cell.getContext(),

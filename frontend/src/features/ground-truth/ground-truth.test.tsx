@@ -1284,18 +1284,42 @@ describe("Ground Truth outcome and correction workflow", () => {
     if (!correctedRow || !originalRow) {
       throw new Error("Dictionary result row missing")
     }
+    const editor = groundTruthEditor()
+    const manual = within(editor).getByPlaceholderText(
+      /cpe:2\.3:a:vendor/,
+    )
+    expect(
+      within(correctedRow).getByRole("button", {
+        name: "View details",
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(correctedRow).queryByRole("button", {
+        name: `Copy CPE ${correctedCpe}`,
+      }),
+    ).not.toBeInTheDocument()
+    await user.click(
+      within(correctedRow).getByRole("button", {
+        name: "Copy to Manual CPE",
+      }),
+    )
+    expect(manual).toHaveValue(correctedCpe)
     await user.click(
       within(correctedRow).getByRole("button", {
         name: "Select as Ground Truth",
       }),
     )
+    expect(manual).toHaveValue("")
     expect(
-      within(groundTruthEditor()).getByText(
+      within(editor).getByText(
         "Corrected to official CPE",
       ),
     ).toBeInTheDocument()
     expect(
-      within(groundTruthEditor()).getByRole("combobox", {
+      groundTruthDecisionPaths().dictionary,
+    ).toHaveAttribute("data-state", "active")
+    expect(
+      within(editor).getByRole("combobox", {
         name: "Correction Types",
       }),
     ).toBeEnabled()
@@ -1306,12 +1330,12 @@ describe("Ground Truth outcome and correction workflow", () => {
       }),
     )
     expect(
-      within(groundTruthEditor()).getByText(
+      within(editor).getByText(
         "Original CPE confirmed",
       ),
     ).toBeInTheDocument()
     expect(
-      within(groundTruthEditor()).getByRole("combobox", {
+      within(editor).getByRole("combobox", {
         name: "Correction Types",
       }),
     ).toBeDisabled()

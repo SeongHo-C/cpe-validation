@@ -183,6 +183,101 @@ describe("read-only CPE Dictionary", () => {
     expect(currentParameters().get("vendor")).toBe("HAXX")
   })
 
+  it("prioritizes Part and raw CPE evidence in result columns", async () => {
+    installFetch()
+    renderAppAt("/cpe-dictionary?q=curl")
+
+    const table = await screen.findByRole("table", {
+      name: "CPE Dictionary search results",
+    })
+    expect(table).toHaveClass("min-w-[1080px]", "table-fixed")
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent),
+    ).toEqual([
+      "Status",
+      "Part",
+      "Vendor",
+      "Product",
+      "Version",
+      "CPE name",
+      "Actions",
+    ])
+    expect(within(table).getByText("Application"))
+      .toBeInTheDocument()
+    expect(
+      within(table).queryByRole("columnheader", { name: "Title" }),
+    ).not.toBeInTheDocument()
+    expect(within(table).queryByRole("columnheader", { name: "Update" }))
+      .not.toBeInTheDocument()
+    expect(
+      within(table).queryByRole("columnheader", {
+        name: "Target SW",
+      }),
+    ).not.toBeInTheDocument()
+    expect(within(table).getByTitle(cpeName))
+      .toHaveTextContent(cpeName)
+    expect(
+      within(table).queryByRole("button", {
+        name: `Copy CPE ${cpeName}`,
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("formats known Parts and falls back to an unknown raw value", async () => {
+    installFetch()
+    const original = vi.mocked(fetch).getMockImplementation()
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      const url = new URL(String(input), "http://frontend.test")
+      if (url.pathname === "/api/cpe-dictionary/") {
+        return Promise.resolve(
+          jsonResponse({
+            ...searchResponse,
+            count: 3,
+            results: [
+              {
+                ...searchResponse.results[0],
+                id: 2,
+                cpe_name_id:
+                  "22222222-2222-4222-8222-222222222222",
+                cpe_name: "cpe:2.3:o:example:system:1:*:*:*:*:*:*:*",
+                part: "o",
+              },
+              {
+                ...searchResponse.results[0],
+                id: 3,
+                cpe_name_id:
+                  "33333333-3333-4333-8333-333333333333",
+                cpe_name: "cpe:2.3:h:example:device:1:*:*:*:*:*:*:*",
+                part: "h",
+              },
+              {
+                ...searchResponse.results[0],
+                id: 4,
+                cpe_name_id:
+                  "44444444-4444-4444-8444-444444444444",
+                cpe_name: "cpe:2.3:x:example:device:1:*:*:*:*:*:*:*",
+                part: "x",
+              },
+            ],
+          }),
+        )
+      }
+      return original!(input, init)
+    })
+    renderAppAt("/cpe-dictionary?q=device")
+
+    const table = await screen.findByRole("table", {
+      name: "CPE Dictionary search results",
+    })
+    expect(within(table).getByText("Operating System"))
+      .toBeInTheDocument()
+    expect(within(table).getByText("Hardware"))
+      .toBeInTheDocument()
+    expect(within(table).getByText("x")).toBeInTheDocument()
+  })
+
   it("restores URL search state through history navigation", async () => {
     installFetch()
     const { router } = renderAppWithHistory([
@@ -215,6 +310,14 @@ describe("read-only CPE Dictionary", () => {
     expect(
       within(dialog).getByText("https://curl.se/"),
     ).toBeInTheDocument()
+    const titlesHeading = within(dialog).getByRole("heading", {
+      name: "Titles",
+    })
+    const titlesSection = titlesHeading.closest("section")
+    if (!titlesSection) throw new Error("Titles section missing")
+    expect(
+      within(titlesSection).getByText("curl command line tool"),
+    ).toBeInTheDocument()
     expect(
       within(dialog).queryByRole("button", {
         name: "Select as Ground Truth",
@@ -226,6 +329,18 @@ describe("read-only CPE Dictionary", () => {
     const rawCpe = within(dialog).getByText(cpeName)
     expect(rawCpe).toHaveClass("break-all")
     expect(rawCpe).toHaveClass("max-w-full")
+    const update = within(dialog).getByText("update", {
+      selector: "dt",
+    })
+    expect(update.parentElement).toHaveTextContent("*")
+    const targetSw = within(dialog).getByText("target_sw", {
+      selector: "dt",
+    })
+    expect(targetSw.parentElement).toHaveTextContent("*")
+    const uuid = within(dialog).getByText("CPE UUID", {
+      selector: "dt",
+    })
+    expect(uuid.parentElement).toHaveTextContent(cpeNameId)
     await user.click(
       within(dialog).getByRole("button", {
         name: "Copy raw CPE",
