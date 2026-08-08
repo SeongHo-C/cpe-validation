@@ -1,7 +1,13 @@
-import { getJson } from "@/lib/api-client"
+import {
+  deleteNoContent,
+  getJson,
+  postFormData,
+} from "@/lib/api-client"
 import type {
+  SbomDocumentDetail,
   SbomPage,
   SbomsQuery,
+  UploadSbomInput,
 } from "@/features/sboms/sboms-types"
 
 export const DEFAULT_SBOM_PAGE = 1
@@ -20,4 +26,33 @@ export function getSboms(
   signal?: AbortSignal,
 ): Promise<SbomPage> {
   return getJson<SbomPage>(buildSbomsApiUrl(query), { signal })
+}
+
+export function uploadSbom(
+  input: UploadSbomInput,
+  signal?: AbortSignal,
+): Promise<SbomDocumentDetail> {
+  const formData = new FormData()
+  formData.append("file", input.file)
+  if (input.manufacturer) {
+    formData.append("manufacturer", input.manufacturer)
+  }
+  if (input.productName) {
+    formData.append("product_name", input.productName)
+  }
+  if (input.productVersion) {
+    formData.append("product_version", input.productVersion)
+  }
+  return postFormData<SbomDocumentDetail>(
+    "/api/sboms/upload/",
+    formData,
+    { signal },
+  )
+}
+
+export function deleteSbom(
+  sbomId: number,
+  signal?: AbortSignal,
+): Promise<void> {
+  return deleteNoContent(`/api/sboms/${sbomId}/`, { signal })
 }

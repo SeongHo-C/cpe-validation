@@ -14,6 +14,20 @@ export interface SbomDocumentSummary {
   uploaded_at: string
 }
 
+export interface SbomDocumentDetail extends SbomDocumentSummary {
+  file_sha256: string
+  serial_number: string
+  document_version: number
+  generated_at: string | null
+}
+
+export interface UploadSbomInput {
+  file: File
+  manufacturer: string
+  productName: string
+  productVersion: string
+}
+
 export interface SbomsQuery {
   page: number
   page_size: SbomPageSize

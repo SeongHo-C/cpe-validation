@@ -10,6 +10,14 @@ export interface MutationJsonOptions {
   signal?: AbortSignal
 }
 
+export interface FormDataOptions {
+  signal?: AbortSignal
+}
+
+export interface DeleteOptions {
+  signal?: AbortSignal
+}
+
 export class ApiError extends Error {
   readonly status: number
   readonly code?: string
@@ -163,4 +171,46 @@ export function patchJson<T>(
   options: MutationJsonOptions = {},
 ): Promise<T> {
   return mutationJson("PATCH", url, body, options)
+}
+
+export async function postFormData<T>(
+  url: string,
+  body: FormData,
+  options: FormDataOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    signal: options.signal,
+    headers: {
+      Accept: "application/json",
+    },
+    body,
+  })
+
+  if (!response.ok) {
+    throw await responseError(response)
+  }
+
+  try {
+    return (await response.json()) as T
+  } catch {
+    throw new Error("The API returned an invalid JSON response")
+  }
+}
+
+export async function deleteNoContent(
+  url: string,
+  options: DeleteOptions = {},
+): Promise<void> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    signal: options.signal,
+    headers: {
+      Accept: "application/json",
+    },
+  })
+
+  if (!response.ok) {
+    throw await responseError(response)
+  }
 }

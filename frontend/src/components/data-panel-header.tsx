@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 
 import {
+  CardAction,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -24,7 +25,7 @@ export function DataPanelHeader({
       {description ? (
         <CardDescription>{description}</CardDescription>
       ) : null}
-      {children}
+      {children ? <CardAction>{children}</CardAction> : null}
     </CardHeader>
   )
 }

@@ -2,6 +2,7 @@ import {
   FileText,
   LoaderCircle,
   TriangleAlert,
+  Upload as UploadIcon,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import {
@@ -11,10 +12,7 @@ import {
 
 import type { AppShellOutletContext } from "@/components/app-shell"
 import { DataPanelHeader } from "@/components/data-panel-header"
-import {
-  formLabelTextClassName,
-  selectControlClassName,
-} from "@/components/form-control-styles"
+import { selectControlClassName } from "@/components/form-control-styles"
 import { PagePagination } from "@/components/page-pagination"
 import { PageContent } from "@/components/page-content"
 import {
@@ -29,12 +27,15 @@ import {
   DEFAULT_SBOM_PAGE_SIZE,
   getSboms,
 } from "@/features/sboms/sboms-query"
+import { SbomDeleteDialog } from "@/features/sboms/sbom-delete-dialog"
+import { SbomUploadDialog } from "@/features/sboms/sbom-upload-dialog"
 import {
   SbomsTable,
   SbomsTableSkeleton,
 } from "@/features/sboms/sboms-table"
 import {
   sbomPageSizes,
+  type SbomDocumentSummary,
   type SbomPage,
   type SbomPageSize,
 } from "@/features/sboms/sboms-types"
@@ -69,6 +70,9 @@ export function SbomsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [reloadToken, setReloadToken] = useState(0)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  const [sbomToDelete, setSbomToDelete] =
+    useState<SbomDocumentSummary | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -104,10 +108,15 @@ export function SbomsPage() {
   return (
     <PageContent id="sboms" aria-busy={isLoading}>
       <Card className="gap-0 py-0">
-        <DataPanelHeader
-          title="SBOM Inventory"
-          description="SBOM documents available for CPE validation."
-        />
+        <DataPanelHeader title="SBOM Inventory">
+          <Button
+            type="button"
+            onClick={() => setIsUploadDialogOpen(true)}
+          >
+            <UploadIcon aria-hidden="true" />
+            Upload SBOM
+          </Button>
+        </DataPanelHeader>
 
         {isInitialLoading ? <SbomsTableSkeleton /> : null}
 
@@ -140,11 +149,11 @@ export function SbomsPage() {
 
         {!hasError && response && response.count > 0 ? (
           <>
-            <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+            <div className="flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
                 <label
                   htmlFor="sbom-page-size"
-                  className={formLabelTextClassName}
+                  className="text-xs font-medium whitespace-nowrap text-foreground"
                 >
                   Per page
                 </label>
@@ -168,7 +177,7 @@ export function SbomsPage() {
                 </select>
               </div>
               <p
-                className="flex min-h-9 items-center gap-2 text-sm text-muted-foreground"
+                className="flex min-h-8 items-center gap-2 text-sm text-muted-foreground"
                 aria-live="polite"
               >
                 {isLoading ? (
@@ -177,7 +186,8 @@ export function SbomsPage() {
                     aria-hidden="true"
                   />
                 ) : null}
-                {formatInteger(response.count)} SBOM documents
+                {formatInteger(response.count)}{" "}
+                {response.count === 1 ? "SBOM" : "SBOMs"}
               </p>
             </div>
             <SbomsTable
@@ -186,6 +196,7 @@ export function SbomsPage() {
               onSelectSbom={(sbomId) =>
                 navigate(`/components?sbom_id=${sbomId}`)
               }
+              onDeleteSbom={setSbomToDelete}
             />
             <PagePagination
               page={response.page}
@@ -196,6 +207,24 @@ export function SbomsPage() {
           </>
         ) : null}
       </Card>
+      <SbomUploadDialog
+        open={isUploadDialogOpen}
+        onOpenChange={setIsUploadDialogOpen}
+        onUploaded={() => {
+          setPage(DEFAULT_SBOM_PAGE)
+          setReloadToken((current) => current + 1)
+        }}
+      />
+      <SbomDeleteDialog
+        sbom={sbomToDelete}
+        onOpenChange={(open) => {
+          if (!open) setSbomToDelete(null)
+        }}
+        onDeleted={() => {
+          setPage(DEFAULT_SBOM_PAGE)
+          setReloadToken((current) => current + 1)
+        }}
+      />
     </PageContent>
   )
 }

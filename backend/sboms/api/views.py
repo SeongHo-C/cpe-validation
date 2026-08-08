@@ -48,6 +48,10 @@ from sboms.api.serializers import (
     SBOMDocumentListSerializer,
     SBOMDocumentUploadSerializer,
 )
+from sboms.deletions import (
+    SBOMDeleteConflictError,
+    delete_sbom_document,
+)
 from sboms.exact_matching import (
     CPEExactMatchStatus,
     match_cpes,
@@ -222,10 +226,24 @@ class SBOMDocumentDetailAPIView(generics.RetrieveAPIView):
     serializer_class = SBOMDocumentDetailSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
-    http_method_names = ["get", "head", "options"]
+    http_method_names = ["get", "delete", "head", "options"]
 
     def get_queryset(self) -> QuerySet[SBOMDocument]:
         return _annotated_sbom_queryset()
+
+    def delete(self, request, *args, **kwargs) -> Response:
+        document = self.get_object()
+        try:
+            delete_sbom_document(document)
+        except SBOMDeleteConflictError as error:
+            return Response(
+                {
+                    "code": "sbom_delete_conflict",
+                    "detail": str(error),
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SBOMDocumentUploadAPIView(APIView):
