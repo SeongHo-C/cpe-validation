@@ -63,6 +63,7 @@ const componentSummary: ComponentSummary = {
 
 const componentDetail: ComponentDetail = {
   ...componentSummary,
+  image: null,
   bom_ref: "pkg:apk/alpine/curl@8.14.1-r1?package-id=abc",
   properties: [
     {
@@ -80,6 +81,10 @@ const componentDetail: ComponentDetail = {
     {
       name: "syft:location:0:path",
       value: "/lib/apk/db/installed",
+    },
+    {
+      name: "EMBA:sbom:source_location:1:source_path",
+      value: "/firmware/rootfs/usr/bin/curl",
     },
   ],
   sbom_document: {
@@ -309,7 +314,7 @@ describe("Component Detail panel", () => {
     expect(listRequestCount()).toBe(initialListRequests)
   })
 
-  it("renders metadata, CPE evidence, statuses, and SBOM source", async () => {
+  it("renders component evidence while hiding SBOM provenance", async () => {
     installSuccessfulFetch()
     renderAppAt("/components?component_id=101")
     await waitForDetail()
@@ -317,65 +322,165 @@ describe("Component Detail panel", () => {
     const panel = screen.getByRole("complementary", {
       name: "Component details",
     })
-    expect(within(panel).getByText("Read only")).toBeInTheDocument()
+    expect(within(panel).queryByText("Read only")).not.toBeInTheDocument()
     expect(
-      within(panel).getByText(componentDetail.bom_ref),
-    ).toBeInTheDocument()
+      within(panel).queryByText("No Docker image"),
+    ).not.toBeInTheDocument()
     expect(
-      within(panel).getByText(componentDetail.purl),
-    ).toBeInTheDocument()
-    expect(
-      within(panel).getAllByText(componentDetail.cpe).length,
-    ).toBeGreaterThanOrEqual(2)
-    expect(
-      within(panel).getAllByText("STRUCTURALLY_VALID").length,
-    ).toBeGreaterThanOrEqual(2)
-    expect(
-      within(panel).getAllByText("Active").length,
-    ).toBe(1)
-    expect(
-      within(panel).getByText("Official Dictionary Match"),
-    ).toBeInTheDocument()
+      within(panel).getAllByText(componentDetail.version),
+    ).toHaveLength(1)
+    expect(within(panel).getAllByText("library")).toHaveLength(1)
     expect(
       within(panel).getByText("Official Active"),
     ).toBeInTheDocument()
+    const headerContent = within(panel)
+      .getByRole("heading", { name: componentDetail.name })
+      .parentElement
+    expect(headerContent).not.toBeNull()
     expect(
-      within(panel).getByText("20260725T035002Z"),
+      within(headerContent!).getByText("Structurally Valid"),
     ).toBeInTheDocument()
     expect(
-      within(panel).getByText(
-        "11111111-1111-4111-8111-111111111111",
-      ),
+      within(headerContent!)
+        .getAllByText(
+          /^(library|Official Active|Structurally Valid)$/,
+        )
+        .map((element) => element.textContent),
+    ).toEqual(["library", "Official Active", "Structurally Valid"])
+    expect(
+      within(panel).queryByRole("heading", {
+        name: "Status Summary",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(panel).queryByText("Structural Status"),
+    ).not.toBeInTheDocument()
+    expect(
+      within(panel).queryByText("STRUCTURALLY_VALID"),
+    ).not.toBeInTheDocument()
+
+    const metadataSection = within(panel)
+      .getByRole("heading", { name: "Component Metadata" })
+      .closest("section")
+    expect(metadataSection).not.toBeNull()
+    for (const fieldName of [
+      "Version",
+      "Publisher",
+      "PURL",
+    ]) {
+      expect(
+        within(metadataSection!).getByText(fieldName),
+      ).toBeInTheDocument()
+    }
+    for (const removedField of [
+      "Name",
+      "Type",
+      "bom-ref",
+      "Docker repository",
+      "Docker tag",
+      "SBOM document id",
+    ]) {
+      expect(
+        within(metadataSection!).queryByText(removedField),
+      ).not.toBeInTheDocument()
+    }
+    expect(
+      within(panel).queryByText(componentDetail.bom_ref),
+    ).not.toBeInTheDocument()
+    expect(componentDetail.bom_ref).toBe(
+      "pkg:apk/alpine/curl@8.14.1-r1?package-id=abc",
+    )
+    expect(
+      within(panel).getByText(componentDetail.purl),
+    ).toBeInTheDocument()
+
+    const primaryCpeSection = within(panel)
+      .getByRole("heading", { name: "Primary CPE" })
+      .closest("section")
+    expect(primaryCpeSection).not.toBeNull()
+    expect(
+      within(primaryCpeSection!).getByText(componentDetail.cpe),
     ).toBeInTheDocument()
     expect(
-      within(panel).getAllByText("20260725T035002Z"),
-    ).toHaveLength(1)
+      within(panel).queryByRole("heading", {
+        name: "Structural Validation",
+      }),
+    ).not.toBeInTheDocument()
+    expect(componentDetail.dictionary_match).toEqual({
+      snapshot_id: "20260725T035002Z",
+      cpe_name_id: "11111111-1111-4111-8111-111111111111",
+      matched_cpe_name: componentSummary.cpe,
+      deprecated: false,
+    })
     expect(
-      within(panel).getAllByText(
+      within(panel).queryByRole("heading", {
+        name: "Exact Match",
+      }),
+    ).not.toBeInTheDocument()
+    expect(within(panel).queryByText("Snapshot ID")).not.toBeInTheDocument()
+    expect(
+      within(panel).queryByText("20260725T035002Z"),
+    ).not.toBeInTheDocument()
+    expect(
+      within(panel).queryByText(
         "11111111-1111-4111-8111-111111111111",
       ),
-    ).toHaveLength(1)
+    ).not.toBeInTheDocument()
     expect(
-      within(panel).getByText(
+      within(panel).queryByText(
         "No structural issues detected by the formatted-string parser.",
       ),
-    ).toBeInTheDocument()
+    ).not.toBeInTheDocument()
+    expect(componentDetail.sbom_document).toEqual({
+      id: 11,
+      source_path: "pilot/results/sboms/alpine-3.24.1.cdx.json",
+      spec_version: "1.7",
+      generator_name: "syft",
+      generator_version: "1.49.0",
+      source_type: "registry",
+      scope: "squashed",
+    })
     expect(
-      within(panel).getByText(
-        componentDetail.sbom_document.source_path,
-      ),
-    ).toBeInTheDocument()
-    expect(within(panel).getByText("1.49.0")).toBeInTheDocument()
+      within(panel).queryByRole("heading", { name: "SBOM Source" }),
+    ).not.toBeInTheDocument()
+    for (const provenanceLabel of [
+      "Source path",
+      "Spec version",
+      "Generator name",
+      "Generator version",
+      "Source type",
+      "Scope",
+      "Document id",
+    ]) {
+      expect(
+        within(panel).queryByText(provenanceLabel),
+      ).not.toBeInTheDocument()
+    }
+    for (const provenanceValue of [
+      componentDetail.sbom_document.source_path,
+      componentDetail.sbom_document.spec_version,
+      componentDetail.sbom_document.generator_name,
+      componentDetail.sbom_document.generator_version,
+      componentDetail.sbom_document.source_type,
+      componentDetail.sbom_document.scope,
+    ]) {
+      expect(
+        within(panel).queryByText(provenanceValue),
+      ).not.toBeInTheDocument()
+    }
 
-    const fieldsSection = within(panel)
-      .getByRole("heading", { name: "CPE 2.3 Fields" })
-      .closest("section")
-    expect(fieldsSection).not.toBeNull()
+    expect(componentDetail.cpe_fields).toEqual(
+      componentSummary.cpe_fields,
+    )
+    expect(
+      within(panel).queryByRole("heading", {
+        name: "CPE 2.3 Fields",
+      }),
+    ).not.toBeInTheDocument()
     for (const fieldName of [
       "part",
       "vendor",
       "product",
-      "version",
       "update",
       "edition",
       "language",
@@ -385,44 +490,106 @@ describe("Component Detail panel", () => {
       "other",
     ]) {
       expect(
-        within(fieldsSection!).getByText(fieldName),
-      ).toBeInTheDocument()
+        within(panel).queryByText(fieldName),
+      ).not.toBeInTheDocument()
     }
   })
 
-  it("separates Syft candidates from other properties in source order", async () => {
+  it("keeps Additional SBOM Evidence collapsed and toggles raw properties", async () => {
+    const user = userEvent.setup()
     installSuccessfulFetch()
     renderAppAt("/components?component_id=101")
     await waitForDetail()
 
-    const candidatesSection = screen
-      .getByRole("heading", { name: "Syft CPE Candidates" })
-      .closest("section")
-    const otherSection = screen
-      .getByRole("heading", { name: "Other SBOM Properties" })
-      .closest("section")
-    expect(candidatesSection).not.toBeNull()
-    expect(otherSection).not.toBeNull()
-
-    const candidates = within(candidatesSection!).getAllByRole(
-      "listitem",
+    const syftCandidates = componentDetail.properties.filter(
+      (property) => property.name === "syft:cpe23",
     )
-    expect(candidates).toHaveLength(2)
-    expect(candidates[0]).toHaveTextContent(componentSummary.cpe)
-    expect(candidates[0]).toHaveTextContent("Same as primary")
-    expect(candidates[1]).toHaveTextContent(
+    expect(syftCandidates).toHaveLength(2)
+    expect(syftCandidates[0].value).toBe(componentSummary.cpe)
+    expect(syftCandidates[1].value).toBe(
       "cpe:2.3:a:curl:curl:8.14.1:*:*:*:*:*:*:*",
     )
+    expect(
+      screen.queryByRole("heading", {
+        name: "Syft CPE Candidates",
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText("2 candidates")).not.toBeInTheDocument()
+    expect(screen.queryByText("Same as primary")).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        "cpe:2.3:a:curl:curl:8.14.1:*:*:*:*:*:*:*",
+      ),
+    ).not.toBeInTheDocument()
 
-    const otherProperties =
-      within(otherSection!).getAllByRole("listitem")
-    expect(otherProperties).toHaveLength(2)
-    expect(otherProperties[0]).toHaveTextContent(
+    expect(
+      screen.queryByRole("heading", {
+        name: "Other SBOM Properties",
+      }),
+    ).not.toBeInTheDocument()
+    const trigger = screen.getByText("Additional SBOM Evidence")
+    const disclosure = trigger.closest("details")
+    const summary = trigger.closest("summary")
+    expect(disclosure).not.toBeNull()
+    expect(summary).not.toBeNull()
+    expect(disclosure).not.toHaveAttribute("open")
+    expect(
+      within(summary!).getByText("3 properties"),
+    ).toBeInTheDocument()
+
+    const firstProperty = screen.getByText("syft:package:foundBy")
+    const secondProperty = screen.getByText("syft:location:0:path")
+    const embaSourceProperty = screen.getByText(
+      "EMBA:sbom:source_location:1:source_path",
+    )
+    const embaSourceValue = screen.getByText(
+      "/firmware/rootfs/usr/bin/curl",
+    )
+    expect(firstProperty).not.toBeVisible()
+    expect(secondProperty).not.toBeVisible()
+    expect(embaSourceProperty).not.toBeVisible()
+    expect(embaSourceValue).not.toBeVisible()
+
+    await user.click(trigger)
+    expect(disclosure).toHaveAttribute("open")
+    expect(firstProperty).toBeVisible()
+    expect(secondProperty).toBeVisible()
+    expect(embaSourceProperty).toBeVisible()
+    expect(embaSourceValue).toBeVisible()
+    expect(firstProperty.closest("li")).toHaveTextContent(
       "syft:package:foundBy",
     )
-    expect(otherProperties[1]).toHaveTextContent(
+    expect(secondProperty.closest("li")).toHaveTextContent(
       "syft:location:0:path",
     )
+
+    await user.click(trigger)
+    expect(disclosure).not.toHaveAttribute("open")
+    expect(firstProperty).not.toBeVisible()
+    expect(secondProperty).not.toBeVisible()
+    expect(embaSourceProperty).not.toBeVisible()
+    expect(embaSourceValue).not.toBeVisible()
+  })
+
+  it("uses singular wording for one additional SBOM property", async () => {
+    installSuccessfulFetch({
+      ...componentDetail,
+      properties: [
+        {
+          name: "EMBA:sbom:minimal_identifier",
+          value: "curl",
+        },
+      ],
+    })
+    renderAppAt("/components?component_id=101")
+    await waitForDetail()
+
+    const trigger = screen.getByText("Additional SBOM Evidence")
+    const summary = trigger.closest("summary")
+    expect(summary).not.toBeNull()
+    expect(
+      within(summary!).getByText("1 property"),
+    ).toBeInTheDocument()
   })
 
   it("closes only component_id without reloading the list", async () => {
@@ -607,21 +774,38 @@ describe("Component Detail panel", () => {
       await screen.findByText("No primary CPE"),
     ).toBeInTheDocument()
     expect(
-      screen.getByText("CPE fields are not available."),
-    ).toBeInTheDocument()
+      screen.queryByRole("heading", {
+        name: "CPE 2.3 Fields",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("CPE fields are not available."),
+    ).not.toBeInTheDocument()
     expect(
       within(
         screen.getByRole("complementary", {
           name: "Component details",
         }),
       ).getAllByText("Primary CPE Not Present"),
-    ).toHaveLength(2)
+    ).toHaveLength(1)
     expect(
-      screen.getAllByText("NOT_PRESENT"),
-    ).toHaveLength(2)
+      screen.queryByRole("heading", {
+        name: "Syft CPE Candidates",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        "No `syft:cpe23` candidate properties were found.",
+      ),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText("Not Present"),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText("NOT_PRESENT")).toHaveLength(1)
+    expect(screen.getByText("0 properties")).toBeInTheDocument()
   })
 
-  it("keeps structural and Dictionary evidence independent", async () => {
+  it("keeps Structural Validation and the header Dictionary status", async () => {
     const structuralErrorDetail: ComponentDetail = {
       ...componentDetail,
       structural_status: "INVALID_ESCAPE",
@@ -637,9 +821,27 @@ describe("Component Detail panel", () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText("Official Dictionary Match"),
+      screen.getByRole("heading", {
+        name: "Structural Validation",
+      }),
     ).toBeInTheDocument()
-    expect(screen.getByText("Active")).toBeInTheDocument()
+    const panel = screen.getByRole("complementary", {
+      name: "Component details",
+    })
+    expect(
+      within(panel).getByText("Official Active"),
+    ).toBeInTheDocument()
+    expect(
+      within(panel).getByText("Invalid Escape"),
+    ).toBeInTheDocument()
+    expect(
+      within(panel).queryByRole("heading", {
+        name: "Status Summary",
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Exact Match" }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByText(
         "Checks the CPE 2.3 formatted-string structure only.",
@@ -650,112 +852,78 @@ describe("Component Detail panel", () => {
   it.each([
     {
       status: "OFFICIAL_ACTIVE" as const,
-      title: "Official Dictionary Match",
-      badge: "Active",
-      description:
-        "The raw CPE string exactly matches an active entry in the selected NVD CPE Dictionary snapshot.",
+      headerLabel: "Official Active",
       cpeNameId: "11111111-1111-4111-8111-111111111111",
       deprecated: false,
     },
     {
       status: "OFFICIAL_DEPRECATED" as const,
-      title: "Official Dictionary Match",
-      badge: "Deprecated",
-      description:
-        "The raw CPE string exactly matches a deprecated entry in the selected NVD CPE Dictionary snapshot.",
+      headerLabel: "Official Deprecated",
       cpeNameId: "22222222-2222-4222-8222-222222222222",
       deprecated: true,
     },
     {
       status: "NOT_IN_DICTIONARY" as const,
-      title: "Not Found in Dictionary",
-      badge: "No raw-string match",
-      description:
-        "No identical raw CPE string was found in the selected NVD CPE Dictionary snapshot.",
+      headerLabel: "Not in Dictionary",
       cpeNameId: null,
       deprecated: null,
     },
     {
       status: "NOT_PRESENT" as const,
-      title: "Primary CPE Not Present",
-      badge: "Not present",
-      description:
-        "This SBOM Component does not provide a Primary CPE to compare.",
+      headerLabel: "Primary CPE Not Present",
       cpeNameId: null,
       deprecated: null,
     },
   ])(
-    "renders $status Dictionary evidence",
+    "keeps $status data while hiding Exact Match details",
     async ({
       status,
-      title,
-      badge,
-      description,
+      headerLabel,
       cpeNameId,
       deprecated,
     }) => {
+      const dictionaryMatch = {
+        snapshot_id: "20260725T035002Z",
+        cpe_name_id: cpeNameId,
+        matched_cpe_name: cpeNameId
+          ? componentSummary.cpe
+          : null,
+        deprecated,
+      }
       installSuccessfulFetch({
         ...componentDetail,
         dictionary_status: status,
-        dictionary_match: {
-          snapshot_id: "20260725T035002Z",
-          cpe_name_id: cpeNameId,
-          matched_cpe_name: cpeNameId
-            ? componentSummary.cpe
-            : null,
-          deprecated,
-        },
+        dictionary_match: dictionaryMatch,
       })
       renderAppAt("/components?component_id=101")
       await waitForDetail()
 
-      const dictionarySection = screen
-        .getByRole("heading", { name: "Exact Match" })
-        .closest("section")
-      expect(dictionarySection).not.toBeNull()
+      const panel = screen.getByRole("complementary", {
+        name: "Component details",
+      })
+      expect(dictionaryMatch.snapshot_id).toBe(
+        "20260725T035002Z",
+      )
       expect(
-        within(dictionarySection!).getByText(title),
+        within(panel).getByText(headerLabel),
       ).toBeInTheDocument()
       expect(
-        within(dictionarySection!).getAllByText(badge).length,
-      ).toBeGreaterThanOrEqual(1)
+        screen.queryByRole("heading", { name: "Exact Match" }),
+      ).not.toBeInTheDocument()
       expect(
-        within(dictionarySection!).getByText(description),
-      ).toBeInTheDocument()
+        screen.queryByText("Snapshot ID"),
+      ).not.toBeInTheDocument()
       expect(
-        within(dictionarySection!).getByText("20260725T035002Z"),
-      ).toBeInTheDocument()
+        screen.queryByText("20260725T035002Z"),
+      ).not.toBeInTheDocument()
       expect(
-        within(dictionarySection!).getByText(
+        screen.queryByText(
           "Dictionary exact match is automated evidence and does not establish semantic correctness for this component.",
         ),
-      ).toBeInTheDocument()
-      expect(
-        screen.getAllByRole("heading", {
-          name: "Exact Match",
-        }),
-      ).toHaveLength(1)
+      ).not.toBeInTheDocument()
       if (cpeNameId) {
         expect(
-          within(dictionarySection!).getByText(cpeNameId),
-        ).toBeInTheDocument()
-      } else {
-        expect(
-          within(dictionarySection!).queryByText(
-            "NVD CPE UUID",
-          ),
-        ).not.toBeInTheDocument()
-      }
-      for (const unsupportedClaim of [
-        "Valid",
-        "Correct",
-        "Verified",
-        "Trusted",
-      ]) {
-        expect(
-          within(dictionarySection!).queryByText(
-            unsupportedClaim,
-          ),
+          screen.queryByText(cpeNameId),
         ).not.toBeInTheDocument()
       }
     },
@@ -780,7 +948,7 @@ describe("Component Detail panel", () => {
     ).toBeInTheDocument()
   })
 
-  it("keeps exact-match evidence without Ground Truth actions", async () => {
+  it("keeps the remaining Detail flow without hidden evidence or provenance sections", async () => {
     installSuccessfulFetch()
     renderAppAt("/components?component_id=101")
     await waitForDetail()
@@ -794,9 +962,14 @@ describe("Component Detail panel", () => {
       screen.queryByText("Expected Ground Truth CPE"),
     ).not.toBeInTheDocument()
     expect(
-      screen.getByRole("heading", { name: "Exact Match" }),
-    ).toBeInTheDocument()
-    expect(screen.getByText("SBOM Source")).toBeInTheDocument()
+      screen.queryByRole("heading", { name: "Exact Match" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", {
+        name: "Syft CPE Candidates",
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText("SBOM Source")).not.toBeInTheDocument()
   })
 
   it("closes Detail when sorting, page size, or page changes", async () => {

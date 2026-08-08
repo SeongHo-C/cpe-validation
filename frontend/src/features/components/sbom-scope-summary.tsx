@@ -3,7 +3,6 @@ import { FileText, FilterX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -38,10 +37,17 @@ export function SbomScopeSummary({
   componentCount,
   onClearSbomFilter,
 }: SbomScopeSummaryProps) {
+  const componentCountLabel =
+    componentCount === undefined
+      ? "Loading Primary CPE component count"
+      : `${formatInteger(componentCount)} Primary CPE ${
+          componentCount === 1 ? "component" : "components"
+        }`
+
   return (
-    <Card>
-      <CardHeader className="sm:grid-cols-[1fr_auto]">
-        <div>
+    <Card className="gap-0 py-3">
+      <CardHeader className="sm:grid-cols-[1fr_auto] sm:items-center">
+        <div className="min-w-0">
           <CardTitle className="flex items-center gap-2">
             <FileText
               className="size-4 text-cyan-700"
@@ -49,8 +55,8 @@ export function SbomScopeSummary({
             />
             {sbomLabel(sbomId, sbom)}
           </CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Components from the selected SBOM document.
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
+            {componentCountLabel}
           </p>
         </div>
         <Button
@@ -64,28 +70,6 @@ export function SbomScopeSummary({
           Clear SBOM filter
         </Button>
       </CardHeader>
-      <CardContent>
-        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
-            <dt className="text-xs text-muted-foreground">
-              Primary CPE Components
-            </dt>
-            <dd className="mt-1 font-heading text-base font-semibold">
-              {componentCount === undefined
-                ? "Loading"
-                : formatInteger(componentCount)}
-            </dd>
-          </div>
-          <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
-            <dt className="text-xs text-muted-foreground">
-              SBOM document
-            </dt>
-            <dd className="mt-1 font-heading text-base font-semibold">
-              #{sbomId}
-            </dd>
-          </div>
-        </dl>
-      </CardContent>
     </Card>
   )
 }

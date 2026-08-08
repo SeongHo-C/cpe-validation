@@ -11,11 +11,13 @@ import type { ComponentSummary } from "@/features/components/components-types"
 interface ComponentsTableSortHeaderProps {
   column: Column<ComponentSummary, unknown>
   label: string
+  align?: "left" | "center"
 }
 
 export function ComponentsTableSortHeader({
   column,
   label,
+  align = "left",
 }: ComponentsTableSortHeaderProps) {
   const sorted = column.getIsSorted()
 
@@ -24,7 +26,9 @@ export function ComponentsTableSortHeader({
       type="button"
       variant="ghost"
       size="sm"
-      className="-ml-2 h-8 px-2"
+      className={
+        align === "left" ? "-ml-2 h-8 px-2" : "h-8 px-2"
+      }
       aria-label={`Sort by ${label}`}
       onClick={() => column.toggleSorting(sorted === "asc")}
     >

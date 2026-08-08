@@ -197,31 +197,29 @@ export function ComponentsTableSkeleton() {
         </TableCaption>
         <TableHeader className="bg-muted/45">
           <TableRow>
-            {[
-              "Component",
-              "Version",
-              "Image",
-              "Primary CPE",
-              "Dictionary Status",
-            ].map((label) => (
-              <TableHead key={label}>{label}</TableHead>
-            ))}
+            <TableHead>Component</TableHead>
+            <TableHead className="text-center">Version</TableHead>
+            <TableHead>Primary CPE</TableHead>
+            <TableHead className="text-center">
+              Dictionary Status
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {Array.from({ length: 9 }, (_, rowIndex) => (
             <TableRow key={rowIndex}>
-              {Array.from({ length: 5 }, (_, cellIndex) => (
-                <TableCell key={cellIndex}>
-                  <Skeleton
-                    className={
-                      cellIndex === 0 || cellIndex === 3
-                        ? "h-8 w-52"
-                        : "h-5 w-20"
-                    }
-                  />
-                </TableCell>
-              ))}
+              <TableCell>
+                <Skeleton className="h-8 w-52" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="mx-auto h-5 w-20" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-8 w-72" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="mx-auto h-5 w-24" />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

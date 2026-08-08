@@ -81,7 +81,6 @@ export function ComponentsToolbar({
               onChange={(event) =>
                 onSearchInputChange(event.target.value)
               }
-              placeholder="Search name, version, publisher, PURL, CPE, or bom-ref..."
               className="pl-9"
             />
           </div>
@@ -182,14 +181,14 @@ export function ComponentsToolbar({
           ) : null}
           {resultCount === undefined
             ? "Loading components"
-            : searchInput.trim() || dictionaryStatus
-              ? `${formatInteger(resultCount)} matching components`
-              : `${formatInteger(resultCount)} primary CPE components`}
+            : `${formatInteger(resultCount)} ${
+                resultCount === 1 ? "result" : "results"
+              }`}
         </p>
       </div>
       <p className="text-xs leading-5 text-muted-foreground">
-        Dictionary status indicates raw-string presence in the
-        selected NVD snapshot, not semantic correctness.
+        Dictionary status reflects exact NVD CPE presence, not
+        semantic correctness.
       </p>
     </div>
   )

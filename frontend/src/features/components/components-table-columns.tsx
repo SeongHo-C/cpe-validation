@@ -9,10 +9,6 @@ import {
 import type { ComponentSummary } from "@/features/components/components-types"
 import { cn } from "@/lib/utils"
 
-function repositoryBasename(repository: string): string {
-  return repository.split("/").at(-1) ?? repository
-}
-
 export const componentsTableColumns: ColumnDef<ComponentSummary>[] =
   [
     {
@@ -49,69 +45,22 @@ export const componentsTableColumns: ColumnDef<ComponentSummary>[] =
     {
       accessorKey: "version",
       header: ({ column }) => (
-        <ComponentsTableSortHeader
-          column={column}
-          label="Version"
-        />
+        <div className="flex justify-center">
+          <ComponentsTableSortHeader
+            column={column}
+            label="Version"
+            align="center"
+          />
+        </div>
       ),
       cell: ({ row }) => (
         <span
           title={row.original.version || undefined}
-          className="block w-[120px] max-w-[150px] truncate font-mono text-xs"
+          className="mx-auto block w-[120px] max-w-[150px] truncate text-center font-mono text-xs"
         >
           {row.original.version || "—"}
         </span>
       ),
-    },
-    {
-      id: "repository",
-      accessorFn: (component) => component.image?.repository ?? "",
-      header: ({ column }) => (
-        <ComponentsTableSortHeader
-          column={column}
-          label="Image"
-        />
-      ),
-      cell: ({ row }) => {
-        const image = row.original.image
-        if (!image) {
-          return (
-            <span className="text-sm text-muted-foreground">
-              No Docker image
-            </span>
-          )
-        }
-        const { repository, tag } = image
-        const imageReference = `${repository}:${tag}`
-        return (
-          <div
-            title={imageReference}
-            className="w-[210px] min-w-0 max-w-[230px]"
-          >
-            <div className="flex min-w-0 items-center gap-2">
-              <span
-                title={imageReference}
-                className="min-w-0 flex-1 truncate font-medium"
-              >
-                {repositoryBasename(repository)}
-              </span>
-              <Badge
-                variant="secondary"
-                title={tag}
-                className="max-w-24 shrink-0 truncate font-mono"
-              >
-                {tag}
-              </Badge>
-            </div>
-            <p
-              title={repository}
-              className="mt-0.5 truncate text-xs text-muted-foreground"
-            >
-              {repository}
-            </p>
-          </div>
-        )
-      },
     },
     {
       accessorKey: "cpe",
@@ -121,7 +70,7 @@ export const componentsTableColumns: ColumnDef<ComponentSummary>[] =
         <span
           title={row.original.cpe || undefined}
           className={cn(
-            "block w-[360px] min-w-[260px] max-w-[400px] truncate font-mono text-xs",
+            "block w-[520px] min-w-[360px] max-w-[600px] truncate font-mono text-xs",
             !row.original.cpe && "text-muted-foreground",
           )}
         >
@@ -132,9 +81,11 @@ export const componentsTableColumns: ColumnDef<ComponentSummary>[] =
     {
       accessorKey: "dictionary_status",
       enableSorting: false,
-      header: "Dictionary Status",
+      header: () => (
+        <div className="text-center">Dictionary Status</div>
+      ),
       cell: ({ row }) => (
-        <div className="min-w-[180px] max-w-[200px]">
+        <div className="mx-auto flex min-w-[180px] max-w-[200px] justify-center">
           <Badge
             variant="outline"
             className={cn(

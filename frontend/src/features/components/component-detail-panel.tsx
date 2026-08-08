@@ -39,8 +39,22 @@ type DetailStatus =
   | "not-found"
   | "error"
 
-function repositoryBasename(repository: string): string {
-  return repository.split("/").at(-1) ?? repository
+function structuralStatusClassName(status: string): string {
+  if (status === "STRUCTURALLY_VALID") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700"
+  }
+  if (status === "NOT_PRESENT") {
+    return "border-border bg-muted text-muted-foreground"
+  }
+  return "border-red-200 bg-red-50 text-red-700"
+}
+
+function formatStructuralStatus(status: string): string {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
 }
 
 function CloseButton({ onClose }: { onClose: () => void }) {
@@ -218,15 +232,9 @@ export function ComponentDetailPanel({
           <div className="flex h-full min-h-0 flex-col">
             <div className="z-10 flex shrink-0 items-start justify-between gap-3 border-b bg-card p-4">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="font-heading text-base font-semibold">
-                    {detail.name || "Not provided"}
-                  </h2>
-                  <Badge variant="outline">Read only</Badge>
-                </div>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  {detail.version || "Not provided"}
-                </p>
+                <h2 className="truncate font-heading text-base font-semibold">
+                  {detail.name || "Not provided"}
+                </h2>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">
                     {detail.component_type || "Not provided"}
@@ -246,11 +254,19 @@ export function ComponentDetailPanel({
                       ]
                     }
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {detail.image
-                      ? `${repositoryBasename(detail.image.repository)}:${detail.image.tag}`
-                      : "No Docker image"}
-                  </span>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "whitespace-nowrap",
+                      structuralStatusClassName(
+                        detail.structural_status,
+                      ),
+                    )}
+                  >
+                    {formatStructuralStatus(
+                      detail.structural_status,
+                    )}
+                  </Badge>
                 </div>
               </div>
               <CloseButton onClose={onClose} />

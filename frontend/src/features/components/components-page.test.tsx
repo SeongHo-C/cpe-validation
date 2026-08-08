@@ -81,7 +81,6 @@ const imageDetailFixture: DockerImageDetail = {
 const expectedComponentTableHeaders = [
   "Component",
   "Version",
-  "Image",
   "Primary CPE",
   "Dictionary Status",
 ]
@@ -119,10 +118,12 @@ function paginatedResponse(
 function installSuccessfulFetch({
   componentResults = [componentFixture],
   componentCount = componentResults.length,
+  sbomComponentCount = componentCount,
   imageDetail = imageDetailFixture,
 }: {
   componentResults?: ComponentSummary[]
   componentCount?: number
+  sbomComponentCount?: number
   imageDetail?: DockerImageDetail
 } = {}) {
   vi.mocked(fetch).mockImplementation((input) => {
@@ -136,12 +137,19 @@ function installSuccessfulFetch({
       return Promise.resolve(jsonResponse(imageDetail))
     }
     if (url.pathname === "/api/components/") {
+      const isSbomSummaryRequest =
+        url.searchParams.has("sbom_id") &&
+        url.searchParams.get("page_size") === "1" &&
+        !url.searchParams.has("search") &&
+        !url.searchParams.has("dictionary_status")
       return Promise.resolve(
         jsonResponse(
           paginatedResponse(
             url,
             componentResults,
-            componentCount,
+            isSbomSummaryRequest
+              ? sbomComponentCount
+              : componentCount,
           ),
         ),
       )
@@ -266,9 +274,10 @@ describe("Components routing and page", () => {
       await screen.findByText("alpine:3.24.1"),
     ).toBeInTheDocument()
     expect(
-      screen.getAllByText("docker.io/library/alpine"),
-    ).toHaveLength(2)
+      screen.getByText("docker.io/library/alpine"),
+    ).toBeInTheDocument()
     expect(screen.getByText("linux/amd64")).toBeInTheDocument()
+    expect(screen.getByText("16 results")).toBeInTheDocument()
 
     const request = await waitForComponentRequest(
       (url) => url.searchParams.get("image_id") === "1",
@@ -291,17 +300,48 @@ describe("Components routing and page", () => {
           image: null,
         },
       ],
-      componentCount: 1,
+      componentCount: 3,
+      sbomComponentCount: 788,
     })
-    renderAppAt("/components?sbom_id=1")
+    renderAppAt(
+      "/components?sbom_id=1&dictionary_status=OFFICIAL_ACTIVE",
+    )
 
     expect(
       await screen.findByText("NETGEAR R7000 1.0.11.136"),
     ).toBeInTheDocument()
-    expect(await screen.findByText("No Docker image")).toBeInTheDocument()
+    expect(
+      screen.queryByText("No Docker image"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        "Components from the selected SBOM document.",
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText("SBOM document")).not.toBeInTheDocument()
+    expect(
+      screen.getByText("788 Primary CPE components"),
+    ).toBeInTheDocument()
+
+    const searchInput = screen.getByLabelText("Search components")
+    expect(searchInput).not.toHaveAttribute("placeholder")
+    expect(
+      screen.queryByText(
+        "Search and filter components selected for Primary CPE validation.",
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText("3 results")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Dictionary status reflects exact NVD CPE presence, not semantic correctness.",
+      ),
+    ).toBeInTheDocument()
 
     const request = await waitForComponentRequest(
-      (url) => url.searchParams.get("sbom_id") === "1",
+      (url) =>
+        url.searchParams.get("sbom_id") === "1" &&
+        url.searchParams.get("dictionary_status") ===
+          "OFFICIAL_ACTIVE",
     )
     expect(request.searchParams.has("image_id")).toBe(false)
     expect(
@@ -311,6 +351,56 @@ describe("Components routing and page", () => {
           ([input]) => String(input) === "/api/images/1/",
         ),
     ).toBe(false)
+  })
+
+  it("uses singular wording for one SBOM Primary CPE component", async () => {
+    installSuccessfulFetch({ sbomComponentCount: 1 })
+    renderAppAt("/components?sbom_id=1")
+
+    expect(
+      await screen.findByText("1 Primary CPE component"),
+    ).toBeInTheDocument()
+  })
+
+  it("clears the selected SBOM scope without changing the queue contract", async () => {
+    const user = userEvent.setup()
+    installSuccessfulFetch({ sbomComponentCount: 788 })
+    renderAppAt("/components?sbom_id=1")
+    await screen.findByText("788 Primary CPE components")
+
+    await user.click(
+      screen.getByRole("button", { name: "Clear SBOM filter" }),
+    )
+    await waitForComponentRequest(
+      (url) => !url.searchParams.has("sbom_id"),
+    )
+    expect(screen.getByTestId("route-location")).toHaveTextContent(
+      "/components",
+    )
+  })
+
+  it("formats the current API result count with correct plurality", async () => {
+    installSuccessfulFetch({ componentCount: 788 })
+    const allResults = renderAppAt("/components")
+    expect(
+      await screen.findByText("788 results"),
+    ).toBeInTheDocument()
+    allResults.unmount()
+
+    installSuccessfulFetch({ componentCount: 3 })
+    const filteredResults = renderAppAt(
+      "/components?dictionary_status=OFFICIAL_ACTIVE",
+    )
+    expect(
+      await screen.findByText("3 results"),
+    ).toBeInTheDocument()
+    filteredResults.unmount()
+
+    installSuccessfulFetch({ componentCount: 1 })
+    renderAppAt("/components?search=curl")
+    expect(
+      await screen.findByText("1 result"),
+    ).toBeInTheDocument()
   })
 
   it("does not request Components for conflicting scope filters", () => {
@@ -340,7 +430,7 @@ describe("Components routing and page", () => {
     expect(componentRequestUrls()).toHaveLength(0)
   })
 
-  it("renders only the five manual-review columns", async () => {
+  it("renders only the four manual-review columns", async () => {
     installSuccessfulFetch()
     renderAppAt("/components")
 
@@ -374,6 +464,11 @@ describe("Components routing and page", () => {
         name: "Part",
       }),
     ).not.toBeInTheDocument()
+    expect(
+      within(table).queryByRole("columnheader", {
+        name: "Image",
+      }),
+    ).not.toBeInTheDocument()
 
     const componentName = within(table).getByText("curl")
     expect(componentName).toHaveAttribute("title", "curl")
@@ -382,13 +477,6 @@ describe("Components routing and page", () => {
     const version = within(table).getByText("8.14.1-r1")
     expect(version).toHaveAttribute("title", "8.14.1-r1")
     expect(version).toHaveClass("truncate")
-
-    const image = within(table).getByText("alpine")
-    expect(image).toHaveAttribute(
-      "title",
-      "docker.io/library/alpine:3.24.1",
-    )
-    expect(image).toHaveClass("truncate")
 
     const primaryCpe = within(table).getByText(
       componentFixture.cpe,
@@ -422,10 +510,6 @@ describe("Components routing and page", () => {
       "a-component-name-that-is-deliberately-long-for-table-layout-verification"
     const longVersion =
       "2026.07.27-build-with-an-unusually-long-version-suffix"
-    const longRepository =
-      "docker.io/research/namespace/with-a-long-path/component-image-with-a-long-name"
-    const longTag =
-      "release-with-an-unusually-long-tag-for-layout-verification"
     const longCpe =
       "cpe:2.3:a:vendor-with-a-long-name:product-with-a-long-name:2026.07.27:update:edition:language:sw_edition:target_sw:target_hw:other"
     installSuccessfulFetch({
@@ -434,11 +518,6 @@ describe("Components routing and page", () => {
           ...componentFixture,
           name: longName,
           version: longVersion,
-          image: {
-            id: 1,
-            repository: longRepository,
-            tag: longTag,
-          },
           cpe: longCpe,
         },
       ],
@@ -454,21 +533,6 @@ describe("Components routing and page", () => {
     const version = within(table).getByText(longVersion)
     expect(version).toHaveAttribute("title", longVersion)
     expect(version).toHaveClass("truncate")
-
-    const imageName = within(table).getByText(
-      "component-image-with-a-long-name",
-    )
-    expect(imageName).toHaveAttribute(
-      "title",
-      `${longRepository}:${longTag}`,
-    )
-    expect(imageName).toHaveClass("truncate")
-    expect(within(table).getByText(longRepository)).toHaveClass(
-      "truncate",
-    )
-    expect(within(table).getByText(longTag)).toHaveClass(
-      "truncate",
-    )
 
     const primaryCpe = within(table).getByText(longCpe)
     expect(primaryCpe).toHaveAttribute("title", longCpe)
@@ -746,8 +810,9 @@ describe("Components routing and page", () => {
     )
     expect(nameRequest.searchParams.get("page")).toBe("1")
 
-    await user.click(
-      screen.getByRole("button", { name: "Sort by Image" }),
+    await user.selectOptions(
+      screen.getByLabelText("Sort components"),
+      "repository",
     )
     await waitForComponentRequest(
       (url) => url.searchParams.get("ordering") === "repository",

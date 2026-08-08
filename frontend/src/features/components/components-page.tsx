@@ -157,6 +157,10 @@ export function ComponentsPage() {
   const [componentsError, setComponentsError] = useState(false)
   const [componentsReloadToken, setComponentsReloadToken] =
     useState(0)
+  const [sbomScopeSummary, setSbomScopeSummary] = useState<{
+    sbom: ComponentSummary["sbom"] | null
+    componentCount: number
+  } | null>(null)
   const [image, setImage] = useState<DockerImageDetail | null>(
     null,
   )
@@ -337,6 +341,53 @@ export function ComponentsPage() {
       invalidImageId ||
       invalidSbomId ||
       conflictingScopeFilters ||
+      sbomId === undefined
+    ) {
+      setSbomScopeSummary(null)
+      return
+    }
+
+    const controller = new AbortController()
+    let active = true
+
+    setSbomScopeSummary(null)
+    getComponents(
+      {
+        sbom_id: sbomId,
+        page: 1,
+        page_size: 1,
+      },
+      controller.signal,
+    )
+      .then((response) => {
+        if (!active) return
+        setSbomScopeSummary({
+          sbom: response.results[0]?.sbom ?? null,
+          componentCount: response.count,
+        })
+      })
+      .catch((error: unknown) => {
+        if (!active || isAbortError(error)) return
+        setSbomScopeSummary(null)
+      })
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [
+    componentsReloadToken,
+    conflictingScopeFilters,
+    invalidImageId,
+    invalidSbomId,
+    sbomId,
+  ])
+
+  useEffect(() => {
+    if (
+      invalidImageId ||
+      invalidSbomId ||
+      conflictingScopeFilters ||
       imageId === undefined
     ) {
       setImage(null)
@@ -448,9 +499,11 @@ export function ComponentsPage() {
   const selectedSbom =
     sbomId === undefined
       ? null
-      : (components?.results.find(
+      : (sbomScopeSummary?.sbom ??
+        components?.results.find(
           (component) => component.sbom.id === sbomId,
-        )?.sbom ?? null)
+        )?.sbom ??
+        null)
 
   return (
     <PageContent aria-busy={isLoading}>
@@ -463,7 +516,9 @@ export function ComponentsPage() {
             <SbomScopeSummary
               sbomId={sbomId}
               sbom={selectedSbom}
-              componentCount={resultCount}
+              componentCount={
+                sbomScopeSummary?.componentCount
+              }
               onClearSbomFilter={clearSbomFilter}
             />
           ) : (
@@ -482,10 +537,7 @@ export function ComponentsPage() {
             id="components-table"
             className="gap-0 py-0"
           >
-            <DataPanelHeader
-              title="Validation Queue"
-              description="Search and filter components selected for Primary CPE validation."
-            />
+            <DataPanelHeader title="Validation Queue" />
             <ComponentsToolbar
               searchInput={searchInput}
               ordering={ordering}
