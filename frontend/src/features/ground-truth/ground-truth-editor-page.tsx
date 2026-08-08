@@ -9,6 +9,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react"
 import {
@@ -57,8 +58,14 @@ export function GroundTruthEditorPage() {
     rawComponentId && /^[1-9]\d*$/.test(rawComponentId)
       ? Number(rawComponentId)
       : undefined
-  const [searchParameters] = useSearchParams()
+  const [searchParameters, setSearchParameters] = useSearchParams()
   const searchSignature = searchParameters.toString()
+  const reviewSearchSignature = useMemo(() => {
+    const reviewParameters = new URLSearchParams()
+    const queue = searchParameters.get("queue")
+    if (queue) reviewParameters.set("queue", queue)
+    return reviewParameters.toString()
+  }, [searchParameters])
   const queueQuery = useMemo(
     () =>
       parseGroundTruthQueue(
@@ -79,6 +86,29 @@ export function GroundTruthEditorPage() {
     useState<CpeDictionaryCandidate | null>(null)
   const [manualCpe, setManualCpe] = useState("")
   const [dirty, setDirty] = useState(false)
+  const previousComponentId = useRef(componentId)
+
+  useEffect(() => {
+    const previous = previousComponentId.current
+    previousComponentId.current = componentId
+    if (
+      !previous ||
+      !componentId ||
+      previous === componentId ||
+      searchSignature === reviewSearchSignature
+    ) {
+      return
+    }
+    setSearchParameters(
+      new URLSearchParams(reviewSearchSignature),
+      { replace: true },
+    )
+  }, [
+    componentId,
+    reviewSearchSignature,
+    searchSignature,
+    setSearchParameters,
+  ])
 
   useEffect(() => {
     if (!componentId) {
@@ -140,11 +170,13 @@ export function GroundTruthEditorPage() {
       }
       navigate(
         `/ground-truth/components/${nextComponentId}${
-          searchSignature ? `?${searchSignature}` : ""
+          reviewSearchSignature
+            ? `?${reviewSearchSignature}`
+            : ""
         }`,
       )
     },
-    [dirty, navigate, searchSignature],
+    [dirty, navigate, reviewSearchSignature],
   )
 
   if (!componentId) {
@@ -225,7 +257,10 @@ export function GroundTruthEditorPage() {
 
       <div className="grid min-w-0 grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
         <CpeDictionarySearch
+          key={componentId}
+          compactInitialState
           preserveQueryKeys={preservedGroundTruthQueryKeys}
+          showExamplePlaceholders={false}
           showSnapshotSummary={false}
           onSelectCandidate={(candidate) => {
             setManualCpe("")

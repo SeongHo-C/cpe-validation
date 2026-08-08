@@ -110,11 +110,10 @@ export function GroundTruthComponentContext({
         <div className="flex items-center gap-2">
           <Box className="size-4 text-cyan-700" aria-hidden="true" />
           <CardTitle>Component context</CardTitle>
-          <Badge variant="outline">Read only</Badge>
         </div>
         <CardDescription>
-          Compare this SBOM evidence with Dictionary records. No
-          result is applied automatically.
+          Compare SBOM evidence with official Dictionary records
+          before assigning Ground Truth.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -147,23 +146,9 @@ export function GroundTruthComponentContext({
             value={detail.component_type}
             className="xl:col-span-3"
           />
-          <MetadataField
-            label="Docker image"
-            value={
-              detail.image
-                ? `${detail.image.repository}:${detail.image.tag}`
-                : ""
-            }
-            className="xl:col-span-3"
-          />
-          <MetadataField
-            label="SBOM document"
-            value={`${detail.sbom_document.id} · ${detail.sbom_document.source_path}`}
-            className="xl:col-span-3"
-          />
           <div className="min-w-0 xl:col-span-3">
             <dt className="text-xs font-medium text-muted-foreground">
-              Exact Match
+              Dictionary Status
             </dt>
             <dd className="mt-1 text-sm">
               <Badge

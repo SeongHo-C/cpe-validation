@@ -1276,6 +1276,12 @@ describe("Ground Truth outcome and correction workflow", () => {
     await within(editor).findByText(
       "Direct official CPE not confirmed",
     )
+    await user.type(screen.getByLabelText("Vendor"), "haxx")
+    await user.type(screen.getByLabelText("Product"), "curl")
+    await user.click(
+      screen.getByRole("button", { name: "Search" }),
+    )
+    expect(await screen.findByText("2 results")).toBeInTheDocument()
     await user.click(
       within(editor).getByRole("button", {
         name: "Save and Next",
@@ -1292,6 +1298,11 @@ describe("Ground Truth outcome and correction workflow", () => {
         screen.getByTestId("route-location").textContent ?? "",
       ),
     ).toContain("correction_type=vendor_corrected")
+    expect(screen.getByLabelText("Vendor")).toHaveValue("")
+    expect(screen.getByLabelText("Product")).toHaveValue("")
+    expect(screen.getByLabelText("Part")).toHaveValue("")
+    expect(screen.getByLabelText("Status")).toHaveValue("active")
+    expect(screen.queryByText("2 results")).not.toBeInTheDocument()
   })
 
   it("preserves Component evidence and the existing review layout", async () => {
@@ -1313,10 +1324,28 @@ describe("Ground Truth outcome and correction workflow", () => {
     expect(screen.getByText("Search Official CPE Names"))
       .toBeInTheDocument()
     const context = componentContext()
-    expect(within(context).getByText("Exact Match"))
+    expect(within(context).queryByText("Read only"))
+      .not.toBeInTheDocument()
+    expect(within(context).queryByText("Docker image"))
+      .not.toBeInTheDocument()
+    expect(within(context).queryByText("SBOM document"))
+      .not.toBeInTheDocument()
+    expect(within(context).queryByText("Exact Match"))
+      .not.toBeInTheDocument()
+    expect(within(context).getByText("Dictionary Status"))
       .toBeInTheDocument()
     expect(within(context).getByText("Not in Dictionary"))
       .toBeInTheDocument()
+    expect(within(context).getByText("Name")).toBeInTheDocument()
+    expect(within(context).getByText("Version"))
+      .toBeInTheDocument()
+    expect(within(context).getByText("Group")).toBeInTheDocument()
+    expect(within(context).getByText("Publisher"))
+      .toBeInTheDocument()
+    expect(within(context).getByText("Type")).toBeInTheDocument()
+    expect(within(context).getByText("Primary CPE"))
+      .toBeInTheDocument()
+    expect(within(context).getByText("PURL")).toBeInTheDocument()
     expect(within(context).getByText(componentPurl)).toHaveClass(
       "whitespace-normal",
       "break-all",
@@ -1337,6 +1366,85 @@ describe("Ground Truth outcome and correction workflow", () => {
       ),
     )
     expect(properties).toHaveAttribute("open")
+
+    for (const field of [
+      "Keyword",
+      "Vendor",
+      "Product",
+      "Version",
+    ]) {
+      expect(screen.getByLabelText(field)).not.toHaveAttribute(
+        "placeholder",
+      )
+    }
+  })
+
+  it("resets Dictionary search state and results across Review navigation", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt(
+      "/ground-truth/components/101?queue=sbom_id%3D11%26page%3D2",
+    )
+    await within(groundTruthEditor()).findByText(
+      "Direct official CPE not confirmed",
+    )
+
+    await user.type(screen.getByLabelText("Keyword"), "curl")
+    await user.selectOptions(screen.getByLabelText("Part"), "a")
+    await user.type(screen.getByLabelText("Vendor"), "haxx")
+    await user.type(screen.getByLabelText("Product"), "curl")
+    await user.type(screen.getByLabelText("Version"), "8.14.1")
+    await user.selectOptions(screen.getByLabelText("Status"), "all")
+    await user.click(screen.getByRole("button", { name: "Search" }))
+    expect(await screen.findByText("2 results")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Next" }))
+    await waitFor(() => {
+      expect(screen.getByTestId("route-location").textContent)
+        .toContain("/ground-truth/components/102")
+    })
+    expect(screen.getByLabelText("Keyword")).toHaveValue("")
+    expect(screen.getByLabelText("Part")).toHaveValue("")
+    expect(screen.getByLabelText("Vendor")).toHaveValue("")
+    expect(screen.getByLabelText("Product")).toHaveValue("")
+    expect(screen.getByLabelText("Version")).toHaveValue("")
+    expect(screen.getByLabelText("Status")).toHaveValue("active")
+    expect(screen.queryByText("2 results")).not.toBeInTheDocument()
+    expect(
+      screen.getByText("Search the selected Dictionary snapshot"),
+    ).toBeInTheDocument()
+    const location = new URL(
+      screen.getByTestId("route-location").textContent ?? "",
+      "http://frontend.test",
+    )
+    expect([...location.searchParams.keys()]).toEqual(["queue"])
+    expect(location.searchParams.get("queue")).toBe(
+      "sbom_id=11&page=2",
+    )
+
+    await user.type(screen.getByLabelText("Vendor"), "openssl")
+    await user.click(screen.getByRole("button", { name: "Search" }))
+    expect(await screen.findByText("2 results")).toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", { name: "Previous" }),
+    )
+    await waitFor(() => {
+      expect(screen.getByTestId("route-location").textContent)
+        .toContain("/ground-truth/components/101")
+    })
+    expect(screen.getByLabelText("Vendor")).toHaveValue("")
+    expect(screen.getByLabelText("Part")).toHaveValue("")
+    expect(screen.getByLabelText("Status")).toHaveValue("active")
+    expect(screen.queryByText("2 results")).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("link", { name: "Back to Review Queue" }),
+    )
+    await waitFor(() => {
+      expect(screen.getByTestId("route-location").textContent).toBe(
+        "/ground-truth?sbom_id=11&page=2",
+      )
+    })
   })
 
   it("shows Not provided when the Component PURL is absent", async () => {

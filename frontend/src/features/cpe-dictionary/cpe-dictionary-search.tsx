@@ -57,6 +57,7 @@ import {
   isAbortError,
 } from "@/lib/api-client"
 import { formatInteger } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
@@ -117,14 +118,18 @@ const emptyPreservedQueryKeys: readonly string[] = []
 export function CpeDictionarySearch({
   onSelectCandidate,
   onCopyToManual,
+  compactInitialState = false,
   preserveQueryKeys = emptyPreservedQueryKeys,
+  showExamplePlaceholders = true,
   showSnapshotSummary = true,
 }: {
   onSelectCandidate?: (
     candidate: CpeDictionaryCandidate,
   ) => void
   onCopyToManual?: (rawCpe: string) => void
+  compactInitialState?: boolean
   preserveQueryKeys?: readonly string[]
+  showExamplePlaceholders?: boolean
   showSnapshotSummary?: boolean
 }) {
   const [searchParameters, setSearchParameters] =
@@ -304,7 +309,11 @@ export function CpeDictionarySearch({
               <Input
                 name="q"
                 value={draft.q}
-                placeholder="curl, openssl, or a title"
+                placeholder={
+                  showExamplePlaceholders
+                    ? "curl, openssl, or a title"
+                    : undefined
+                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -336,7 +345,9 @@ export function CpeDictionarySearch({
               <Input
                 name="vendor"
                 value={draft.vendor}
-                placeholder="haxx"
+                placeholder={
+                  showExamplePlaceholders ? "haxx" : undefined
+                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -349,7 +360,9 @@ export function CpeDictionarySearch({
               <Input
                 name="product"
                 value={draft.product}
-                placeholder="curl"
+                placeholder={
+                  showExamplePlaceholders ? "curl" : undefined
+                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -362,7 +375,9 @@ export function CpeDictionarySearch({
               <Input
                 name="version"
                 value={draft.version}
-                placeholder="8.14.1"
+                placeholder={
+                  showExamplePlaceholders ? "8.14.1" : undefined
+                }
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -436,7 +451,12 @@ export function CpeDictionarySearch({
 
       {!hasCpeDictionarySearchTerm(submittedQuery) ? (
         <Card className="gap-0 py-0">
-          <CardContent className="flex min-h-48 flex-col items-center justify-center text-center">
+          <CardContent
+            className={cn(
+              "flex flex-col items-center justify-center text-center",
+              compactInitialState ? "py-8" : "min-h-48",
+            )}
+          >
             <Search
               className="size-7 text-muted-foreground"
               aria-hidden="true"
