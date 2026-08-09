@@ -6,11 +6,7 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react"
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import {
   Alert,
@@ -26,26 +22,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { selectControlClassName } from "@/components/form-control-styles"
 import type { CpeDictionaryCandidate } from "@/features/cpe-dictionary/cpe-dictionary-types"
 import {
   getComponentCpeGroundTruth,
   putComponentCpeGroundTruth,
 } from "@/features/ground-truth/ground-truth-api"
-import { GroundTruthCorrectionTypeField } from "@/features/ground-truth/ground-truth-correction-type-field"
 import {
-  expectedResolutionOutcome,
-  resolutionAllowsCorrections,
-} from "@/features/ground-truth/ground-truth-resolution-outcome"
+  groundTruthDecisionCodes,
+  groundTruthDecisionNames,
+} from "@/features/ground-truth/ground-truth-decision"
+import { GroundTruthDiscrepancyTypeField } from "@/features/ground-truth/ground-truth-discrepancy-type-field"
 import type {
-  ComponentCpeGroundTruthRecord,
   ComponentCpeGroundTruthResponse,
-  GroundTruthCorrectionType,
+  GroundTruthDecisionCode,
+  GroundTruthDiscrepancyType,
 } from "@/features/ground-truth/ground-truth-types"
-import {
-  ApiError,
-  isAbortError,
-} from "@/lib/api-client"
-import { cn } from "@/lib/utils"
+import { ApiError, isAbortError } from "@/lib/api-client"
 
 function requestError(error: unknown): string {
   if (error instanceof ApiError) {
@@ -54,30 +47,62 @@ function requestError(error: unknown): string {
   return "Unable to complete the Ground Truth request."
 }
 
-function decisionPathClassName(active: boolean): string {
-  return cn(
-    "rounded-lg border p-3 transition-colors",
-    active ? "border-ring bg-accent/40" : "bg-muted/20",
-  )
-}
-
 function stateSignature(
+  decision: GroundTruthDecisionCode | "",
   selectedCpe: CpeDictionaryCandidate | null,
   manualCpe: string,
-  noDirectOfficialCpeConfirmed: boolean,
-  correctionTypes: GroundTruthCorrectionType[],
+  discrepancyTypes: GroundTruthDiscrepancyType[],
   note: string,
 ): string {
   return JSON.stringify({
+    decision,
     dictionary_cpe_id: selectedCpe?.id ?? null,
     manual_cpe: manualCpe,
-    no_direct_official_cpe_confirmed:
-      noDirectOfficialCpeConfirmed,
-    correction_type_ids: correctionTypes
-      .map((correctionType) => correctionType.id)
+    discrepancy_type_ids: discrepancyTypes
+      .map((discrepancyType) => discrepancyType.id)
       .sort((left, right) => left - right),
     note,
   })
+}
+
+function decisionValidationMessage(
+  decision: GroundTruthDecisionCode | "",
+  originalCpe: string,
+  selectedCpe: CpeDictionaryCandidate | null,
+  manualCpe: string,
+  discrepancyTypes: GroundTruthDiscrepancyType[],
+): string | null {
+  const groundTruthCpe = selectedCpe?.cpe_name ?? manualCpe.trim()
+  if (!decision) return "Select a Ground Truth Decision."
+  if (decision === "CPE_CONFIRMED") {
+    if (!originalCpe) {
+      return "CPE Confirmed requires an original SBOM CPE."
+    }
+    if (selectedCpe?.cpe_name !== originalCpe) {
+      return "Select the original CPE from the Dictionary to confirm it."
+    }
+    if (discrepancyTypes.length) {
+      return "CPE Confirmed cannot include Discrepancy Types."
+    }
+  }
+  if (decision === "OFFICIAL_CPE_MAPPED") {
+    if (!groundTruthCpe) {
+      return "Official CPE mapped requires a Ground Truth CPE."
+    }
+    if (groundTruthCpe === originalCpe) {
+      return "Official CPE mapped requires a CPE different from the original."
+    }
+    if (!discrepancyTypes.length) {
+      return "Select at least one Discrepancy Type for Official CPE mapped."
+    }
+  }
+  if (
+    decision === "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED" &&
+    groundTruthCpe
+  ) {
+    return "Direct official CPE not confirmed requires an empty Ground Truth CPE."
+  }
+  return null
 }
 
 export function GroundTruthEditor({
@@ -103,18 +128,17 @@ export function GroundTruthEditor({
   canMoveNext: boolean
   onSavedAndNext: () => void
 }) {
-  const [correctionTypes, setCorrectionTypes] = useState<
-    GroundTruthCorrectionType[]
+  const [decision, setDecision] = useState<
+    GroundTruthDecisionCode | ""
+  >("")
+  const [discrepancyTypes, setDiscrepancyTypes] = useState<
+    GroundTruthDiscrepancyType[]
   >([])
-  const [correctionNotice, setCorrectionNotice] = useState<
+  const [discrepancyNotice, setDiscrepancyNotice] = useState<
     string | null
   >(null)
   const [note, setNote] = useState("")
   const [snapshotId, setSnapshotId] = useState("")
-  const [noDirectOfficialCpeConfirmed, setNoDirectOfficialCpeConfirmed] =
-    useState(false)
-  const [serverGroundTruth, setServerGroundTruth] =
-    useState<ComponentCpeGroundTruthRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -123,68 +147,40 @@ export function GroundTruthEditor({
     string | null
   >(null)
 
-  const noDirectDecisionActive =
-    noDirectOfficialCpeConfirmed &&
-    selectedCpe === null &&
-    !manualCpe.trim()
   const currentSignature = useMemo(
     () =>
       stateSignature(
+        decision,
         selectedCpe,
         manualCpe,
-        noDirectDecisionActive,
-        correctionTypes,
+        discrepancyTypes,
         note,
       ),
-    [
-      correctionTypes,
-      manualCpe,
-      noDirectDecisionActive,
-      note,
-      selectedCpe,
-    ],
+    [decision, discrepancyTypes, manualCpe, note, selectedCpe],
   )
-  const resolutionOutcome = useMemo(
-    () =>
-      expectedResolutionOutcome(
-        originalCpe,
-        selectedCpe,
-        manualCpe,
-      ),
-    [manualCpe, originalCpe, selectedCpe],
-  )
-  const correctionsAllowed = resolutionAllowsCorrections(
-    resolutionOutcome.code,
-  )
-  const editorPristine =
-    savedSignature !== null && currentSignature === savedSignature
-  const hasGroundTruthDecision = Boolean(
-    selectedCpe || manualCpe.trim() || noDirectDecisionActive,
-  )
-  const pendingReview = !hasGroundTruthDecision
-  const showingSavedOutcome =
-    serverGroundTruth !== null && editorPristine
-  const displayedResolutionOutcome = showingSavedOutcome
-    ? serverGroundTruth.resolution_outcome
-    : resolutionOutcome
-  const resolutionDescription = pendingReview
-    ? "Select a Dictionary CPE, enter a Manual CPE, or confirm that no direct official CPE was found."
-    : showingSavedOutcome
-      ? "Server-confirmed outcome from the saved Ground Truth."
-      : "Preview calculated from the current Ground Truth result and confirmed by the server when saved."
-
-  useEffect(() => {
-    if (
-      noDirectOfficialCpeConfirmed &&
-      (selectedCpe !== null || manualCpe.trim())
-    ) {
-      setNoDirectOfficialCpeConfirmed(false)
-    }
-  }, [
-    manualCpe,
-    noDirectOfficialCpeConfirmed,
+  const validationMessage = decisionValidationMessage(
+    decision,
+    originalCpe,
     selectedCpe,
-  ])
+    manualCpe,
+    discrepancyTypes,
+  )
+  const discrepancyValidationMessage =
+    decision === "OFFICIAL_CPE_MAPPED" &&
+    discrepancyTypes.length === 0
+      ? "Select at least one Discrepancy Type for Official CPE mapped."
+      : undefined
+  const discrepancyTypesDisabled =
+    decision === "" || decision === "CPE_CONFIRMED"
+  const groundTruthCpeDisabled =
+    decision === "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+  const displayedGroundTruthCpe =
+    selectedCpe?.cpe_name ?? manualCpe.trim()
+  const groundTruthCpeSource = selectedCpe
+    ? "Dictionary"
+    : manualCpe.trim()
+      ? "Manual"
+      : "Not selected"
 
   useEffect(() => {
     onDirtyChange(
@@ -194,26 +190,41 @@ export function GroundTruthEditor({
   }, [currentSignature, onDirtyChange, savedSignature])
 
   useEffect(() => {
-    if (correctionsAllowed) {
-      setCorrectionNotice(null)
+    if (decision !== "CPE_CONFIRMED") {
+      setDiscrepancyNotice(null)
       return
     }
-    if (correctionTypes.length) {
-      setCorrectionTypes([])
-      setCorrectionNotice(
-        "Correction Types were cleared because this Resolution Outcome does not allow them.",
+    if (discrepancyTypes.length) {
+      setDiscrepancyTypes([])
+      setDiscrepancyNotice(
+        "Discrepancy Types were cleared because the original CPE is confirmed.",
       )
     }
-  }, [correctionTypes.length, correctionsAllowed])
+  }, [decision, discrepancyTypes.length])
+
+  useEffect(() => {
+    if (
+      decision === "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED" &&
+      (selectedCpe !== null || manualCpe.trim())
+    ) {
+      onSelectedCpeChange(null)
+      onManualCpeChange("")
+    }
+  }, [
+    decision,
+    manualCpe,
+    onManualCpeChange,
+    onSelectedCpeChange,
+    selectedCpe,
+  ])
 
   useEffect(() => {
     const controller = new AbortController()
-    setCorrectionTypes([])
-    setCorrectionNotice(null)
+    setDecision("")
+    setDiscrepancyTypes([])
+    setDiscrepancyNotice(null)
     setNote("")
     setSnapshotId("")
-    setNoDirectOfficialCpeConfirmed(false)
-    setServerGroundTruth(null)
     setLoading(true)
     setSaving(false)
     setError(null)
@@ -225,29 +236,24 @@ export function GroundTruthEditor({
     getComponentCpeGroundTruth(componentId, controller.signal)
       .then((response) => {
         const groundTruth = response.ground_truth
-        const restoredCandidate =
-          groundTruth?.dictionary_cpe ?? null
+        const restoredDecision = groundTruth?.decision.code ?? ""
+        const restoredCandidate = groundTruth?.dictionary_cpe ?? null
         const restoredManual = groundTruth?.manual_cpe ?? ""
-        const restoredCorrectionTypes =
-          groundTruth?.correction_types ?? []
+        const restoredDiscrepancies =
+          groundTruth?.discrepancy_types ?? []
         const restoredNote = groundTruth?.note ?? ""
-        const restoredNoDirectDecision =
-          groundTruth?.source === "NONE"
         setSnapshotId(response.snapshot_id)
-        setNoDirectOfficialCpeConfirmed(
-          restoredNoDirectDecision,
-        )
-        setServerGroundTruth(groundTruth)
-        setCorrectionTypes(restoredCorrectionTypes)
+        setDecision(restoredDecision)
+        setDiscrepancyTypes(restoredDiscrepancies)
         setNote(restoredNote)
         onSelectedCpeChange(restoredCandidate)
         onManualCpeChange(restoredManual)
         setSavedSignature(
           stateSignature(
+            restoredDecision,
             restoredCandidate,
             restoredManual,
-            restoredNoDirectDecision,
-            restoredCorrectionTypes,
+            restoredDiscrepancies,
             restoredNote,
           ),
         )
@@ -274,44 +280,45 @@ export function GroundTruthEditor({
   const saveGroundTruth = async (
     moveNext: boolean,
   ): Promise<void> => {
-    if (!hasGroundTruthDecision) return
+    if (!decision) return
+    if (validationMessage) {
+      setError(validationMessage)
+      setSuccess(null)
+      return
+    }
     setSaving(true)
     setError(null)
     setSuccess(null)
     try {
       const response: ComponentCpeGroundTruthResponse =
         await putComponentCpeGroundTruth(componentId, {
+          decision,
           dictionary_cpe_id: selectedCpe?.id ?? null,
           manual_cpe: manualCpe.trim() || null,
-          correction_type_ids: correctionTypes.map(
-            (correctionType) => correctionType.id,
+          discrepancy_type_ids: discrepancyTypes.map(
+            (discrepancyType) => discrepancyType.id,
           ),
           note,
         })
       const groundTruth = response.ground_truth
-      const restoredCandidate =
-        groundTruth?.dictionary_cpe ?? null
+      const restoredDecision = groundTruth?.decision.code ?? ""
+      const restoredCandidate = groundTruth?.dictionary_cpe ?? null
       const restoredManual = groundTruth?.manual_cpe ?? ""
-      const restoredCorrectionTypes =
-        groundTruth?.correction_types ?? []
+      const restoredDiscrepancies =
+        groundTruth?.discrepancy_types ?? []
       const restoredNote = groundTruth?.note ?? ""
-      const restoredNoDirectDecision =
-        groundTruth?.source === "NONE"
       setSnapshotId(response.snapshot_id)
-      setNoDirectOfficialCpeConfirmed(
-        restoredNoDirectDecision,
-      )
-      setServerGroundTruth(groundTruth)
-      setCorrectionTypes(restoredCorrectionTypes)
+      setDecision(restoredDecision)
+      setDiscrepancyTypes(restoredDiscrepancies)
       setNote(restoredNote)
       onSelectedCpeChange(restoredCandidate)
       onManualCpeChange(restoredManual)
       setSavedSignature(
         stateSignature(
+          restoredDecision,
           restoredCandidate,
           restoredManual,
-          restoredNoDirectDecision,
-          restoredCorrectionTypes,
+          restoredDiscrepancies,
           restoredNote,
         ),
       )
@@ -325,8 +332,11 @@ export function GroundTruthEditor({
   }
 
   return (
-    <Card aria-busy={loading || saving}>
-      <CardHeader>
+    <Card
+      aria-busy={loading || saving}
+      className="gap-0 py-0 xl:max-h-[calc(100dvh-2.5rem)]"
+    >
+      <CardHeader className="shrink-0 border-b py-3">
         <div className="flex items-center gap-2">
           <ClipboardPen
             className="size-4 text-cyan-700"
@@ -335,13 +345,13 @@ export function GroundTruthEditor({
           <CardTitle>Expected Ground Truth CPE</CardTitle>
           <Badge variant="outline">Human review</Badge>
         </div>
-        <CardDescription>
-          Record an expected CPE independently of search rankings and
-          scores.
+        <CardDescription className="text-xs">
+          Record the final decision independently from the discrepancy
+          reasons and search scores.
           {snapshotId ? ` Snapshot: ${snapshotId}` : ""}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex min-h-0 flex-1 flex-col px-0">
         {loading ? (
           <div className="flex min-h-24 items-center justify-center gap-2 text-sm text-muted-foreground">
             <LoaderCircle
@@ -353,63 +363,67 @@ export function GroundTruthEditor({
         ) : (
           <>
             <div
-              role="group"
-              aria-label="Ground Truth decision paths"
-              className="space-y-3"
+              data-testid="ground-truth-editor-scroll-region"
+              className="space-y-3 px-4 py-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto"
             >
               <section
-                aria-labelledby={`dictionary-decision-title-${componentId}`}
-                data-state={selectedCpe ? "active" : "inactive"}
-                className={decisionPathClassName(Boolean(selectedCpe))}
+                aria-labelledby={`ground-truth-cpe-title-${componentId}`}
+                data-testid="ground-truth-cpe-primary"
+                className="rounded-lg border border-ring bg-background p-3 shadow-sm xl:sticky xl:top-0 xl:z-10"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3
-                      id={`dictionary-decision-title-${componentId}`}
-                      className="text-sm font-medium"
-                    >
-                      Official Dictionary CPE
-                    </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Select an official CPE Dictionary record.
-                    </p>
-                  </div>
-                  {selectedCpe ? (
-                    <Badge variant="outline" className="bg-background">
-                      Selected
-                    </Badge>
-                  ) : null}
+                <div className="flex items-center justify-between gap-2">
+                  <h3
+                    id={`ground-truth-cpe-title-${componentId}`}
+                    className="text-sm font-semibold"
+                  >
+                    Ground Truth CPE
+                  </h3>
+                  <Badge
+                    variant={
+                      displayedGroundTruthCpe
+                        ? "secondary"
+                        : "outline"
+                    }
+                  >
+                    {groundTruthCpeSource}
+                  </Badge>
                 </div>
                 {selectedCpe ? (
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-2 space-y-2">
                     <p className="break-all font-mono text-xs leading-5">
                       {selectedCpe.cpe_name}
                     </p>
-                    <p className="break-all font-mono text-[11px] text-muted-foreground">
-                      UUID: {selectedCpe.cpe_uuid}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        selectedCpe.part,
-                        selectedCpe.vendor,
-                        selectedCpe.product,
-                        selectedCpe.version,
-                      ].map((value) => (
-                        <Badge key={value} variant="outline">
-                          {value}
+                    <details className="text-xs text-muted-foreground">
+                      <summary className="cursor-pointer font-medium text-foreground">
+                        CPE record details
+                      </summary>
+                      <p className="mt-2 break-all font-mono text-[11px]">
+                        UUID: {selectedCpe.cpe_uuid}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {[
+                          selectedCpe.part,
+                          selectedCpe.vendor,
+                          selectedCpe.product,
+                          selectedCpe.version,
+                        ].map((value) => (
+                          <Badge key={value} variant="outline">
+                            {value}
+                          </Badge>
+                        ))}
+                        <Badge variant="secondary">
+                          {selectedCpe.deprecated
+                            ? "Deprecated"
+                            : "Active"}
                         </Badge>
-                      ))}
-                      <Badge variant="secondary">
-                        {selectedCpe.deprecated
-                          ? "Deprecated"
-                          : "Active"}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
+                      </div>
+                    </details>
+                    <div className="flex flex-wrap gap-1.5">
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
+                        disabled={groundTruthCpeDisabled}
                         onClick={() => {
                           onManualCpeChange(selectedCpe.cpe_name)
                           onSelectedCpeChange(null)
@@ -421,193 +435,162 @@ export function GroundTruthEditor({
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          onSelectedCpeChange(null)
-                        }
+                        disabled={groundTruthCpeDisabled}
+                        onClick={() => onSelectedCpeChange(null)}
                       >
                         <X aria-hidden="true" />
-                        Remove Selection
+                        Change CPE
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    No Dictionary CPE selected
-                  </p>
+                  <div className="mt-2">
+                    <label
+                      htmlFor={`manual-ground-truth-cpe-${componentId}`}
+                      className="sr-only"
+                    >
+                      Manual CPE 2.3
+                    </label>
+                    <textarea
+                      id={`manual-ground-truth-cpe-${componentId}`}
+                      className="min-h-16 w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 font-mono text-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={manualCpe}
+                      disabled={groundTruthCpeDisabled}
+                      aria-describedby={`ground-truth-cpe-help-${componentId}`}
+                      placeholder="cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*"
+                      onChange={(event) => {
+                        onManualCpeChange(event.target.value)
+                        setError(null)
+                        setSuccess(null)
+                      }}
+                    />
+                    <p
+                      id={`ground-truth-cpe-help-${componentId}`}
+                      className="mt-1 text-xs text-muted-foreground"
+                    >
+                      Select an official record from the evidence panel,
+                      or enter a manual CPE.
+                    </p>
+                  </div>
                 )}
               </section>
 
               <section
-                aria-labelledby={`manual-decision-title-${componentId}`}
-                data-state={manualCpe.trim() ? "active" : "inactive"}
-                className={decisionPathClassName(Boolean(manualCpe.trim()))}
+                aria-labelledby={`classification-title-${componentId}`}
+                data-testid="ground-truth-classification"
+                className="space-y-3 rounded-lg border bg-muted/20 p-3"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <label
-                      id={`manual-decision-title-${componentId}`}
-                      htmlFor={`manual-ground-truth-cpe-${componentId}`}
-                      className="text-sm font-medium"
-                    >
-                      Manual CPE 2.3
-                    </label>
-                    <p
-                      id={`manual-decision-description-${componentId}`}
-                      className="mt-1 text-xs text-muted-foreground"
-                    >
-                      Enter a CPE manually when an official family is
-                      identified.
-                    </p>
-                  </div>
-                  {manualCpe.trim() ? (
-                    <Badge variant="outline" className="bg-background">
-                      Selected
-                    </Badge>
-                  ) : null}
+                <h3
+                  id={`classification-title-${componentId}`}
+                  className="text-sm font-semibold"
+                >
+                  Classification
+                </h3>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`ground-truth-decision-${componentId}`}
+                    className="text-sm font-medium"
+                  >
+                    Decision
+                  </label>
+                  <select
+                    id={`ground-truth-decision-${componentId}`}
+                    aria-label="Ground Truth Decision"
+                    className={`${selectControlClassName} w-full`}
+                    value={decision}
+                    onChange={(event) => {
+                      setDecision(
+                        event.target.value as
+                          | GroundTruthDecisionCode
+                          | "",
+                      )
+                      setError(null)
+                      setSuccess(null)
+                    }}
+                  >
+                    <option value="">Select a decision</option>
+                    {groundTruthDecisionCodes.map((code) => (
+                      <option key={code} value={code}>
+                        {groundTruthDecisionNames[code]}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <textarea
-                  id={`manual-ground-truth-cpe-${componentId}`}
-                  className="mt-3 min-h-24 w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 font-mono text-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  value={manualCpe}
-                  aria-describedby={`manual-decision-description-${componentId}`}
-                  placeholder="cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*"
-                  onChange={(event) => {
-                    onManualCpeChange(event.target.value)
-                    if (event.target.value) {
-                      onSelectedCpeChange(null)
-                    }
+
+                <GroundTruthDiscrepancyTypeField
+                  value={discrepancyTypes}
+                  onChange={setDiscrepancyTypes}
+                  disabled={discrepancyTypesDisabled}
+                  disabledMessage={
+                    decision === "CPE_CONFIRMED"
+                      ? "A confirmed original CPE has no discrepancy."
+                      : decision === ""
+                        ? "Select a Ground Truth Decision first."
+                        : undefined
+                  }
+                  validationMessage={discrepancyValidationMessage}
+                  onInteraction={() => {
+                    setError(null)
                     setSuccess(null)
                   }}
                 />
               </section>
 
-              <section
-                aria-labelledby={`no-direct-decision-title-${componentId}`}
-                data-state={noDirectDecisionActive ? "active" : "inactive"}
-                className={decisionPathClassName(noDirectDecisionActive)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h3
-                    id={`no-direct-decision-title-${componentId}`}
-                    className="text-sm font-medium"
-                  >
-                    No direct official CPE
-                  </h3>
-                  {noDirectDecisionActive ? (
-                    <Badge variant="outline" className="bg-background">
-                      Selected
-                    </Badge>
-                  ) : null}
-                </div>
-                <div className="mt-3 flex items-start gap-3">
-                  <input
-                    id={`no-direct-official-cpe-${componentId}`}
-                    type="checkbox"
-                    className="mt-0.5 size-4 shrink-0 cursor-pointer accent-cyan-600 outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2"
-                    checked={noDirectDecisionActive}
-                    aria-describedby={`no-direct-official-cpe-description-${componentId}`}
-                    onChange={(event) => {
-                      const checked = event.target.checked
-                      setNoDirectOfficialCpeConfirmed(checked)
-                      if (checked) {
-                        onSelectedCpeChange(null)
-                        onManualCpeChange("")
-                      }
-                      setError(null)
-                      setSuccess(null)
-                    }}
+              {discrepancyNotice ? (
+                <p className="text-xs text-amber-700">
+                  {discrepancyNotice}
+                </p>
+              ) : null}
+
+              <details className="rounded-lg border bg-muted/20 px-3 py-2">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Review details
+                  {note ? " · Note saved" : ""}
+                </summary>
+                <label
+                  htmlFor={`ground-truth-note-${componentId}`}
+                  className="mt-3 block text-xs font-medium"
+                >
+                  Note
+                </label>
+                <textarea
+                  id={`ground-truth-note-${componentId}`}
+                  className="mt-1.5 min-h-24 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  value={note}
+                  placeholder="Optional"
+                  onChange={(event) => {
+                    setNote(event.target.value)
+                    setSuccess(null)
+                  }}
+                />
+              </details>
+
+              {error ? (
+                <Alert variant="destructive">
+                  <TriangleAlert aria-hidden="true" />
+                  <AlertTitle>Unable to save</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              ) : null}
+              {success ? (
+                <Alert>
+                  <CheckCircle2
+                    className="text-emerald-700"
+                    aria-hidden="true"
                   />
-                  <div className="min-w-0">
-                    <label
-                      htmlFor={`no-direct-official-cpe-${componentId}`}
-                      className="cursor-pointer text-sm font-medium"
-                    >
-                      Direct official CPE not confirmed
-                    </label>
-                    <p
-                      id={`no-direct-official-cpe-description-${componentId}`}
-                      className="mt-1 text-xs leading-5 text-muted-foreground"
-                    >
-                      Use only after reviewing the available SBOM evidence
-                      and official Dictionary records.
-                    </p>
-                  </div>
-                </div>
-              </section>
+                  <AlertTitle>Saved</AlertTitle>
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              ) : null}
             </div>
 
-            <section className="rounded-lg border bg-muted/20 p-3">
-              <p className="text-xs font-medium text-muted-foreground">
-                Resolution Outcome
-              </p>
-              <Badge className="mt-2" variant="secondary">
-                {pendingReview
-                  ? "Pending review"
-                  : displayedResolutionOutcome.label}
-              </Badge>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {resolutionDescription}
-              </p>
-            </section>
-
-            <GroundTruthCorrectionTypeField
-              value={correctionTypes}
-              onChange={setCorrectionTypes}
-              disabled={!correctionsAllowed}
-              disabledMessage={
-                !correctionsAllowed
-                  ? "Correction Types are unavailable for this Resolution Outcome."
-                  : undefined
-              }
-              onInteraction={() => {
-                setError(null)
-                setSuccess(null)
-              }}
-            />
-            {correctionNotice ? (
-              <p className="text-xs text-amber-700">
-                {correctionNotice}
-              </p>
-            ) : null}
-
-            <details className="rounded-lg border bg-muted/20 px-3 py-2">
-              <summary className="cursor-pointer text-sm font-medium">
-                Add Note
-                {note ? " · Saved note" : ""}
-              </summary>
-              <textarea
-                className="mt-3 min-h-28 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={note}
-                placeholder="Optional"
-                onChange={(event) => {
-                  setNote(event.target.value)
-                  setSuccess(null)
-                }}
-              />
-            </details>
-
-            {error ? (
-              <Alert variant="destructive">
-                <TriangleAlert aria-hidden="true" />
-                <AlertTitle>Unable to save</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
-            {success ? (
-              <Alert>
-                <CheckCircle2
-                  className="text-emerald-700"
-                  aria-hidden="true"
-                />
-                <AlertTitle>Saved</AlertTitle>
-                <AlertDescription>{success}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <div className="flex flex-wrap gap-2">
+            <div
+              data-testid="ground-truth-editor-actions"
+              className="sticky bottom-0 z-10 flex shrink-0 flex-wrap gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur-sm"
+            >
               <Button
                 type="button"
-                disabled={saving || !hasGroundTruthDecision}
+                disabled={saving || !decision}
                 onClick={() => void saveGroundTruth(false)}
               >
                 {saving ? (
@@ -623,11 +606,7 @@ export function GroundTruthEditor({
               <Button
                 type="button"
                 variant="outline"
-                disabled={
-                  saving ||
-                  !canMoveNext ||
-                  !hasGroundTruthDecision
-                }
+                disabled={saving || !canMoveNext || !decision}
                 onClick={() => void saveGroundTruth(true)}
               >
                 Save and Next

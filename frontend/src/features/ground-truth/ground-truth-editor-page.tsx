@@ -270,7 +270,7 @@ export function GroundTruthEditorPage() {
             setManualCpe(rawCpe)
           }}
         />
-        <aside className="xl:sticky xl:top-5">
+        <aside className="min-w-0 xl:sticky xl:top-5 xl:max-h-[calc(100dvh-2.5rem)]">
           <GroundTruthEditor
             key={componentId}
             componentId={componentId}

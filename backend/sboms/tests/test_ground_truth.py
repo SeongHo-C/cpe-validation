@@ -18,6 +18,8 @@ from sboms.models import (
     ComponentCpeGroundTruth,
     DockerImage,
     GroundTruthCorrectionType,
+    GroundTruthDecision,
+    GroundTruthDiscrepancyType,
     GroundTruthResolutionOutcome,
     SBOMDocument,
 )
@@ -156,6 +158,29 @@ def create_correction_type(
     return correction_type
 
 
+def create_discrepancy_type(
+    code: str,
+    *,
+    name: str | None = None,
+    is_active: bool = True,
+    display_order: int | None = None,
+) -> GroundTruthDiscrepancyType:
+    defaults = {
+        "name": name or code.replace("_", " ").title(),
+        "description": f"Evidence for {code}",
+        "is_active": is_active,
+    }
+    if display_order is not None:
+        defaults["display_order"] = display_order
+    discrepancy_type, _ = (
+        GroundTruthDiscrepancyType.objects.update_or_create(
+            code=code,
+            defaults=defaults,
+        )
+    )
+    return discrepancy_type
+
+
 class ComponentCpeGroundTruthModelTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
@@ -176,14 +201,20 @@ class ComponentCpeGroundTruthModelTests(TestCase):
     def test_derives_all_resolution_outcomes(self) -> None:
         cases = (
             (
-                {"ground_truth_cpe": self.original_cpe},
+                {
+                    "decision": GroundTruthDecision.CPE_CONFIRMED,
+                    "ground_truth_cpe": self.original_cpe,
+                },
                 (
                     GroundTruthResolutionOutcome
                     .ORIGINAL_OFFICIAL_CONFIRMED
                 ),
             ),
             (
-                {"ground_truth_cpe": self.corrected_cpe},
+                {
+                    "decision": GroundTruthDecision.OFFICIAL_CPE_MAPPED,
+                    "ground_truth_cpe": self.corrected_cpe,
+                },
                 (
                     GroundTruthResolutionOutcome
                     .CORRECTED_TO_DICTIONARY
@@ -191,6 +222,7 @@ class ComponentCpeGroundTruthModelTests(TestCase):
             ),
             (
                 {
+                    "decision": GroundTruthDecision.OFFICIAL_CPE_MAPPED,
                     "manual_ground_truth_cpe": (
                         "cpe:2.3:a:example:manual:"
                         "1.0:*:*:*:*:*:*:*"
@@ -202,7 +234,12 @@ class ComponentCpeGroundTruthModelTests(TestCase):
                 ),
             ),
             (
-                {},
+                {
+                    "decision": (
+                        GroundTruthDecision
+                        .DIRECT_OFFICIAL_CPE_NOT_CONFIRMED
+                    )
+                },
                 (
                     GroundTruthResolutionOutcome
                     .DIRECT_OFFICIAL_NOT_CONFIRMED
@@ -240,8 +277,10 @@ class ComponentCpeGroundTruthModelTests(TestCase):
         ground_truth = ComponentCpeGroundTruth.objects.create(
             component=self.component,
             snapshot=self.snapshot,
+            decision=GroundTruthDecision.CPE_CONFIRMED,
             ground_truth_cpe=self.original_cpe,
         )
+        ground_truth.decision = GroundTruthDecision.OFFICIAL_CPE_MAPPED
         ground_truth.ground_truth_cpe = self.corrected_cpe
         ground_truth.save(update_fields={"ground_truth_cpe"})
         ground_truth.refresh_from_db()
@@ -264,6 +303,7 @@ class ComponentCpeGroundTruthModelTests(TestCase):
         ground_truth = ComponentCpeGroundTruth.objects.create(
             component=self.component,
             snapshot=self.snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
             manual_ground_truth_cpe=f"  {manual}  ",
         )
 
@@ -293,6 +333,9 @@ class ComponentCpeGroundTruthModelTests(TestCase):
                     ComponentCpeGroundTruth.objects.create(
                         component=self.component,
                         snapshot=self.snapshot,
+                        decision=(
+                            GroundTruthDecision.OFFICIAL_CPE_MAPPED
+                        ),
                         **values,
                     )
 
@@ -377,6 +420,7 @@ class GroundTruthCorrectionTypeAPITests(APITestCase):
         record = ComponentCpeGroundTruth.objects.create(
             component=component,
             snapshot=snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
             ground_truth_cpe=cpe,
         )
         record.correction_types.add(cls.active)
@@ -503,6 +547,45 @@ class GroundTruthCorrectionTypeAPITests(APITestCase):
         )
 
 
+class GroundTruthDiscrepancyTypeAPITests(APITestCase):
+    def test_list_uses_canonical_order_and_includes_version_mismatch(
+        self,
+    ) -> None:
+        response = self.client.get(
+            reverse(
+                "sboms_api:ground-truth-discrepancy-type-list"
+            )
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [item["code"] for item in response.json()],
+            [
+                "PART_MISMATCH",
+                "PRODUCT_MISMATCH",
+                "VENDOR_MISMATCH",
+                "VERSION_MISMATCH",
+                "DISTRIBUTION_PACKAGE_VERSION_NORMALIZED",
+                "VERSION_NOT_IN_DICTIONARY",
+            ],
+        )
+        version_mismatch = next(
+            item
+            for item in response.json()
+            if item["code"] == "VERSION_MISMATCH"
+        )
+        self.assertEqual(version_mismatch["name"], "Version mismatch")
+        self.assertEqual(
+            version_mismatch["description"],
+            (
+                "The original CPE version differs from the verified "
+                "product or upstream version, and the difference cannot "
+                "be explained solely by distribution or vendor package "
+                "version normalization."
+            ),
+        )
+
+
 @override_settings(CPE_DICTIONARY_SNAPSHOT_ID=None)
 class ComponentCpeGroundTruthAPITests(APITestCase):
     @classmethod
@@ -533,6 +616,23 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             name="Archived correction",
             is_active=False,
         )
+        cls.vendor_discrepancy = create_discrepancy_type(
+            "VENDOR_MISMATCH",
+            name="Vendor mismatch",
+        )
+        cls.product_discrepancy = create_discrepancy_type(
+            "PRODUCT_MISMATCH",
+            name="Product mismatch",
+        )
+        cls.version_discrepancy = create_discrepancy_type(
+            "VERSION_MISMATCH",
+            name="Version mismatch",
+        )
+        cls.inactive_discrepancy = create_discrepancy_type(
+            "ARCHIVED_DISCREPANCY",
+            name="Archived discrepancy",
+            is_active=False,
+        )
 
     @property
     def url(self) -> str:
@@ -542,10 +642,31 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         )
 
     def put(self, **payload):
+        dictionary_cpe_id = payload.get("dictionary_cpe_id")
+        manual_cpe = payload.get("manual_cpe")
+        inferred_decision = (
+            GroundTruthDecision.CPE_CONFIRMED
+            if dictionary_cpe_id == self.original_cpe.id
+            else (
+                GroundTruthDecision.OFFICIAL_CPE_MAPPED
+                if dictionary_cpe_id is not None or manual_cpe
+                else (
+                    GroundTruthDecision
+                    .DIRECT_OFFICIAL_CPE_NOT_CONFIRMED
+                )
+            )
+        )
         defaults = {
+            "decision": inferred_decision,
             "dictionary_cpe_id": None,
             "manual_cpe": None,
             "correction_type_ids": [],
+            "discrepancy_type_ids": (
+                [self.vendor_discrepancy.id]
+                if inferred_decision
+                == GroundTruthDecision.OFFICIAL_CPE_MAPPED
+                else []
+            ),
             "note": "",
         }
         defaults.update(payload)
@@ -574,6 +695,13 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             dictionary_cpe_id=self.original_cpe.id,
         )
         self.assertEqual(
+            original.json()["ground_truth"]["decision"],
+            {
+                "code": "CPE_CONFIRMED",
+                "name": "CPE Confirmed",
+            },
+        )
+        self.assertEqual(
             original.json()["ground_truth"]["resolution_outcome"],
             {
                 "code": "ORIGINAL_OFFICIAL_CONFIRMED",
@@ -586,6 +714,10 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             correction_type_ids=[
                 self.vendor.id,
                 self.product.id,
+            ],
+            discrepancy_type_ids=[
+                self.vendor_discrepancy.id,
+                self.product_discrepancy.id,
             ],
         )
         body = corrected.json()["ground_truth"]
@@ -601,6 +733,14 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         self.assertEqual(
             {item["code"] for item in body["correction_types"]},
             {"vendor_corrected", "product_corrected"},
+        )
+        self.assertEqual(
+            body["decision"]["code"],
+            "OFFICIAL_CPE_MAPPED",
+        )
+        self.assertEqual(
+            {item["code"] for item in body["discrepancy_types"]},
+            {"VENDOR_MISMATCH", "PRODUCT_MISMATCH"},
         )
         saved = ComponentCpeGroundTruth.objects.get()
         self.assertEqual(saved.component.cpe, self.component.cpe)
@@ -619,6 +759,10 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             "MANUAL_FROM_OFFICIAL_FAMILY",
         )
         none = self.put()
+        self.assertEqual(
+            none.json()["ground_truth"]["decision"]["code"],
+            "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        )
         self.assertEqual(
             none.json()["ground_truth"]["resolution_outcome"][
                 "code"
@@ -646,6 +790,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         self.put(
             dictionary_cpe_id=self.corrected_cpe.id,
             correction_type_ids=[self.vendor.id],
+            discrepancy_type_ids=[self.vendor_discrepancy.id],
         )
         updated = self.put(
             manual_cpe=(
@@ -653,6 +798,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
                 "4.0:*:*:*:*:*:*:*"
             ),
             correction_type_ids=[self.product.id],
+            discrepancy_type_ids=[self.product_discrepancy.id],
         )
 
         self.assertEqual(
@@ -674,6 +820,106 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
             },
             {"product_corrected"},
         )
+        self.assertEqual(
+            {
+                item["code"]
+                for item in updated.json()["ground_truth"][
+                    "discrepancy_types"
+                ]
+            },
+            {"PRODUCT_MISMATCH"},
+        )
+
+    def test_create_and_update_support_version_mismatch(self) -> None:
+        created = self.put(
+            dictionary_cpe_id=self.corrected_cpe.id,
+            discrepancy_type_ids=[self.vendor_discrepancy.id],
+        )
+        updated = self.put(
+            dictionary_cpe_id=self.corrected_cpe.id,
+            discrepancy_type_ids=[self.version_discrepancy.id],
+        )
+
+        self.assertEqual(created.status_code, status.HTTP_200_OK)
+        self.assertEqual(updated.status_code, status.HTTP_200_OK)
+        self.assertEqual(ComponentCpeGroundTruth.objects.count(), 1)
+        self.assertEqual(
+            [
+                item["code"]
+                for item in updated.json()["ground_truth"][
+                    "discrepancy_types"
+                ]
+            ],
+            ["VERSION_MISMATCH"],
+        )
+
+    def test_mapped_requires_cpe_and_discrepancy(self) -> None:
+        missing_cpe = self.put(
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
+            discrepancy_type_ids=[self.vendor_discrepancy.id],
+        )
+        missing_discrepancy = self.put(
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
+            dictionary_cpe_id=self.corrected_cpe.id,
+            discrepancy_type_ids=[],
+        )
+
+        self.assertEqual(
+            missing_cpe.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn("decision", missing_cpe.json())
+        self.assertEqual(
+            missing_discrepancy.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn(
+            "discrepancy_type_ids",
+            missing_discrepancy.json(),
+        )
+
+    def test_direct_requires_empty_cpe_and_allows_discrepancies(
+        self,
+    ) -> None:
+        with_cpe = self.put(
+            decision=(
+                GroundTruthDecision
+                .DIRECT_OFFICIAL_CPE_NOT_CONFIRMED
+            ),
+            dictionary_cpe_id=self.corrected_cpe.id,
+            discrepancy_type_ids=[],
+        )
+        valid = self.put(
+            decision=(
+                GroundTruthDecision
+                .DIRECT_OFFICIAL_CPE_NOT_CONFIRMED
+            ),
+            discrepancy_type_ids=[self.vendor_discrepancy.id],
+        )
+
+        self.assertEqual(with_cpe.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("decision", with_cpe.json())
+        self.assertEqual(valid.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            valid.json()["ground_truth"]["discrepancy_types"][0][
+                "code"
+            ],
+            "VENDOR_MISMATCH",
+        )
+
+    def test_decision_is_required(self) -> None:
+        response = self.client.put(
+            self.url,
+            {
+                "dictionary_cpe_id": None,
+                "manual_cpe": None,
+                "discrepancy_type_ids": [],
+                "note": "",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("decision", response.json())
 
     def test_rejects_duplicate_and_new_inactive_corrections(
         self,
@@ -702,6 +948,7 @@ class ComponentCpeGroundTruthAPITests(APITestCase):
         record = ComponentCpeGroundTruth.objects.create(
             component=self.component,
             snapshot=self.snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
             ground_truth_cpe=self.corrected_cpe,
         )
         record.correction_types.add(self.inactive)
@@ -817,6 +1064,19 @@ class GroundTruthComponentListAPITests(APITestCase):
             name="Product corrected",
             is_active=False,
         )
+        cls.vendor_discrepancy = create_discrepancy_type(
+            "VENDOR_MISMATCH",
+            name="Vendor mismatch",
+        )
+        cls.product_discrepancy = create_discrepancy_type(
+            "PRODUCT_MISMATCH",
+            name="Product mismatch",
+            is_active=False,
+        )
+        cls.version_discrepancy = create_discrepancy_type(
+            "VERSION_MISMATCH",
+            name="Version mismatch",
+        )
         cls.unreviewed = create_component()
         document = cls.unreviewed.sbom_document
         cls.original = Component.objects.create(
@@ -849,11 +1109,13 @@ class GroundTruthComponentListAPITests(APITestCase):
         original_record = ComponentCpeGroundTruth.objects.create(
             component=cls.original,
             snapshot=cls.snapshot,
+            decision=GroundTruthDecision.CPE_CONFIRMED,
             ground_truth_cpe=original_cpe,
         )
         cls.manual_record = ComponentCpeGroundTruth.objects.create(
             component=cls.manual,
             snapshot=cls.snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
             manual_ground_truth_cpe=(
                 "cpe:2.3:a:canonical:manual-target:"
                 "2.1:*:*:*:*:*:*:*"
@@ -862,6 +1124,10 @@ class GroundTruthComponentListAPITests(APITestCase):
         cls.manual_record.correction_types.add(
             cls.vendor,
             cls.product,
+        )
+        cls.manual_record.discrepancy_types.add(
+            cls.vendor_discrepancy,
+            cls.product_discrepancy,
         )
         cls.original_record = original_record
 
@@ -877,10 +1143,19 @@ class GroundTruthComponentListAPITests(APITestCase):
                     f"reviewed-{index}:1.0:*:*:*:*:*:*:*"
                 ),
             )
-            ComponentCpeGroundTruth.objects.create(
+            record = ComponentCpeGroundTruth.objects.create(
                 component=component,
                 snapshot=cls.snapshot,
+                decision=(
+                    GroundTruthDecision
+                    .DIRECT_OFFICIAL_CPE_NOT_CONFIRMED
+                ),
             )
+            if index == 0:
+                record.discrepancy_types.add(
+                    cls.version_discrepancy
+                )
+                cls.version_component = component
 
     @property
     def url(self) -> str:
@@ -900,6 +1175,19 @@ class GroundTruthComponentListAPITests(APITestCase):
         self.assertEqual(
             rows[self.original.id]["resolution_outcome"]["code"],
             "ORIGINAL_OFFICIAL_CONFIRMED",
+        )
+        self.assertEqual(
+            rows[self.original.id]["decision"]["code"],
+            "CPE_CONFIRMED",
+        )
+        self.assertEqual(
+            {
+                item["code"]
+                for item in rows[self.manual.id][
+                    "discrepancy_types"
+                ]
+            },
+            {"VENDOR_MISMATCH", "PRODUCT_MISMATCH"},
         )
         self.assertEqual(
             {
@@ -963,6 +1251,92 @@ class GroundTruthComponentListAPITests(APITestCase):
         self.assertEqual(
             invalid.status_code,
             status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_decision_and_discrepancy_filters(self) -> None:
+        mapped = self.client.get(
+            self.url,
+            {
+                "decision": "OFFICIAL_CPE_MAPPED",
+                "page_size": 200,
+            },
+        )
+        vendor = self.client.get(
+            self.url,
+            {
+                "discrepancy_type": "VENDOR_MISMATCH",
+                "page_size": 200,
+            },
+        )
+        invalid = self.client.get(
+            self.url,
+            {"decision": "INVALID"},
+        )
+        version = self.client.get(
+            self.url,
+            {
+                "discrepancy_type": "VERSION_MISMATCH",
+                "page_size": 200,
+            },
+        )
+
+        self.assertEqual(
+            {row["id"] for row in mapped.json()["results"]},
+            {self.manual.id},
+        )
+        self.assertEqual(
+            {row["id"] for row in vendor.json()["results"]},
+            {self.manual.id},
+        )
+        self.assertEqual(
+            {row["id"] for row in version.json()["results"]},
+            {self.version_component.id},
+        )
+        self.assertEqual(
+            invalid.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_summary_aggregates_decisions_and_multi_select_types(
+        self,
+    ) -> None:
+        response = self.client.get(
+            reverse("sboms_api:ground-truth-summary")
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        body = response.json()
+        self.assertEqual(body["total_records"], 10)
+        decisions = {
+            item["code"]: item["count"]
+            for item in body["decision_distribution"]
+        }
+        self.assertEqual(decisions["CPE_CONFIRMED"], 1)
+        self.assertEqual(decisions["OFFICIAL_CPE_MAPPED"], 1)
+        self.assertEqual(
+            decisions["DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"],
+            8,
+        )
+        self.assertEqual(decisions["UNRESOLVED"], 0)
+        discrepancies = {
+            item["code"]: item["count"]
+            for item in body["discrepancy_type_distribution"]
+        }
+        self.assertEqual(discrepancies["VENDOR_MISMATCH"], 1)
+        self.assertEqual(discrepancies["VERSION_MISMATCH"], 1)
+        self.assertNotIn("PRODUCT_MISMATCH", discrepancies)
+        self.assertEqual(
+            [
+                item["code"]
+                for item in body["discrepancy_type_distribution"]
+            ],
+            [
+                "PART_MISMATCH",
+                "VENDOR_MISMATCH",
+                "VERSION_MISMATCH",
+                "DISTRIBUTION_PACKAGE_VERSION_NORMALIZED",
+                "VERSION_NOT_IN_DICTIONARY",
+            ],
         )
 
     def test_existing_status_search_order_and_pagination_remain(

@@ -13,6 +13,9 @@ HANGUL_PATTERN = re.compile(
     "\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]"
 )
 CORRECTION_TYPE_CODE_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+DISCREPANCY_TYPE_CODE_PATTERN = re.compile(
+    r"^[A-Z][A-Z0-9_]*$"
+)
 FILE_SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -219,6 +222,20 @@ class GroundTruthResolutionOutcome(models.TextChoices):
         "DIRECT_OFFICIAL_NOT_CONFIRMED",
         "Direct official CPE not confirmed",
     )
+    UNRESOLVED = "UNRESOLVED", "Unresolved"
+
+
+class GroundTruthDecision(models.TextChoices):
+    CPE_CONFIRMED = "CPE_CONFIRMED", "CPE Confirmed"
+    OFFICIAL_CPE_MAPPED = (
+        "OFFICIAL_CPE_MAPPED",
+        "Official CPE mapped",
+    )
+    DIRECT_OFFICIAL_CPE_NOT_CONFIRMED = (
+        "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "Direct official CPE not confirmed",
+    )
+    UNRESOLVED = "UNRESOLVED", "Unresolved"
 
 
 def derive_resolution_outcome(
@@ -320,6 +337,78 @@ class GroundTruthCorrectionType(models.Model):
         return self.name
 
 
+class GroundTruthDiscrepancyType(models.Model):
+    code = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    display_order = models.PositiveSmallIntegerField(default=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("display_order", "id")
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                name="unique_gt_discrepancy_type_name_ci",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        self.code = (
+            self.code.strip().upper()
+            if isinstance(self.code, str)
+            else ""
+        )
+        self.name = self.name.strip() if isinstance(self.name, str) else ""
+        self.description = (
+            self.description.strip()
+            if isinstance(self.description, str)
+            else ""
+        )
+        if not DISCREPANCY_TYPE_CODE_PATTERN.fullmatch(self.code):
+            raise ValidationError(
+                {
+                    "code": (
+                        "Discrepancy Type code must start with an "
+                        "uppercase letter and contain only uppercase "
+                        "letters, digits, and underscores."
+                    )
+                }
+            )
+        if not self.name:
+            raise ValidationError(
+                {"name": "Discrepancy Type name must not be blank."}
+            )
+        if contains_hangul(self.name):
+            raise ValidationError(
+                {
+                    "name": (
+                        "Discrepancy Type names must be written in "
+                        "English."
+                    )
+                }
+            )
+        if contains_hangul(self.description):
+            raise ValidationError(
+                {
+                    "description": (
+                        "Discrepancy Type descriptions must be written "
+                        "in English."
+                    )
+                }
+            )
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class ComponentCpeGroundTruth(models.Model):
     component = models.ForeignKey(
         Component,
@@ -347,8 +436,17 @@ class ComponentCpeGroundTruth(models.Model):
         choices=GroundTruthResolutionOutcome.choices,
         editable=False,
     )
+    decision = models.CharField(
+        max_length=64,
+        choices=GroundTruthDecision.choices,
+    )
     correction_types = models.ManyToManyField(
         GroundTruthCorrectionType,
+        blank=True,
+        related_name="ground_truth_records",
+    )
+    discrepancy_types = models.ManyToManyField(
+        GroundTruthDiscrepancyType,
         blank=True,
         related_name="ground_truth_records",
     )
@@ -368,6 +466,12 @@ class ComponentCpeGroundTruth(models.Model):
                     | models.Q(manual_ground_truth_cpe="")
                 ),
                 name="ground_truth_has_one_cpe_source",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    decision__in=GroundTruthDecision.values
+                ),
+                name="ground_truth_decision_valid",
             ),
         ]
 
@@ -425,6 +529,74 @@ class ComponentCpeGroundTruth(models.Model):
                         )
                     }
                 )
+        original_cpe = (
+            Component.objects.filter(pk=self.component_id)
+            .values_list("cpe", flat=True)
+            .first()
+            or ""
+            if self.component_id is not None
+            else ""
+        )
+        dictionary_cpe = (
+            CpeName.objects.filter(pk=self.ground_truth_cpe_id)
+            .values_list("cpe_name", flat=True)
+            .first()
+            if self.ground_truth_cpe_id is not None
+            else None
+        )
+        ground_truth_cpe = (
+            dictionary_cpe or self.manual_ground_truth_cpe
+        )
+        if self.decision == GroundTruthDecision.CPE_CONFIRMED:
+            if not original_cpe:
+                raise ValidationError(
+                    {
+                        "decision": (
+                            "CPE Confirmed requires an original SBOM CPE."
+                        )
+                    }
+                )
+            if dictionary_cpe != original_cpe:
+                raise ValidationError(
+                    {
+                        "ground_truth_cpe": (
+                            "CPE Confirmed requires the original CPE to "
+                            "be selected from the Dictionary."
+                        )
+                    }
+                )
+        elif self.decision == GroundTruthDecision.OFFICIAL_CPE_MAPPED:
+            if not ground_truth_cpe:
+                raise ValidationError(
+                    {
+                        "decision": (
+                            "Official CPE mapped requires a Ground Truth "
+                            "CPE."
+                        )
+                    }
+                )
+            if ground_truth_cpe == original_cpe:
+                raise ValidationError(
+                    {
+                        "decision": (
+                            "Official CPE mapped requires a CPE different "
+                            "from the original SBOM CPE."
+                        )
+                    }
+                )
+        elif (
+            self.decision
+            == GroundTruthDecision.DIRECT_OFFICIAL_CPE_NOT_CONFIRMED
+            and ground_truth_cpe
+        ):
+            raise ValidationError(
+                {
+                    "decision": (
+                        "Direct official CPE not confirmed requires the "
+                        "Ground Truth CPE to be empty."
+                    )
+                }
+            )
 
     def save(self, *args, **kwargs) -> None:
         original_cpe = (
@@ -442,18 +614,23 @@ class ComponentCpeGroundTruth(models.Model):
             if self.ground_truth_cpe_id is not None
             else None
         )
-        self.resolution_outcome = derive_resolution_outcome(
-            original_cpe=original_cpe,
-            dictionary_cpe=dictionary_cpe,
-            manual_cpe=(
-                self.manual_ground_truth_cpe.strip()
-                if isinstance(
-                    self.manual_ground_truth_cpe,
-                    str,
-                )
-                else ""
-            ),
-        )
+        if self.decision == GroundTruthDecision.UNRESOLVED:
+            self.resolution_outcome = (
+                GroundTruthResolutionOutcome.UNRESOLVED
+            )
+        else:
+            self.resolution_outcome = derive_resolution_outcome(
+                original_cpe=original_cpe,
+                dictionary_cpe=dictionary_cpe,
+                manual_cpe=(
+                    self.manual_ground_truth_cpe.strip()
+                    if isinstance(
+                        self.manual_ground_truth_cpe,
+                        str,
+                    )
+                    else ""
+                ),
+            )
         self.full_clean()
         update_fields = kwargs.get("update_fields")
         if update_fields is not None:

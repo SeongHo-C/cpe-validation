@@ -10,6 +10,8 @@ from sboms.api.views import (
     GroundTruthComponentNavigationAPIView,
     GroundTruthCorrectionTypeDetailAPIView,
     GroundTruthCorrectionTypeListCreateAPIView,
+    GroundTruthDiscrepancyTypeListAPIView,
+    GroundTruthSummaryAPIView,
     HealthAPIView,
     SBOMDocumentDetailAPIView,
     SBOMDocumentListAPIView,
@@ -70,6 +72,16 @@ urlpatterns = [
         "ground-truth-correction-types/<int:pk>/",
         GroundTruthCorrectionTypeDetailAPIView.as_view(),
         name="ground-truth-correction-type-detail",
+    ),
+    path(
+        "ground-truth-discrepancy-types/",
+        GroundTruthDiscrepancyTypeListAPIView.as_view(),
+        name="ground-truth-discrepancy-type-list",
+    ),
+    path(
+        "ground-truth/summary/",
+        GroundTruthSummaryAPIView.as_view(),
+        name="ground-truth-summary",
     ),
     path(
         "ground-truth/components/",

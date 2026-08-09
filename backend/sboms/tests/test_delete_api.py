@@ -22,6 +22,7 @@ from sboms.models import (
     Component,
     ComponentCpeGroundTruth,
     GroundTruthCorrectionType,
+    GroundTruthDecision,
     SBOMDocument,
 )
 
@@ -273,6 +274,7 @@ class SBOMDocumentDeleteAPITests(APITestCase):
         ground_truth = ComponentCpeGroundTruth.objects.create(
             component=component,
             snapshot=snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
             manual_ground_truth_cpe=(
                 "cpe:2.3:a:example:reviewed:1.0:*:*:*:*:*:*:*"
             ),

@@ -12,6 +12,18 @@ export type GroundTruthResolutionOutcomeCode =
   | "CORRECTED_TO_DICTIONARY"
   | "MANUAL_FROM_OFFICIAL_FAMILY"
   | "DIRECT_OFFICIAL_NOT_CONFIRMED"
+  | "UNRESOLVED"
+
+export type GroundTruthDecisionCode =
+  | "CPE_CONFIRMED"
+  | "OFFICIAL_CPE_MAPPED"
+  | "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+  | "UNRESOLVED"
+
+export interface GroundTruthDecision {
+  code: GroundTruthDecisionCode
+  name: string
+}
 
 export interface GroundTruthResolutionOutcome {
   code: GroundTruthResolutionOutcomeCode
@@ -27,11 +39,22 @@ export interface GroundTruthCorrectionType {
   usage_count?: number
 }
 
+export interface GroundTruthDiscrepancyType {
+  id: number
+  code: string
+  name: string
+  description: string
+  is_active: boolean
+  usage_count?: number
+}
+
 export interface ComponentCpeGroundTruthRecord {
   id: number
   source: GroundTruthSource
   dictionary_cpe: CpeDictionaryCandidate | null
   manual_cpe: string | null
+  decision: GroundTruthDecision
+  discrepancy_types: GroundTruthDiscrepancyType[]
   resolution_outcome: GroundTruthResolutionOutcome
   correction_types: GroundTruthCorrectionType[]
   note: string
@@ -46,9 +69,10 @@ export interface ComponentCpeGroundTruthResponse {
 }
 
 export interface ComponentCpeGroundTruthWrite {
+  decision: GroundTruthDecisionCode
   dictionary_cpe_id: number | null
   manual_cpe: string | null
-  correction_type_ids: number[]
+  discrepancy_type_ids: number[]
   note: string
 }
 
@@ -56,6 +80,8 @@ export interface GroundTruthComponentSummary
   extends ComponentSummary {
   ground_truth_status: GroundTruthStatus
   ground_truth: ComponentCpeGroundTruthRecord | null
+  decision: GroundTruthDecision | null
+  discrepancy_types: GroundTruthDiscrepancyType[]
   resolution_outcome: GroundTruthResolutionOutcome | null
   correction_types: GroundTruthCorrectionType[]
 }
@@ -65,12 +91,26 @@ export interface GroundTruthListQuery {
   sbom_id?: number
   ground_truth_status?: GroundTruthStatus
   dictionary_status?: DictionaryStatus
+  decision?: GroundTruthDecisionCode
+  discrepancy_type?: string
   resolution_outcome?: GroundTruthResolutionOutcomeCode
   correction_type?: string
   search?: string
   ordering: GroundTruthOrdering
   page: number
   page_size: number
+}
+
+export interface GroundTruthDistributionItem {
+  code: string
+  name: string
+  count: number
+}
+
+export interface GroundTruthSummary {
+  total_records: number
+  decision_distribution: GroundTruthDistributionItem[]
+  discrepancy_type_distribution: GroundTruthDistributionItem[]
 }
 
 export interface GroundTruthNavigation {

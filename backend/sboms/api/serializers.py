@@ -12,6 +12,8 @@ from sboms.models import (
     ComponentCpeGroundTruth,
     DockerImage,
     GroundTruthCorrectionType,
+    GroundTruthDecision,
+    GroundTruthDiscrepancyType,
     GroundTruthResolutionOutcome,
     SBOMDocument,
     CORRECTION_TYPE_CODE_PATTERN,
@@ -327,6 +329,26 @@ class GroundTruthCorrectionTypeSerializer(
         )
 
 
+class GroundTruthDiscrepancyTypeSerializer(
+    serializers.ModelSerializer
+):
+    usage_count = serializers.IntegerField(
+        read_only=True,
+        required=False,
+    )
+
+    class Meta:
+        model = GroundTruthDiscrepancyType
+        fields = (
+            "id",
+            "code",
+            "name",
+            "description",
+            "is_active",
+            "usage_count",
+        )
+
+
 class GroundTruthCorrectionTypeCreateSerializer(
     serializers.ModelSerializer
 ):
@@ -429,6 +451,11 @@ class ComponentCpeGroundTruthSerializer(
         read_only=True,
     )
     manual_cpe = serializers.SerializerMethodField()
+    decision = serializers.SerializerMethodField()
+    discrepancy_types = GroundTruthDiscrepancyTypeSerializer(
+        many=True,
+        read_only=True,
+    )
     resolution_outcome = serializers.SerializerMethodField()
     correction_types = GroundTruthCorrectionTypeSerializer(
         many=True,
@@ -442,6 +469,8 @@ class ComponentCpeGroundTruthSerializer(
             "source",
             "dictionary_cpe",
             "manual_cpe",
+            "decision",
+            "discrepancy_types",
             "resolution_outcome",
             "correction_types",
             "note",
@@ -465,6 +494,16 @@ class ComponentCpeGroundTruthSerializer(
     ) -> str | None:
         return instance.manual_ground_truth_cpe or None
 
+    def get_decision(
+        self,
+        instance: ComponentCpeGroundTruth,
+    ) -> dict[str, str]:
+        decision = GroundTruthDecision(instance.decision)
+        return {
+            "code": decision.value,
+            "name": decision.label,
+        }
+
     def get_resolution_outcome(
         self,
         instance: ComponentCpeGroundTruth,
@@ -481,6 +520,9 @@ class ComponentCpeGroundTruthSerializer(
 class ComponentCpeGroundTruthWriteSerializer(
     serializers.Serializer
 ):
+    decision = serializers.ChoiceField(
+        choices=GroundTruthDecision.choices,
+    )
     dictionary_cpe_id = serializers.PrimaryKeyRelatedField(
         source="dictionary_cpe_input",
         queryset=CpeName.objects.all(),
@@ -497,6 +539,12 @@ class ComponentCpeGroundTruthWriteSerializer(
     correction_type_ids = serializers.PrimaryKeyRelatedField(
         source="correction_types",
         queryset=GroundTruthCorrectionType.objects.all(),
+        many=True,
+        required=False,
+    )
+    discrepancy_type_ids = serializers.PrimaryKeyRelatedField(
+        source="discrepancy_types",
+        queryset=GroundTruthDiscrepancyType.objects.all(),
         many=True,
         required=False,
         default=list,
@@ -520,9 +568,24 @@ class ComponentCpeGroundTruthWriteSerializer(
         return super().to_internal_value(data)
 
     def validate(self, attributes: dict) -> dict:
-        raw_correction_type_ids = self.initial_data.get(
-            "correction_type_ids",
+        raw_discrepancy_type_ids = self.initial_data.get(
+            "discrepancy_type_ids",
             [],
+        )
+        if (
+            isinstance(raw_discrepancy_type_ids, list)
+            and len(raw_discrepancy_type_ids)
+            != len(set(map(str, raw_discrepancy_type_ids)))
+        ):
+            raise serializers.ValidationError(
+                {
+                    "discrepancy_type_ids": (
+                        "A Discrepancy Type may be selected only once."
+                    )
+                }
+            )
+        raw_correction_type_ids = self.initial_data.get(
+            "correction_type_ids"
         )
         if (
             isinstance(raw_correction_type_ids, list)
@@ -536,13 +599,14 @@ class ComponentCpeGroundTruthWriteSerializer(
                     )
                 }
             )
-        correction_types = attributes["correction_types"]
+        discrepancy_types = attributes["discrepancy_types"]
+        correction_types = attributes.get("correction_types")
         current_ground_truth = self.context.get(
             "current_ground_truth"
         )
-        existing_correction_type_ids = (
+        existing_discrepancy_type_ids = (
             set(
-                current_ground_truth.correction_types.values_list(
+                current_ground_truth.discrepancy_types.values_list(
                     "id",
                     flat=True,
                 )
@@ -550,9 +614,40 @@ class ComponentCpeGroundTruthWriteSerializer(
             if current_ground_truth is not None
             else set()
         )
+        newly_selected_inactive_discrepancies = [
+            discrepancy_type
+            for discrepancy_type in discrepancy_types
+            if (
+                not discrepancy_type.is_active
+                and discrepancy_type.id
+                not in existing_discrepancy_type_ids
+            )
+        ]
+        if newly_selected_inactive_discrepancies:
+            raise serializers.ValidationError(
+                {
+                    "discrepancy_type_ids": (
+                        "Inactive Discrepancy Types cannot be newly "
+                        "selected."
+                    )
+                }
+            )
+        existing_correction_type_ids = (
+            set(
+                current_ground_truth.correction_types.values_list(
+                    "id",
+                    flat=True,
+                )
+            )
+            if (
+                current_ground_truth is not None
+                and correction_types is not None
+            )
+            else set()
+        )
         newly_selected_inactive = [
             correction_type
-            for correction_type in correction_types
+            for correction_type in (correction_types or [])
             if (
                 not correction_type.is_active
                 and correction_type.id
@@ -622,17 +717,94 @@ class ComponentCpeGroundTruthWriteSerializer(
         attributes[
             "manual_ground_truth_cpe"
         ] = normalized_manual_cpe
+        original_cpe = self.context["component"].cpe
+        dictionary_cpe_value = (
+            ground_truth_cpe.cpe_name
+            if ground_truth_cpe is not None
+            else None
+        )
+        ground_truth_cpe_value = (
+            dictionary_cpe_value or normalized_manual_cpe
+        )
+        decision = attributes["decision"]
+        if decision == GroundTruthDecision.CPE_CONFIRMED:
+            if not original_cpe:
+                raise serializers.ValidationError(
+                    {
+                        "decision": (
+                            "CPE Confirmed requires an original SBOM CPE."
+                        )
+                    }
+                )
+            if dictionary_cpe_value != original_cpe:
+                raise serializers.ValidationError(
+                    {
+                        "dictionary_cpe_id": (
+                            "CPE Confirmed requires the original CPE to "
+                            "be selected from the Dictionary."
+                        )
+                    }
+                )
+            if discrepancy_types:
+                raise serializers.ValidationError(
+                    {
+                        "discrepancy_type_ids": (
+                            "Discrepancy Types must be empty when the "
+                            "original CPE is confirmed."
+                        )
+                    }
+                )
+        elif decision == GroundTruthDecision.OFFICIAL_CPE_MAPPED:
+            if not ground_truth_cpe_value:
+                raise serializers.ValidationError(
+                    {
+                        "decision": (
+                            "Official CPE mapped requires a Ground Truth "
+                            "CPE."
+                        )
+                    }
+                )
+            if ground_truth_cpe_value == original_cpe:
+                raise serializers.ValidationError(
+                    {
+                        "decision": (
+                            "Official CPE mapped requires a CPE different "
+                            "from the original SBOM CPE."
+                        )
+                    }
+                )
+            if not discrepancy_types:
+                raise serializers.ValidationError(
+                    {
+                        "discrepancy_type_ids": (
+                            "Select at least one Discrepancy Type for "
+                            "Official CPE mapped."
+                        )
+                    }
+                )
+        elif (
+            decision
+            == GroundTruthDecision.DIRECT_OFFICIAL_CPE_NOT_CONFIRMED
+            and ground_truth_cpe_value
+        ):
+            raise serializers.ValidationError(
+                {
+                    "decision": (
+                        "Direct official CPE not confirmed requires the "
+                        "Ground Truth CPE to be empty."
+                    )
+                }
+            )
         outcome = derive_resolution_outcome(
-            original_cpe=self.context["component"].cpe,
-            dictionary_cpe=(
-                ground_truth_cpe.cpe_name
-                if ground_truth_cpe is not None
-                else None
-            ),
+            original_cpe=original_cpe,
+            dictionary_cpe=dictionary_cpe_value,
             manual_cpe=normalized_manual_cpe,
         )
+        if decision == GroundTruthDecision.UNRESOLVED:
+            outcome = GroundTruthResolutionOutcome.UNRESOLVED
         if (
-            outcome
+            correction_types is not None
+            and outcome
             in {
                 (
                     GroundTruthResolutionOutcome
@@ -662,6 +834,8 @@ class GroundTruthComponentListSerializer(
 ):
     ground_truth_status = serializers.SerializerMethodField()
     ground_truth = serializers.SerializerMethodField()
+    decision = serializers.SerializerMethodField()
+    discrepancy_types = serializers.SerializerMethodField()
     resolution_outcome = serializers.SerializerMethodField()
     correction_types = serializers.SerializerMethodField()
 
@@ -706,6 +880,31 @@ class GroundTruthComponentListSerializer(
             "code": outcome.value,
             "label": outcome.label,
         }
+
+    def get_decision(
+        self,
+        instance: Component,
+    ) -> dict | None:
+        ground_truth = self._ground_truth(instance)
+        if ground_truth is None:
+            return None
+        decision = GroundTruthDecision(ground_truth.decision)
+        return {
+            "code": decision.value,
+            "name": decision.label,
+        }
+
+    def get_discrepancy_types(
+        self,
+        instance: Component,
+    ) -> list[dict]:
+        ground_truth = self._ground_truth(instance)
+        if ground_truth is None:
+            return []
+        return GroundTruthDiscrepancyTypeSerializer(
+            ground_truth.discrepancy_types.all(),
+            many=True,
+        ).data
 
     def get_correction_types(
         self,

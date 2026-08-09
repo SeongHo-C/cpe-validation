@@ -16,6 +16,7 @@ export const resolutionOutcomeLabels: Record<
     "Manual CPE from official family",
   DIRECT_OFFICIAL_NOT_CONFIRMED:
     "Direct official CPE not confirmed",
+  UNRESOLVED: "Unresolved",
 }
 
 export const resolutionOutcomeCodes =

@@ -1068,6 +1068,7 @@ class ReadOnlyAPITests(APITestCase):
             response.json()["code"],
         )
 
+    @override_settings(CPE_DICTIONARY_SNAPSHOT_ID=None)
     def test_ambiguous_snapshot_configuration_returns_503(
         self,
     ) -> None:

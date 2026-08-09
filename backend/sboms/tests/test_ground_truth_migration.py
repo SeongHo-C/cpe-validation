@@ -12,6 +12,7 @@ from sboms.models import (
     ComponentCpeGroundTruth,
     DockerImage,
     GroundTruthCorrectionType,
+    GroundTruthDecision,
     SBOMDocument,
 )
 
@@ -90,6 +91,7 @@ class GroundTruthTaxonomyResetMigrationTests(TestCase):
         ground_truth = ComponentCpeGroundTruth.objects.create(
             component=component,
             snapshot=snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
             manual_ground_truth_cpe=(
                 "cpe:2.3:a:example:migration-test:"
                 "2.0:*:*:*:*:*:*:*"

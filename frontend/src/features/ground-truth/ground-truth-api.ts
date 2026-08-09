@@ -4,8 +4,10 @@ import type {
   ComponentCpeGroundTruthWrite,
   GroundTruthCorrectionType,
   GroundTruthComponentSummary,
+  GroundTruthDiscrepancyType,
   GroundTruthListQuery,
   GroundTruthNavigation,
+  GroundTruthSummary,
 } from "@/features/ground-truth/ground-truth-types"
 import {
   getJson,
@@ -60,6 +62,32 @@ export function updateGroundTruthCorrectionType(
   )
 }
 
+export function getGroundTruthDiscrepancyTypes(
+  query: { is_active?: "all" } = {},
+  signal?: AbortSignal,
+): Promise<GroundTruthDiscrepancyType[]> {
+  const parameters = new URLSearchParams()
+  if (query.is_active) {
+    parameters.set("is_active", query.is_active)
+  }
+  const queryString = parameters.toString()
+  return getJson<GroundTruthDiscrepancyType[]>(
+    `/api/ground-truth-discrepancy-types/${
+      queryString ? `?${queryString}` : ""
+    }`,
+    { signal },
+  )
+}
+
+export function getGroundTruthSummary(
+  signal?: AbortSignal,
+): Promise<GroundTruthSummary> {
+  return getJson<GroundTruthSummary>(
+    "/api/ground-truth/summary/",
+    { signal },
+  )
+}
+
 export function buildGroundTruthListApiUrl(
   query: GroundTruthListQuery,
 ): string {
@@ -80,6 +108,15 @@ export function buildGroundTruthListApiUrl(
     parameters.set(
       "dictionary_status",
       query.dictionary_status,
+    )
+  }
+  if (query.decision) {
+    parameters.set("decision", query.decision)
+  }
+  if (query.discrepancy_type) {
+    parameters.set(
+      "discrepancy_type",
+      query.discrepancy_type,
     )
   }
   if (query.resolution_outcome) {

@@ -49,8 +49,12 @@ import {
 } from "@/features/components/dictionary-status"
 import {
   getGroundTruthComponents,
-  getGroundTruthCorrectionTypes,
+  getGroundTruthDiscrepancyTypes,
 } from "@/features/ground-truth/ground-truth-api"
+import {
+  groundTruthDecisionCodes,
+  groundTruthDecisionNames,
+} from "@/features/ground-truth/ground-truth-decision"
 import {
   DEFAULT_GROUND_TRUTH_QUERY,
   groundTruthDetailPath,
@@ -58,17 +62,13 @@ import {
   writeGroundTruthListQuery,
 } from "@/features/ground-truth/ground-truth-query"
 import type {
-  GroundTruthCorrectionType,
   GroundTruthComponentSummary,
+  GroundTruthDecisionCode,
+  GroundTruthDiscrepancyType,
   GroundTruthListQuery,
   GroundTruthOrdering,
-  GroundTruthResolutionOutcomeCode,
   GroundTruthStatus,
 } from "@/features/ground-truth/ground-truth-types"
-import {
-  resolutionOutcomeCodes,
-  resolutionOutcomeLabels,
-} from "@/features/ground-truth/ground-truth-resolution-outcome"
 import { getSboms } from "@/features/sboms/sboms-query"
 import type { SbomDocumentSummary } from "@/features/sboms/sboms-types"
 import {
@@ -137,8 +137,8 @@ export function GroundTruthListPage() {
     results: GroundTruthComponentSummary[]
   } | null>(null)
   const [sboms, setSboms] = useState<SbomDocumentSummary[]>([])
-  const [correctionTypes, setCorrectionTypes] = useState<
-    GroundTruthCorrectionType[]
+  const [discrepancyTypes, setDiscrepancyTypes] = useState<
+    GroundTruthDiscrepancyType[]
   >([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -169,12 +169,12 @@ export function GroundTruthListPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    getGroundTruthCorrectionTypes(
+    getGroundTruthDiscrepancyTypes(
       { is_active: "all" },
       controller.signal,
     )
-      .then(setCorrectionTypes)
-      .catch(() => setCorrectionTypes([]))
+      .then(setDiscrepancyTypes)
+      .catch(() => setDiscrepancyTypes([]))
     return () => controller.abort()
   }, [])
 
@@ -208,8 +208,8 @@ export function GroundTruthListPage() {
     query.sbom_id !== undefined ||
     query.ground_truth_status !== undefined ||
     query.dictionary_status !== undefined ||
-    query.resolution_outcome !== undefined ||
-    query.correction_type !== undefined ||
+    query.decision !== undefined ||
+    query.discrepancy_type !== undefined ||
     query.search !== undefined ||
     query.ordering !== DEFAULT_GROUND_TRUTH_QUERY.ordering ||
     query.page !== DEFAULT_GROUND_TRUTH_QUERY.page ||
@@ -328,51 +328,51 @@ export function GroundTruthListPage() {
                 </select>
               </label>
               <label className={formLabelClassName}>
-                <span className="block">Resolution Outcome</span>
+                <span className="block">Ground Truth Decision</span>
                 <select
-                  aria-label="Resolution Outcome"
+                  aria-label="Ground Truth Decision"
                   className={`${selectControlClassName} w-full`}
-                  value={query.resolution_outcome ?? ""}
+                  value={query.decision ?? ""}
                   onChange={(event) =>
                     setQuery({
-                      resolution_outcome:
+                      decision:
                         (event.target.value || undefined) as
-                          | GroundTruthResolutionOutcomeCode
+                          | GroundTruthDecisionCode
                           | undefined,
                       page: 1,
                     })
                   }
                 >
-                  <option value="">All Resolution Outcomes</option>
-                  {resolutionOutcomeCodes.map((code) => (
+                  <option value="">All Decisions</option>
+                  {groundTruthDecisionCodes.map((code) => (
                     <option key={code} value={code}>
-                      {resolutionOutcomeLabels[code]}
+                      {groundTruthDecisionNames[code]}
                     </option>
                   ))}
                 </select>
               </label>
               <label className={formLabelClassName}>
-                <span className="block">Correction Type</span>
+                <span className="block">Discrepancy Type</span>
                 <select
-                  aria-label="Correction Type"
+                  aria-label="Discrepancy Type"
                   className={`${selectControlClassName} w-full`}
-                  value={query.correction_type ?? ""}
+                  value={query.discrepancy_type ?? ""}
                   onChange={(event) =>
                     setQuery({
-                      correction_type:
+                      discrepancy_type:
                         event.target.value || undefined,
                       page: 1,
                     })
                   }
                 >
-                  <option value="">All Correction Types</option>
-                  {correctionTypes.map((correctionType) => (
+                  <option value="">All Discrepancy Types</option>
+                  {discrepancyTypes.map((discrepancyType) => (
                     <option
-                      key={correctionType.id}
-                      value={correctionType.code}
+                      key={discrepancyType.id}
+                      value={discrepancyType.code}
                     >
-                      {correctionType.name}
-                      {!correctionType.is_active
+                      {discrepancyType.name}
+                      {!discrepancyType.is_active
                         ? " (Inactive)"
                         : ""}
                     </option>
@@ -471,10 +471,10 @@ export function GroundTruthListPage() {
                   <TableHead className="text-left">Original CPE</TableHead>
                   <TableHead className="text-left">Ground Truth</TableHead>
                   <TableHead className="text-center">
-                    Resolution Outcome
+                    Ground Truth Decision
                   </TableHead>
                   <TableHead className="text-center">
-                    Correction Types
+                    Discrepancy Types
                   </TableHead>
                   <TableHead className="text-center">Action</TableHead>
                 </TableRow>
@@ -517,33 +517,31 @@ export function GroundTruthListPage() {
                         </p>
                       </TableCell>
                       <TableCell className="min-w-0 text-center">
-                        {component.resolution_outcome ? (
+                        {component.decision ? (
                           <Badge
                             className="max-w-full truncate"
-                            title={
-                              component.resolution_outcome.label
-                            }
+                            title={component.decision.name}
                             variant="secondary"
                           >
-                            {component.resolution_outcome.label}
+                            {component.decision.name}
                           </Badge>
                         ) : (
                           "—"
                         )}
                       </TableCell>
                       <TableCell className="min-w-0 text-center">
-                        {component.correction_types.length ? (
+                        {component.discrepancy_types.length ? (
                           <div className="flex min-w-0 flex-wrap justify-center gap-1">
-                            {component.correction_types.map(
-                              (correctionType) => (
+                            {component.discrepancy_types.map(
+                              (discrepancyType) => (
                                 <Badge
                                   className="max-w-full"
-                                  key={correctionType.id}
-                                  title={correctionType.name}
+                                  key={discrepancyType.id}
+                                  title={discrepancyType.name}
                                   variant="outline"
                                 >
-                                  {correctionType.name}
-                                  {!correctionType.is_active
+                                  {discrepancyType.name}
+                                  {!discrepancyType.is_active
                                     ? " · Inactive"
                                     : ""}
                                 </Badge>

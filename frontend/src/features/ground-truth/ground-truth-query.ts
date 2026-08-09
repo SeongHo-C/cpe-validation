@@ -1,6 +1,7 @@
 import {
   isDictionaryStatus,
 } from "@/features/components/dictionary-status"
+import { isGroundTruthDecisionCode } from "@/features/ground-truth/ground-truth-decision"
 import { isResolutionOutcomeCode } from "@/features/ground-truth/ground-truth-resolution-outcome"
 import type {
   GroundTruthListQuery,
@@ -42,6 +43,7 @@ export function parseGroundTruthListQuery(
   const rawResolutionOutcome = parameters.get(
     "resolution_outcome",
   )
+  const rawDecision = parameters.get("decision")
 
   return {
     image_id: positiveInteger(parameters.get("image_id")),
@@ -50,6 +52,11 @@ export function parseGroundTruthListQuery(
     dictionary_status: isDictionaryStatus(rawDictionaryStatus)
       ? rawDictionaryStatus
       : undefined,
+    decision: isGroundTruthDecisionCode(rawDecision)
+      ? rawDecision
+      : undefined,
+    discrepancy_type:
+      parameters.get("discrepancy_type")?.trim() || undefined,
     resolution_outcome: isResolutionOutcomeCode(
       rawResolutionOutcome,
     )
@@ -90,6 +97,15 @@ export function writeGroundTruthListQuery(
     parameters.set(
       "dictionary_status",
       query.dictionary_status,
+    )
+  }
+  if (query.decision) {
+    parameters.set("decision", query.decision)
+  }
+  if (query.discrepancy_type) {
+    parameters.set(
+      "discrepancy_type",
+      query.discrepancy_type,
     )
   }
   if (query.resolution_outcome) {

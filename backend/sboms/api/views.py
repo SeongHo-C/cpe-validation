@@ -44,6 +44,7 @@ from sboms.api.serializers import (
     GroundTruthCorrectionTypeCreateSerializer,
     GroundTruthCorrectionTypeSerializer,
     GroundTruthCorrectionTypeUpdateSerializer,
+    GroundTruthDiscrepancyTypeSerializer,
     SBOMDocumentDetailSerializer,
     SBOMDocumentListSerializer,
     SBOMDocumentUploadSerializer,
@@ -61,6 +62,8 @@ from sboms.models import (
     ComponentCpeGroundTruth,
     DockerImage,
     GroundTruthCorrectionType,
+    GroundTruthDecision,
+    GroundTruthDiscrepancyType,
     GroundTruthResolutionOutcome,
     SBOMDocument,
 )
@@ -531,6 +534,41 @@ def _ground_truth_component_queryset(
             }
         )
 
+    raw_decision = parameters.get("decision")
+    if raw_decision:
+        try:
+            decision = GroundTruthDecision(raw_decision)
+        except ValueError as error:
+            raise ValidationError(
+                {
+                    "code": "invalid_ground_truth_decision",
+                    "detail": (
+                        "decision must be one of: "
+                        + ", ".join(
+                            item.value for item in GroundTruthDecision
+                        )
+                    ),
+                }
+            ) from error
+        queryset = queryset.filter(
+            Exists(
+                ground_truth_records.filter(decision=decision)
+            )
+        )
+
+    discrepancy_type_code = parameters.get(
+        "discrepancy_type",
+        "",
+    ).strip()
+    if discrepancy_type_code:
+        queryset = queryset.filter(
+            Exists(
+                ground_truth_records.filter(
+                    discrepancy_types__code=discrepancy_type_code,
+                )
+            )
+        )
+
     raw_resolution_outcome = parameters.get(
         "resolution_outcome"
     )
@@ -721,6 +759,88 @@ class GroundTruthCorrectionTypeDetailAPIView(
         )
 
 
+class GroundTruthDiscrepancyTypeListAPIView(
+    generics.ListAPIView
+):
+    serializer_class = GroundTruthDiscrepancyTypeSerializer
+    pagination_class = None
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[GroundTruthDiscrepancyType]:
+        queryset = GroundTruthDiscrepancyType.objects.annotate(
+            usage_count=Count(
+                "ground_truth_records",
+                distinct=True,
+            )
+        )
+        if self.request.query_params.get("is_active") == "all":
+            return queryset.order_by("display_order", "id")
+        return queryset.filter(is_active=True).order_by(
+            "display_order",
+            "id",
+        )
+
+
+class GroundTruthSummaryAPIView(
+    CpeDictionarySnapshotViewMixin,
+    APIView,
+):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    http_method_names = ["get", "head", "options"]
+
+    def get(self, request) -> Response:
+        snapshot = self.get_cpe_dictionary_snapshot()
+        records = ComponentCpeGroundTruth.objects.filter(
+            snapshot=snapshot
+        )
+        decision_counts = {
+            row["decision"]: row["count"]
+            for row in records.values("decision").annotate(
+                count=Count("id")
+            )
+        }
+        discrepancy_types = (
+            GroundTruthDiscrepancyType.objects.annotate(
+                usage_count=Count(
+                    "ground_truth_records",
+                    filter=Q(
+                        ground_truth_records__snapshot=snapshot
+                    ),
+                    distinct=True,
+                )
+            )
+            .filter(is_active=True)
+            .order_by("display_order", "id")
+        )
+        return Response(
+            {
+                "total_records": records.count(),
+                "decision_distribution": [
+                    {
+                        "code": decision.value,
+                        "name": decision.label,
+                        "count": decision_counts.get(
+                            decision.value,
+                            0,
+                        ),
+                    }
+                    for decision in GroundTruthDecision
+                ],
+                "discrepancy_type_distribution": [
+                    {
+                        "code": discrepancy_type.code,
+                        "name": discrepancy_type.name,
+                        "count": discrepancy_type.usage_count,
+                    }
+                    for discrepancy_type in discrepancy_types
+                ],
+            }
+        )
+
+
 class GroundTruthComponentListAPIView(
     CpeDictionarySnapshotViewMixin,
     generics.ListAPIView,
@@ -752,7 +872,10 @@ class GroundTruthComponentListAPIView(
                 ComponentCpeGroundTruth.objects.select_related(
                     "ground_truth_cpe",
                 )
-                .prefetch_related("correction_types")
+                .prefetch_related(
+                    "correction_types",
+                    "discrepancy_types",
+                )
                 .filter(
                     snapshot=snapshot,
                     component_id__in=component_ids,
@@ -895,7 +1018,10 @@ class ComponentCpeGroundTruthAPIView(
             ComponentCpeGroundTruth.objects.select_related(
                 "ground_truth_cpe",
             )
-            .prefetch_related("correction_types")
+            .prefetch_related(
+                "correction_types",
+                "discrepancy_types",
+            )
             .filter(
                 component=component,
                 snapshot=snapshot,
@@ -915,7 +1041,8 @@ class ComponentCpeGroundTruthAPIView(
         snapshot = self.get_cpe_dictionary_snapshot()
         current_ground_truth = (
             ComponentCpeGroundTruth.objects.prefetch_related(
-                "correction_types"
+                "correction_types",
+                "discrepancy_types",
             )
             .filter(
                 component=component,
@@ -933,8 +1060,12 @@ class ComponentCpeGroundTruthAPIView(
         )
         serializer.is_valid(raise_exception=True)
         validated_data = dict(serializer.validated_data)
+        discrepancy_types = validated_data.pop(
+            "discrepancy_types"
+        )
         correction_types = validated_data.pop(
             "correction_types",
+            None,
         )
         with transaction.atomic():
             ground_truth, _ = (
@@ -944,12 +1075,17 @@ class ComponentCpeGroundTruthAPIView(
                     defaults=validated_data,
                 )
             )
-            ground_truth.correction_types.set(correction_types)
+            ground_truth.discrepancy_types.set(discrepancy_types)
+            if correction_types is not None:
+                ground_truth.correction_types.set(correction_types)
         ground_truth = (
             ComponentCpeGroundTruth.objects.select_related(
                 "ground_truth_cpe",
             )
-            .prefetch_related("correction_types")
+            .prefetch_related(
+                "correction_types",
+                "discrepancy_types",
+            )
             .get(pk=ground_truth.pk)
         )
         return Response(
