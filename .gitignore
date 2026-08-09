@@ -226,4 +226,4 @@ data/cpe-dictionary/snapshots/.*.tmp-*/
 data/cpe-dictionary/snapshots/**/*.part
 
 # Uploaded SBOM originals
-backend/media/
+data/uploaded-sboms/

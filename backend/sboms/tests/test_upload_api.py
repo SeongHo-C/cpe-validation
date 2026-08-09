@@ -238,8 +238,11 @@ class SBOMDocumentUploadAPITests(APITestCase):
         self.assertEqual(document.source_path, "")
         self.assertEqual(document.source_type, "upload")
         self.assertEqual(document.scope, "document")
-        expected_name = f"sboms/{digest[:2]}/{digest}.json"
+        expected_name = f"uploaded-sboms/{digest}.json"
         self.assertEqual(document.uploaded_file.name, expected_name)
+        self.assertFalse(
+            (self.media_root / "uploaded-sboms" / digest[:2]).exists()
+        )
         with document.uploaded_file.open("rb") as stored_file:
             self.assertEqual(stored_file.read(), raw_bytes)
 
@@ -324,7 +327,7 @@ class SBOMDocumentUploadAPITests(APITestCase):
                 )
                 self.assertEqual(
                     document.uploaded_file.name,
-                    f"sboms/{digest[:2]}/{digest}.json",
+                    f"uploaded-sboms/{digest}.json",
                 )
 
     def test_duplicate_bytes_return_existing_id_without_extra_file(
@@ -601,8 +604,7 @@ class SBOMDocumentUploadAPITests(APITestCase):
         digest = hashlib.sha256(raw_bytes).hexdigest()
         existing_path = (
             self.media_root
-            / "sboms"
-            / digest[:2]
+            / "uploaded-sboms"
             / f"{digest}.json"
         )
         existing_path.parent.mkdir(parents=True)
@@ -628,8 +630,8 @@ class SBOMDocumentUploadAPITests(APITestCase):
     ) -> None:
         raw_bytes = self.encode_document(self.build_document())
         digest = hashlib.sha256(raw_bytes).hexdigest()
-        expected_name = f"sboms/{digest[:2]}/{digest}.json"
-        returned_name = f"sboms/{digest[:2]}/{digest}_1.json"
+        expected_name = f"uploaded-sboms/{digest}.json"
+        returned_name = f"uploaded-sboms/{digest}_1.json"
         storage = SBOMDocument._meta.get_field(
             "uploaded_file"
         ).storage

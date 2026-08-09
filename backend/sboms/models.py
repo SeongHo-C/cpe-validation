@@ -32,7 +32,7 @@ def sbom_uploaded_file_path(
         raise ValueError(
             "A valid file SHA-256 is required before saving an SBOM file."
         )
-    return f"sboms/{file_sha256[:2]}/{file_sha256}.json"
+    return f"uploaded-sboms/{file_sha256}.json"
 
 
 class DockerImage(models.Model):
