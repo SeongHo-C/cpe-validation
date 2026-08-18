@@ -259,6 +259,22 @@ class SBOMDocumentDeleteAPITests(APITestCase):
         first_artifact_id = first_artifact.id
         first_path = Path(first_artifact.source_archive.path)
         second_path = Path(second_artifact.source_archive.path)
+        first_extraction_root = (
+            first_path.parent / first_artifact.file_sha256
+        )
+        second_extraction_root = (
+            second_path.parent / second_artifact.file_sha256
+        )
+        (first_extraction_root / "extracted").mkdir(parents=True)
+        (second_extraction_root / "extracted").mkdir(parents=True)
+        (first_extraction_root / "extracted/README").write_text(
+            "first extraction",
+            encoding="utf-8",
+        )
+        (second_extraction_root / "extracted/README").write_text(
+            "second extraction",
+            encoding="utf-8",
+        )
 
         with self.captureOnCommitCallbacks(execute=True):
             response = self.client.delete(self.delete_url(first.id))
@@ -268,11 +284,18 @@ class SBOMDocumentDeleteAPITests(APITestCase):
             SourceArtifact.objects.filter(pk=first_artifact_id).exists()
         )
         self.assertFalse(first_path.exists())
+        self.assertFalse(first_extraction_root.exists())
         self.assertTrue(SBOMDocument.objects.filter(pk=second.id).exists())
         self.assertTrue(
             SourceArtifact.objects.filter(pk=second_artifact.id).exists()
         )
         self.assertTrue(second_path.exists())
+        self.assertEqual(
+            (second_extraction_root / "extracted/README").read_text(
+                encoding="utf-8"
+            ),
+            "second extraction",
+        )
 
     def test_delete_preserves_global_reference_data(self) -> None:
         document = self.upload_document(
@@ -430,6 +453,14 @@ class SBOMDocumentDeleteAPITests(APITestCase):
             sbom_document=document
         )
         source_path = Path(source_artifact.source_archive.path)
+        source_extraction_root = (
+            source_path.parent / source_artifact.file_sha256
+        )
+        (source_extraction_root / "extracted").mkdir(parents=True)
+        (source_extraction_root / "extracted/README").write_text(
+            "preserve on rollback",
+            encoding="utf-8",
+        )
         component = document.components.first()
         assert component is not None
         snapshot = self.create_snapshot()
@@ -478,6 +509,12 @@ class SBOMDocumentDeleteAPITests(APITestCase):
             SourceArtifact.objects.filter(pk=source_artifact.pk).exists()
         )
         self.assertTrue(source_path.exists())
+        self.assertEqual(
+            (source_extraction_root / "extracted/README").read_text(
+                encoding="utf-8"
+            ),
+            "preserve on rollback",
+        )
 
     def test_file_cleanup_failure_is_logged_after_successful_delete(
         self,

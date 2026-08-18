@@ -227,3 +227,4 @@ data/cpe-dictionary/snapshots/**/*.part
 
 # Uploaded SBOM originals
 data/uploaded-sboms/
+data/source-artifacts/

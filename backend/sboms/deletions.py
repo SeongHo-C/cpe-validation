@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+import shutil
 from functools import partial
+from pathlib import Path
 
 from django.core.files.storage import Storage
 from django.db import transaction
@@ -9,8 +11,10 @@ from django.db.models.deletion import ProtectedError
 
 from sboms.models import (
     ComponentCpeGroundTruth,
+    FILE_SHA256_PATTERN,
     SBOMDocument,
     SourceArtifact,
+    source_artifact_upload_path,
 )
 
 
@@ -51,28 +55,89 @@ def _delete_unreferenced_uploaded_file(
 def _delete_unreferenced_source_archive(
     storage: Storage,
     stored_name: str,
+    extraction_root: Path | None,
     *,
     using: str,
 ) -> None:
-    """Best-effort source archive cleanup after the database commit."""
+    """Best-effort source evidence cleanup after the database commit."""
 
     try:
-        if (
+        is_referenced = (
             SourceArtifact.objects.using(using)
             .filter(source_archive=stored_name)
             .exists()
-        ):
-            logger.warning(
-                "Preserving shared source archive %s after SBOM deletion",
-                stored_name,
-            )
-            return
+        )
+    except Exception:
+        logger.exception(
+            "Could not verify source archive references for %s",
+            stored_name,
+        )
+        return
+    if is_referenced:
+        logger.warning(
+            "Preserving shared source archive %s after SBOM deletion",
+            stored_name,
+        )
+        return
+    try:
         storage.delete(stored_name)
     except Exception:
         logger.exception(
             "Could not clean up deleted source archive %s",
             stored_name,
         )
+    if extraction_root is None:
+        return
+    try:
+        if extraction_root.is_symlink():
+            logger.warning(
+                "Preserving unsafe source extraction symlink %s",
+                extraction_root,
+            )
+        elif extraction_root.exists():
+            if not extraction_root.is_dir():
+                logger.warning(
+                    "Preserving non-directory source extraction path %s",
+                    extraction_root,
+                )
+                return
+            shutil.rmtree(extraction_root)
+    except Exception:
+        logger.exception(
+            "Could not clean up source extraction %s",
+            extraction_root,
+        )
+
+
+def _source_extraction_root(
+    source_artifact: SourceArtifact,
+) -> Path | None:
+    """Resolve only the deterministic extraction root for this artifact."""
+
+    source_sha256 = source_artifact.file_sha256
+    if FILE_SHA256_PATTERN.fullmatch(source_sha256) is None:
+        return None
+    stored_name = source_artifact.source_archive.name
+    if not stored_name:
+        return None
+    try:
+        expected_stored_name = source_artifact_upload_path(
+            source_artifact,
+            source_artifact.original_filename,
+        )
+    except ValueError:
+        return None
+    if stored_name != expected_stored_name:
+        return None
+    storage = source_artifact.source_archive.storage
+    try:
+        storage_root = Path(storage.path("")).resolve()
+        archive_path = Path(storage.path(stored_name)).resolve(strict=False)
+        extraction_root = archive_path.parent / source_sha256
+        extraction_root.resolve(strict=False).relative_to(storage_root)
+    except (NotImplementedError, OSError, ValueError):
+        return None
+    return extraction_root
 
 
 def delete_sbom_document(document: SBOMDocument) -> None:
@@ -108,6 +173,11 @@ def delete_sbom_document(document: SBOMDocument) -> None:
                 if source_stored_name and source_artifact is not None
                 else None
             )
+            source_extraction_root = (
+                _source_extraction_root(source_artifact)
+                if source_artifact is not None
+                else None
+            )
 
             ComponentCpeGroundTruth.objects.using(using).filter(
                 component__sbom_document=locked_document
@@ -129,6 +199,7 @@ def delete_sbom_document(document: SBOMDocument) -> None:
                         _delete_unreferenced_source_archive,
                         source_storage,
                         source_stored_name,
+                        source_extraction_root,
                         using=using,
                     ),
                     using=using,
