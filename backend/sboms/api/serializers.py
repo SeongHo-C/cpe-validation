@@ -16,9 +16,11 @@ from sboms.models import (
     GroundTruthDiscrepancyType,
     GroundTruthResolutionOutcome,
     SBOMDocument,
+    SourceArtifact,
     CORRECTION_TYPE_CODE_PATTERN,
     contains_hangul,
     derive_resolution_outcome,
+    source_archive_suffix,
 )
 
 
@@ -66,7 +68,31 @@ class SBOMDocumentListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class SourceArtifactSerializer(serializers.ModelSerializer):
+    stored_path = serializers.CharField(
+        source="source_archive.name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = SourceArtifact
+        fields = (
+            "id",
+            "original_filename",
+            "file_sha256",
+            "size",
+            "uploaded_at",
+            "stored_path",
+        )
+        read_only_fields = fields
+
+
 class SBOMDocumentDetailSerializer(SBOMDocumentListSerializer):
+    source_artifact = SourceArtifactSerializer(
+        read_only=True,
+        allow_null=True,
+    )
+
     class Meta(SBOMDocumentListSerializer.Meta):
         fields = (
             *SBOMDocumentListSerializer.Meta.fields,
@@ -74,12 +100,18 @@ class SBOMDocumentDetailSerializer(SBOMDocumentListSerializer):
             "serial_number",
             "document_version",
             "generated_at",
+            "source_artifact",
         )
         read_only_fields = fields
 
 
 class SBOMDocumentUploadSerializer(serializers.Serializer):
     file = serializers.FileField(
+        allow_empty_file=False,
+        max_length=255,
+    )
+    source_archive = serializers.FileField(
+        required=False,
         allow_empty_file=False,
         max_length=255,
     )
@@ -104,6 +136,13 @@ class SBOMDocumentUploadSerializer(serializers.Serializer):
         max_length=255,
         trim_whitespace=False,
     )
+
+    def validate_source_archive(self, value):
+        if source_archive_suffix(value.name) is None:
+            raise serializers.ValidationError(
+                "Use a .zip, .tar, .tar.gz, .tgz, or .tar.xz archive."
+            )
+        return value
 
 
 class SBOMDocumentSummarySerializer(serializers.ModelSerializer):

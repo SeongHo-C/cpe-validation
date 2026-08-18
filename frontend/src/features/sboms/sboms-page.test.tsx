@@ -64,6 +64,7 @@ const uploadedSbomFixture: SbomDocumentDetail = {
   serial_number: "urn:uuid:emba-upload",
   document_version: 1,
   generated_at: "2026-08-08T04:05:06Z",
+  source_artifact: null,
 }
 
 const dockerlessComponent: ComponentSummary = {
@@ -418,15 +419,26 @@ describe("SBOM inventory", () => {
     expect(fileInput).toBeRequired()
     expect(fileInput).toHaveAttribute("tabindex", "-1")
     expect(fileInput.parentElement).toHaveClass("sr-only")
+    const sourceInput = within(dialog).getByLabelText(/SDK \/ GPL source/)
+    expect(sourceInput).toHaveAttribute(
+      "accept",
+      ".zip,.tar,.tar.gz,.tgz,.tar.xz",
+    )
+    expect(sourceInput).not.toBeRequired()
+    expect(sourceInput).toHaveAttribute("tabindex", "-1")
+    expect(sourceInput.parentElement).toHaveClass("sr-only")
     expect(within(dialog).getByText("*")).toBeInTheDocument()
+    expect(within(dialog).getByText("Optional")).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(
+        "Used as source evidence for Ground Truth validation",
+      ),
+    ).toBeInTheDocument()
     expect(
       within(dialog).getByText("No file selected"),
     ).toBeInTheDocument()
     expect(
       within(dialog).queryByText("Choose a CycloneDX JSON document."),
-    ).not.toBeInTheDocument()
-    expect(
-      within(dialog).queryByText(/\(optional\)/i),
     ).not.toBeInTheDocument()
     expect(
       within(dialog).queryByText(
@@ -449,6 +461,13 @@ describe("SBOM inventory", () => {
     )
     expect(inputClick).toHaveBeenCalledOnce()
     inputClick.mockRestore()
+
+    const sourceInputClick = vi.spyOn(sourceInput, "click")
+    await user.click(
+      within(dialog).getByRole("button", { name: "Select source" }),
+    )
+    expect(sourceInputClick).toHaveBeenCalledOnce()
+    sourceInputClick.mockRestore()
   })
 
   it("does not call the Upload API without a file", async () => {
@@ -487,6 +506,10 @@ describe("SBOM inventory", () => {
         type: "application/json",
       }),
     )
+    await user.upload(
+      within(dialog).getByLabelText(/SDK \/ GPL source/),
+      new File(["source"], "cancelled-source.tar.gz"),
+    )
     await user.type(
       within(dialog).getByLabelText("Manufacturer"),
       "Example Devices",
@@ -506,6 +529,12 @@ describe("SBOM inventory", () => {
     ).toBeInTheDocument()
     expect(within(resetDialog).getByLabelText(/SBOM file/)).toHaveValue("")
     expect(
+      within(resetDialog).getByLabelText(/SDK \/ GPL source/),
+    ).toHaveValue("")
+    expect(
+      within(resetDialog).getByText("No source archive selected"),
+    ).toBeInTheDocument()
+    expect(
       within(resetDialog).getByLabelText("Manufacturer"),
     ).toHaveValue("")
     expect(uploadRequestCalls()).toHaveLength(0)
@@ -524,7 +553,16 @@ describe("SBOM inventory", () => {
     const file = new File(["{\"bomFormat\":\"CycloneDX\"}"], "sbom.cdx.json", {
       type: "application/json",
     })
+    const sourceArchive = new File(
+      ["source archive"],
+      "RUTX_R_GPL_00.07.23.7.tar.gz",
+      { type: "application/gzip" },
+    )
     await user.upload(within(dialog).getByLabelText(/SBOM file/), file)
+    await user.upload(
+      within(dialog).getByLabelText(/SDK \/ GPL source/),
+      sourceArchive,
+    )
     await user.type(within(dialog).getByLabelText(/Manufacturer/), "Teltonika")
     await user.type(within(dialog).getByLabelText(/Product name/), "RUTX")
     await user.type(
@@ -535,6 +573,14 @@ describe("SBOM inventory", () => {
     expect(
       within(dialog).queryByText("No file selected"),
     ).not.toBeInTheDocument()
+    expect(
+      within(dialog).getByText("RUTX_R_GPL_00.07.23.7.tar.gz"),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole("button", {
+        name: "Remove source archive",
+      }),
+    ).toBeEnabled()
 
     await user.click(
       within(dialog).getByRole("button", { name: "Upload SBOM" }),
@@ -556,6 +602,7 @@ describe("SBOM inventory", () => {
     expect(request?.body).toBeInstanceOf(FormData)
     const formData = request?.body as FormData
     expect(formData.get("file")).toBe(file)
+    expect(formData.get("source_archive")).toBe(sourceArchive)
     expect(formData.get("manufacturer")).toBe("Teltonika")
     expect(formData.get("product_name")).toBe("RUTX")
     expect(formData.get("product_version")).toBe("00.07.23.7")
@@ -572,6 +619,44 @@ describe("SBOM inventory", () => {
     expect(within(resetDialog).getByLabelText(/Product version/)).toHaveValue("")
     expect(within(resetDialog).getByText("No file selected")).toBeInTheDocument()
     expect(within(resetDialog).getByLabelText(/SBOM file/)).toHaveValue("")
+    expect(
+      within(resetDialog).getByLabelText(/SDK \/ GPL source/),
+    ).toHaveValue("")
+  })
+
+  it("removes selected files without closing the upload dialog", async () => {
+    const user = userEvent.setup()
+    installSuccessfulFetch()
+    renderAppAt("/sboms")
+
+    await user.click(
+      await screen.findByRole("button", { name: "Upload SBOM" }),
+    )
+    const dialog = screen.getByRole("dialog", { name: "Upload SBOM" })
+    const sbomInput = within(dialog).getByLabelText(/SBOM file/)
+    const sourceInput = within(dialog).getByLabelText(/SDK \/ GPL source/)
+    await user.upload(sbomInput, new File(["sbom"], "sbom.json"))
+    await user.upload(
+      sourceInput,
+      new File(["source"], "source.tar.xz"),
+    )
+
+    await user.click(
+      within(dialog).getByRole("button", { name: "Remove SBOM file" }),
+    )
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Remove source archive",
+      }),
+    )
+
+    expect(sbomInput).toHaveValue("")
+    expect(sourceInput).toHaveValue("")
+    expect(within(dialog).getByText("No file selected")).toBeInTheDocument()
+    expect(
+      within(dialog).getByText("No source archive selected"),
+    ).toBeInTheDocument()
+    expect(uploadRequestCalls()).toHaveLength(0)
   })
 
   it("keeps the dialog open and explains duplicate uploads", async () => {
@@ -688,7 +773,13 @@ describe("SBOM inventory", () => {
     expect(uploadingButton).toBeDisabled()
     expect(fileInput).toBeDisabled()
     expect(
+      within(dialog).getByLabelText(/SDK \/ GPL source/),
+    ).toBeDisabled()
+    expect(
       within(dialog).getByRole("button", { name: "Select file" }),
+    ).toBeDisabled()
+    expect(
+      within(dialog).getByRole("button", { name: "Select source" }),
     ).toBeDisabled()
     await user.click(uploadingButton)
     expect(uploadRequestCalls()).toHaveLength(1)
@@ -725,6 +816,9 @@ describe("SBOM inventory", () => {
     ).toBeInTheDocument()
     expect(
       within(dialog).getByText(/Ground Truth records/i),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(/linked source evidence archive/i),
     ).toBeInTheDocument()
     expect(
       within(dialog).getByText(/Shared CPE Dictionary/i),

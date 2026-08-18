@@ -114,9 +114,9 @@ export function SbomDeleteDialog({
 
             <p className="text-sm text-muted-foreground">
               Deleting this SBOM will permanently remove its imported
-              components, Ground Truth records, and related review
-              associations. Shared CPE Dictionary and review type data will
-              remain. This action cannot be undone.
+              components, Ground Truth records, related review associations,
+              and any linked source evidence archive. Shared CPE Dictionary
+              and review type data will remain. This action cannot be undone.
             </p>
 
             {error ? (

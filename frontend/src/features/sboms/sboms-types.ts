@@ -19,10 +19,21 @@ export interface SbomDocumentDetail extends SbomDocumentSummary {
   serial_number: string
   document_version: number
   generated_at: string | null
+  source_artifact: SourceArtifactMetadata | null
+}
+
+export interface SourceArtifactMetadata {
+  id: number
+  original_filename: string
+  file_sha256: string
+  size: number
+  uploaded_at: string
+  stored_path: string
 }
 
 export interface UploadSbomInput {
   file: File
+  sourceArchive?: File | null
   manufacturer: string
   productName: string
   productVersion: string

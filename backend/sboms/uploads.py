@@ -15,7 +15,13 @@ from sboms.importers import (
     create_components_from_parsed,
     parse_cyclonedx_document_data,
 )
-from sboms.models import SBOMDocument, sbom_uploaded_file_path
+from sboms.models import (
+    SBOMDocument,
+    SourceArtifact,
+    sbom_uploaded_file_path,
+    source_archive_suffix,
+    source_artifact_upload_path,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -27,6 +33,10 @@ class DuplicateSBOMError(Exception):
     def __init__(self, existing_sbom_id: int) -> None:
         self.existing_sbom_id = existing_sbom_id
         super().__init__("The uploaded SBOM is already registered.")
+
+
+class SourceArchiveError(Exception):
+    """Raised when optional source evidence cannot be read or identified."""
 
 
 @dataclass(frozen=True)
@@ -57,6 +67,30 @@ def calculate_uploaded_file_sha256(uploaded_file: Any) -> str:
     finally:
         _rewind(uploaded_file)
     return digest.hexdigest()
+
+
+def calculate_source_archive_metadata(
+    source_archive: Any,
+) -> tuple[str, int]:
+    """Hash source evidence, count its bytes, and rewind the stream."""
+
+    digest = hashlib.sha256()
+    size = 0
+    try:
+        source_archive.seek(0)
+        for chunk in source_archive.chunks():
+            digest.update(chunk)
+            size += len(chunk)
+    except (AttributeError, OSError, ValueError) as error:
+        raise SourceArchiveError(
+            "source archive could not be read"
+        ) from error
+    finally:
+        try:
+            source_archive.seek(0)
+        except (AttributeError, OSError, ValueError):
+            pass
+    return digest.hexdigest(), size
 
 
 def load_uploaded_json(uploaded_file: Any) -> Any:
@@ -113,9 +147,27 @@ def safe_original_filename(uploaded_file: Any) -> str:
     return original_filename
 
 
+def safe_source_archive_filename(source_archive: Any) -> str:
+    """Return and validate the source archive basename and suffix."""
+
+    try:
+        original_filename = safe_original_filename(source_archive)
+    except ImporterError as error:
+        raise SourceArchiveError(
+            "source archive filename is invalid"
+        ) from error
+    if source_archive_suffix(original_filename) is None:
+        raise SourceArchiveError(
+            "source archive must be a .zip, .tar, .tar.gz, .tgz, "
+            "or .tar.xz file"
+        )
+    return original_filename
+
+
 def import_uploaded_cyclonedx_sbom(
     *,
     uploaded_file: Any,
+    source_archive: Any | None = None,
     manufacturer: str = "",
     product_name: str = "",
     product_version: str = "",
@@ -139,8 +191,17 @@ def import_uploaded_cyclonedx_sbom(
             "uploaded SBOM.specVersion must be a non-empty string"
         )
     original_filename = safe_original_filename(uploaded_file)
-    storage: Storage | None = None
-    stored_name: str | None = None
+    source_original_filename: str | None = None
+    source_sha256: str | None = None
+    source_size: int | None = None
+    if source_archive is not None:
+        source_original_filename = safe_source_archive_filename(
+            source_archive
+        )
+        source_sha256, source_size = calculate_source_archive_metadata(
+            source_archive
+        )
+    stored_files: list[tuple[Storage, str]] = []
 
     try:
         with transaction.atomic():
@@ -191,6 +252,7 @@ def import_uploaded_cyclonedx_sbom(
                 expected_name,
                 uploaded_file,
             )
+            stored_files.append((storage, stored_name))
             if stored_name != expected_name:
                 raise RuntimeError(
                     "The storage backend changed the deterministic "
@@ -198,12 +260,51 @@ def import_uploaded_cyclonedx_sbom(
                 )
             document.uploaded_file.name = stored_name
             document.save(update_fields=["uploaded_file"])
+
+            if source_archive is not None:
+                assert source_original_filename is not None
+                assert source_sha256 is not None
+                assert source_size is not None
+                source_artifact = SourceArtifact.objects.create(
+                    sbom_document=document,
+                    source_archive="",
+                    original_filename=source_original_filename,
+                    file_sha256=source_sha256,
+                    size=source_size,
+                )
+                source_storage = source_artifact.source_archive.storage
+                source_expected_name = source_artifact_upload_path(
+                    source_artifact,
+                    source_original_filename,
+                )
+                if source_storage.exists(source_expected_name):
+                    raise RuntimeError(
+                        "The deterministic source artifact storage path "
+                        "is unavailable."
+                    )
+                source_archive.seek(0)
+                source_stored_name = source_storage.save(
+                    source_expected_name,
+                    source_archive,
+                )
+                stored_files.append(
+                    (source_storage, source_stored_name)
+                )
+                if source_stored_name != source_expected_name:
+                    raise RuntimeError(
+                        "The storage backend changed the deterministic "
+                        "source artifact path."
+                    )
+                source_artifact.source_archive.name = source_stored_name
+                source_artifact.save(update_fields=["source_archive"])
+
             component_count = create_components_from_parsed(
                 document,
                 parsed.components,
             )
     except Exception:
-        _delete_uploaded_file(storage, stored_name)
+        for failed_storage, failed_name in reversed(stored_files):
+            _delete_uploaded_file(failed_storage, failed_name)
         raise
 
     return UploadedSBOMResult(

@@ -17,6 +17,13 @@ DISCREPANCY_TYPE_CODE_PATTERN = re.compile(
     r"^[A-Z][A-Z0-9_]*$"
 )
 FILE_SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+SOURCE_ARCHIVE_SUFFIXES = (
+    ".tar.gz",
+    ".tar.xz",
+    ".tgz",
+    ".zip",
+    ".tar",
+)
 
 
 def contains_hangul(value: str) -> bool:
@@ -36,6 +43,43 @@ def sbom_uploaded_file_path(
             "A valid file SHA-256 is required before saving an SBOM file."
         )
     return f"uploaded-sboms/{file_sha256}.json"
+
+
+def source_archive_suffix(filename: str) -> str | None:
+    """Return the supported source archive suffix, if present."""
+
+    lowered = filename.lower()
+    return next(
+        (
+            suffix
+            for suffix in SOURCE_ARCHIVE_SUFFIXES
+            if lowered.endswith(suffix)
+        ),
+        None,
+    )
+
+
+def source_artifact_upload_path(
+    instance: "SourceArtifact",
+    filename: str,
+) -> str:
+    """Build a deterministic, SBOM-scoped source archive path."""
+
+    del filename
+    sbom_sha256 = instance.sbom_document.file_sha256
+    source_sha256 = instance.file_sha256
+    if FILE_SHA256_PATTERN.fullmatch(sbom_sha256) is None:
+        raise ValueError(
+            "A valid SBOM SHA-256 is required before saving source evidence."
+        )
+    if FILE_SHA256_PATTERN.fullmatch(source_sha256) is None:
+        raise ValueError(
+            "A valid source SHA-256 is required before saving source evidence."
+        )
+    suffix = source_archive_suffix(instance.original_filename)
+    if suffix is None:
+        raise ValueError("A supported source archive suffix is required.")
+    return f"source-artifacts/{sbom_sha256}/{source_sha256}{suffix}"
 
 
 class DockerImage(models.Model):
@@ -156,6 +200,25 @@ class SBOMDocument(models.Model):
         if self.file_sha256:
             return f"SBOM {self.file_sha256[:12]}"
         return f"SBOMDocument {self.pk or 'unsaved'}"
+
+
+class SourceArtifact(models.Model):
+    sbom_document = models.OneToOneField(
+        SBOMDocument,
+        on_delete=models.CASCADE,
+        related_name="source_artifact",
+    )
+    source_archive = models.FileField(
+        upload_to=source_artifact_upload_path,
+        max_length=255,
+    )
+    original_filename = models.CharField(max_length=255)
+    file_sha256 = models.CharField(max_length=64)
+    size = models.PositiveBigIntegerField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.original_filename
 
 
 class Component(models.Model):

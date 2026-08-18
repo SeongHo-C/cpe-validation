@@ -163,6 +163,7 @@ class SBOMDocumentAPITests(APITestCase):
                 "serial_number",
                 "document_version",
                 "generated_at",
+                "source_artifact",
             },
         )
         self.assertEqual(body["file_sha256"], "d" * 64)
@@ -180,6 +181,7 @@ class SBOMDocumentAPITests(APITestCase):
             document.imported_at,
         )
         self.assertEqual(body["component_count"], 1)
+        self.assertIsNone(body["source_artifact"])
 
     def test_detail_returns_404_for_unknown_document(self) -> None:
         response = self.client.get(

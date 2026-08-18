@@ -70,6 +70,7 @@ from sboms.models import (
 from sboms.importers import ImporterError
 from sboms.uploads import (
     DuplicateSBOMError,
+    SourceArchiveError,
     import_uploaded_cyclonedx_sbom,
 )
 
@@ -265,6 +266,7 @@ class SBOMDocumentUploadAPIView(APIView):
         try:
             result = import_uploaded_cyclonedx_sbom(
                 uploaded_file=values["file"],
+                source_archive=values.get("source_archive"),
                 manufacturer=values["manufacturer"],
                 product_name=values["product_name"],
                 product_version=values["product_version"],
@@ -285,6 +287,14 @@ class SBOMDocumentUploadAPIView(APIView):
             return Response(
                 {
                     "code": "invalid_sbom",
+                    "detail": str(error),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except SourceArchiveError as error:
+            return Response(
+                {
+                    "code": "invalid_source_archive",
                     "detail": str(error),
                 },
                 status=status.HTTP_400_BAD_REQUEST,

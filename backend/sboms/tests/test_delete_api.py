@@ -25,6 +25,7 @@ from sboms.models import (
     GroundTruthDecision,
     GroundTruthDiscrepancyType,
     SBOMDocument,
+    SourceArtifact,
 )
 
 
@@ -83,23 +84,27 @@ class SBOMDocumentDeleteAPITests(APITestCase):
         serial_number: str,
         *,
         product_name: str,
+        source_archive: SimpleUploadedFile | None = None,
     ) -> SBOMDocument:
         content = json.dumps(
             self.build_document(serial_number),
             separators=(",", ":"),
         ).encode("utf-8")
+        values: dict[str, object] = {
+            "file": SimpleUploadedFile(
+                f"{product_name}.cdx.json",
+                content,
+                content_type="application/json",
+            ),
+            "manufacturer": "Example Devices",
+            "product_name": product_name,
+            "product_version": "1.0",
+        }
+        if source_archive is not None:
+            values["source_archive"] = source_archive
         response = self.client.post(
             reverse("sboms_api:sbom-upload"),
-            {
-                "file": SimpleUploadedFile(
-                    f"{product_name}.cdx.json",
-                    content,
-                    content_type="application/json",
-                ),
-                "manufacturer": "Example Devices",
-                "product_name": product_name,
-                "product_version": "1.0",
-            },
+            values,
             format="multipart",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -229,6 +234,43 @@ class SBOMDocumentDeleteAPITests(APITestCase):
         self.assertEqual(
             Component.objects.filter(pk__in=second_component_ids).count(),
             2,
+        )
+        self.assertTrue(second_path.exists())
+
+    def test_delete_removes_only_the_target_source_artifact(self) -> None:
+        first = self.upload_document(
+            "urn:uuid:first-source-delete",
+            product_name="first-source-delete",
+            source_archive=SimpleUploadedFile(
+                "first-source.tar.gz",
+                b"first source",
+            ),
+        )
+        second = self.upload_document(
+            "urn:uuid:second-source-preserved",
+            product_name="second-source-preserved",
+            source_archive=SimpleUploadedFile(
+                "second-source.tar.xz",
+                b"second source",
+            ),
+        )
+        first_artifact = SourceArtifact.objects.get(sbom_document=first)
+        second_artifact = SourceArtifact.objects.get(sbom_document=second)
+        first_artifact_id = first_artifact.id
+        first_path = Path(first_artifact.source_archive.path)
+        second_path = Path(second_artifact.source_archive.path)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.delete(self.delete_url(first.id))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            SourceArtifact.objects.filter(pk=first_artifact_id).exists()
+        )
+        self.assertFalse(first_path.exists())
+        self.assertTrue(SBOMDocument.objects.filter(pk=second.id).exists())
+        self.assertTrue(
+            SourceArtifact.objects.filter(pk=second_artifact.id).exists()
         )
         self.assertTrue(second_path.exists())
 
@@ -378,8 +420,16 @@ class SBOMDocumentDeleteAPITests(APITestCase):
         document = self.upload_document(
             "urn:uuid:database-failure",
             product_name="database-failure",
+            source_archive=SimpleUploadedFile(
+                "rollback-source.zip",
+                b"rollback source",
+            ),
         )
         uploaded_path = Path(document.uploaded_file.path)
+        source_artifact = SourceArtifact.objects.get(
+            sbom_document=document
+        )
+        source_path = Path(source_artifact.source_archive.path)
         component = document.components.first()
         assert component is not None
         snapshot = self.create_snapshot()
@@ -424,6 +474,10 @@ class SBOMDocumentDeleteAPITests(APITestCase):
             ).exists()
         )
         self.assertTrue(uploaded_path.exists())
+        self.assertTrue(
+            SourceArtifact.objects.filter(pk=source_artifact.pk).exists()
+        )
+        self.assertTrue(source_path.exists())
 
     def test_file_cleanup_failure_is_logged_after_successful_delete(
         self,

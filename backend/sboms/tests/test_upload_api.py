@@ -15,7 +15,12 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from cpe_dictionary.models import CpeDictionarySnapshot
-from sboms.models import Component, DockerImage, SBOMDocument
+from sboms.models import (
+    Component,
+    DockerImage,
+    SBOMDocument,
+    SourceArtifact,
+)
 
 
 class SBOMDocumentUploadAPITests(APITestCase):
@@ -97,6 +102,7 @@ class SBOMDocumentUploadAPITests(APITestCase):
         content: bytes,
         *,
         filename: str = "emba-sbom.json",
+        source_archive: SimpleUploadedFile | None = None,
         **metadata: str,
     ):
         values: dict[str, object] = {
@@ -107,6 +113,8 @@ class SBOMDocumentUploadAPITests(APITestCase):
             ),
             **metadata,
         }
+        if source_archive is not None:
+            values["source_archive"] = source_archive
         return self.client.post(
             self.upload_url,
             values,
@@ -118,11 +126,13 @@ class SBOMDocumentUploadAPITests(APITestCase):
         document: object,
         *,
         filename: str = "emba-sbom.json",
+        source_archive: SimpleUploadedFile | None = None,
         **metadata: str,
     ):
         return self.post_bytes(
             self.encode_document(document),
             filename=filename,
+            source_archive=source_archive,
             **metadata,
         )
 
@@ -216,6 +226,7 @@ class SBOMDocumentUploadAPITests(APITestCase):
                 "serial_number",
                 "document_version",
                 "generated_at",
+                "source_artifact",
             },
         )
         digest = hashlib.sha256(raw_bytes).hexdigest()
@@ -225,6 +236,7 @@ class SBOMDocumentUploadAPITests(APITestCase):
         self.assertEqual(body["generator_name"], "EMBA")
         self.assertEqual(body["generator_version"], "2.0.1")
         self.assertEqual(body["component_count"], 1)
+        self.assertIsNone(body["source_artifact"])
 
         document = SBOMDocument.objects.get()
         self.assertIsNone(document.docker_image)
@@ -280,6 +292,109 @@ class SBOMDocumentUploadAPITests(APITestCase):
         component_row = component_response.json()["results"][0]
         self.assertEqual(component_row["sbom_document_id"], document.id)
         self.assertIsNone(component_row["image"])
+
+    def test_upload_stores_optional_source_archive_and_metadata(
+        self,
+    ) -> None:
+        raw_bytes = self.encode_document(self.build_document())
+        source_bytes = b"vendor GPL source archive bytes"
+        source_upload = SimpleUploadedFile(
+            "RUTX_R_GPL_00.07.23.7.tar.gz",
+            source_bytes,
+            content_type="application/gzip",
+        )
+
+        response = self.post_bytes(
+            raw_bytes,
+            filename="router.cdx.json",
+            source_archive=source_upload,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        document = SBOMDocument.objects.get()
+        artifact = SourceArtifact.objects.get(sbom_document=document)
+        sbom_digest = hashlib.sha256(raw_bytes).hexdigest()
+        source_digest = hashlib.sha256(source_bytes).hexdigest()
+        expected_name = (
+            f"source-artifacts/{sbom_digest}/"
+            f"{source_digest}.tar.gz"
+        )
+        self.assertEqual(
+            artifact.original_filename,
+            "RUTX_R_GPL_00.07.23.7.tar.gz",
+        )
+        self.assertEqual(artifact.file_sha256, source_digest)
+        self.assertEqual(artifact.size, len(source_bytes))
+        self.assertEqual(artifact.source_archive.name, expected_name)
+        with artifact.source_archive.open("rb") as stored_file:
+            self.assertEqual(stored_file.read(), source_bytes)
+
+        source_body = response.json()["source_artifact"]
+        self.assertEqual(
+            source_body,
+            {
+                "id": artifact.id,
+                "original_filename": (
+                    "RUTX_R_GPL_00.07.23.7.tar.gz"
+                ),
+                "file_sha256": source_digest,
+                "size": len(source_bytes),
+                "uploaded_at": source_body["uploaded_at"],
+                "stored_path": expected_name,
+            },
+        )
+        self.assertIsNotNone(source_body["uploaded_at"])
+
+        detail_response = self.client.get(
+            reverse("sboms_api:sbom-detail", args=[document.id])
+        )
+        self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            detail_response.json()["source_artifact"],
+            source_body,
+        )
+
+    def test_all_supported_source_archive_extensions_are_accepted(
+        self,
+    ) -> None:
+        for index, suffix in enumerate(
+            (".zip", ".tar", ".tar.gz", ".tgz", ".tar.xz"),
+            start=1,
+        ):
+            with self.subTest(suffix=suffix):
+                response = self.post_document(
+                    self.build_document(
+                        serial_number=f"urn:uuid:source-{index}"
+                    ),
+                    filename=f"sbom-{index}.json",
+                    source_archive=SimpleUploadedFile(
+                        f"source{suffix}",
+                        f"archive-{index}".encode(),
+                    ),
+                )
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_201_CREATED,
+                )
+
+        self.assertEqual(SourceArtifact.objects.count(), 5)
+
+    def test_unsupported_source_archive_is_rejected_without_side_effects(
+        self,
+    ) -> None:
+        response = self.post_document(
+            self.build_document(),
+            source_archive=SimpleUploadedFile(
+                "vendor-source.7z",
+                b"unsupported",
+            ),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("source_archive", response.json())
+        self.assertEqual(SBOMDocument.objects.count(), 0)
+        self.assertEqual(SourceArtifact.objects.count(), 0)
+        self.assertEqual(self.stored_files(), [])
 
     def test_minimal_document_without_components_is_allowed(self) -> None:
         response = self.post_document(
@@ -519,6 +634,10 @@ class SBOMDocumentUploadAPITests(APITestCase):
             response = self.post_document(
                 self.build_document(serial_number="urn:uuid:failed"),
                 filename="failed.json",
+                source_archive=SimpleUploadedFile(
+                    "failed-source.tgz",
+                    b"failed source bytes",
+                ),
             )
 
         self.assertEqual(
@@ -538,6 +657,7 @@ class SBOMDocumentUploadAPITests(APITestCase):
         )
         self.assertEqual(SBOMDocument.objects.count(), 1)
         self.assertEqual(Component.objects.count(), 1)
+        self.assertEqual(SourceArtifact.objects.count(), 0)
         self.assertEqual(self.stored_files(), [existing_path])
         self.assertEqual(existing_path.read_bytes(), existing_bytes)
 

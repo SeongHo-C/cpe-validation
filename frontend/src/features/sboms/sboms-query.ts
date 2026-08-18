@@ -34,6 +34,9 @@ export function uploadSbom(
 ): Promise<SbomDocumentDetail> {
   const formData = new FormData()
   formData.append("file", input.file)
+  if (input.sourceArchive) {
+    formData.append("source_archive", input.sourceArchive)
+  }
   if (input.manufacturer) {
     formData.append("manufacturer", input.manufacturer)
   }

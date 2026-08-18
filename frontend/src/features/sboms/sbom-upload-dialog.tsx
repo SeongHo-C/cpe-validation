@@ -1,4 +1,4 @@
-import { LoaderCircle, TriangleAlert, Upload } from "lucide-react"
+import { LoaderCircle, TriangleAlert, Upload, X } from "lucide-react"
 import { useRef, useState } from "react"
 import type { FormEvent } from "react"
 
@@ -34,6 +34,17 @@ function uploadError(error: unknown): UploadError {
     }
   }
   if (error instanceof ApiError && error.status === 400) {
+    if (
+      error.code === "invalid_source_archive" ||
+      error.detail?.includes("source_archive")
+    ) {
+      return {
+        title: "Invalid source archive",
+        detail:
+          error.detail ??
+          "Select a supported source archive and try again.",
+      }
+    }
     return {
       title: "Invalid SBOM",
       detail:
@@ -61,7 +72,9 @@ export function SbomUploadDialog({
 }) {
   const formRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const sourceArchiveInputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
+  const [sourceArchive, setSourceArchive] = useState<File | null>(null)
   const [manufacturer, setManufacturer] = useState("")
   const [productName, setProductName] = useState("")
   const [productVersion, setProductVersion] = useState("")
@@ -71,6 +84,7 @@ export function SbomUploadDialog({
   const resetForm = () => {
     formRef.current?.reset()
     setFile(null)
+    setSourceArchive(null)
     setManufacturer("")
     setProductName("")
     setProductVersion("")
@@ -99,6 +113,7 @@ export function SbomUploadDialog({
     try {
       const document = await uploadSbom({
         file,
+        sourceArchive,
         manufacturer,
         productName,
         productVersion,
@@ -177,7 +192,95 @@ export function SbomUploadDialog({
               >
                 {file?.name ?? "No file selected"}
               </p>
+              {file ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Remove SBOM file"
+                  disabled={isUploading}
+                  onClick={() => {
+                    setFile(null)
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = ""
+                    }
+                  }}
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              ) : null}
             </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="source-archive-upload-file"
+              className={formLabelTextClassName}
+            >
+              SDK / GPL source
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                Optional
+              </span>
+            </label>
+            <div className="sr-only">
+              <Input
+                ref={sourceArchiveInputRef}
+                id="source-archive-upload-file"
+                name="source_archive"
+                type="file"
+                accept=".zip,.tar,.tar.gz,.tgz,.tar.xz"
+                tabIndex={-1}
+                aria-describedby="source-archive-upload-status source-archive-upload-help"
+                aria-invalid={error?.title === "Invalid source archive"}
+                disabled={isUploading}
+                onChange={(event) => {
+                  setSourceArchive(event.target.files?.[0] ?? null)
+                  setError(null)
+                }}
+              />
+            </div>
+            <div className="mt-1 flex min-w-0 items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isUploading}
+                aria-invalid={error?.title === "Invalid source archive"}
+                onClick={() => sourceArchiveInputRef.current?.click()}
+              >
+                Select source
+              </Button>
+              <p
+                id="source-archive-upload-status"
+                className="min-w-0 flex-1 truncate text-sm text-muted-foreground"
+                title={sourceArchive?.name}
+                aria-live="polite"
+              >
+                {sourceArchive?.name ?? "No source archive selected"}
+              </p>
+              {sourceArchive ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Remove source archive"
+                  disabled={isUploading}
+                  onClick={() => {
+                    setSourceArchive(null)
+                    if (sourceArchiveInputRef.current) {
+                      sourceArchiveInputRef.current.value = ""
+                    }
+                  }}
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              ) : null}
+            </div>
+            <p
+              id="source-archive-upload-help"
+              className="mt-1 text-xs text-muted-foreground"
+            >
+              Used as source evidence for Ground Truth validation
+            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
