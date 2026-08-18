@@ -724,6 +724,12 @@ describe("SBOM inventory", () => {
       within(dialog).getByText(/remove its imported components/i),
     ).toBeInTheDocument()
     expect(
+      within(dialog).getByText(/Ground Truth records/i),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(/Shared CPE Dictionary/i),
+    ).toBeInTheDocument()
+    expect(
       within(dialog).getByRole("button", { name: "Cancel" }),
     ).toBeEnabled()
     expect(

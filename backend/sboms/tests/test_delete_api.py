@@ -23,6 +23,7 @@ from sboms.models import (
     ComponentCpeGroundTruth,
     GroundTruthCorrectionType,
     GroundTruthDecision,
+    GroundTruthDiscrepancyType,
     SBOMDocument,
 )
 
@@ -257,64 +258,116 @@ class SBOMDocumentDeleteAPITests(APITestCase):
             ).exists()
         )
 
-    def test_protected_review_data_returns_conflict_and_preserves_all(
+    def test_delete_removes_owned_ground_truth_and_preserves_shared_data(
         self,
     ) -> None:
         document = self.upload_document(
-            "urn:uuid:protected-review",
-            product_name="protected-review",
+            "urn:uuid:reviewed-delete",
+            product_name="reviewed-delete",
+        )
+        preserved_document = self.upload_document(
+            "urn:uuid:reviewed-preserved",
+            product_name="reviewed-preserved",
         )
         component = document.components.first()
         assert component is not None
+        preserved_component = preserved_document.components.first()
+        assert preserved_component is not None
         snapshot = self.create_snapshot()
+        cpe_name = self.create_cpe(snapshot)
         correction_type = GroundTruthCorrectionType.objects.create(
             code="product_typo",
             name="Product Typo",
+        )
+        discrepancy_type = GroundTruthDiscrepancyType.objects.create(
+            code="WRONG_PRODUCT",
+            name="Wrong Product",
         )
         ground_truth = ComponentCpeGroundTruth.objects.create(
             component=component,
             snapshot=snapshot,
             decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
-            manual_ground_truth_cpe=(
-                "cpe:2.3:a:example:reviewed:1.0:*:*:*:*:*:*:*"
-            ),
+            ground_truth_cpe=cpe_name,
+        )
+        preserved_ground_truth = ComponentCpeGroundTruth.objects.create(
+            component=preserved_component,
+            snapshot=snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
+            ground_truth_cpe=cpe_name,
         )
         ground_truth.correction_types.add(correction_type)
+        ground_truth.discrepancy_types.add(discrepancy_type)
+        preserved_ground_truth.correction_types.add(correction_type)
+        preserved_ground_truth.discrepancy_types.add(discrepancy_type)
         uploaded_path = Path(document.uploaded_file.path)
+        preserved_uploaded_path = Path(
+            preserved_document.uploaded_file.path
+        )
+        component_ids = list(
+            document.components.values_list("id", flat=True)
+        )
+        preserved_component_ids = list(
+            preserved_document.components.values_list("id", flat=True)
+        )
 
-        with self.captureOnCommitCallbacks(execute=True) as callbacks:
+        with self.captureOnCommitCallbacks(execute=True):
             response = self.client.delete(self.delete_url(document.id))
 
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(
-            response.json(),
-            {
-                "code": "sbom_delete_conflict",
-                "detail": (
-                    "This SBOM cannot be deleted while its components "
-                    "have protected review data."
-                ),
-            },
-        )
-        self.assertEqual(callbacks, [])
-        self.assertTrue(
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
             SBOMDocument.objects.filter(pk=document.id).exists()
         )
-        self.assertEqual(document.components.count(), 2)
-        self.assertTrue(
+        self.assertFalse(
+            Component.objects.filter(pk__in=component_ids).exists()
+        )
+        self.assertFalse(
             ComponentCpeGroundTruth.objects.filter(
                 pk=ground_truth.pk
             ).exists()
         )
+        self.assertFalse(uploaded_path.exists())
+
+        self.assertTrue(
+            SBOMDocument.objects.filter(
+                pk=preserved_document.id
+            ).exists()
+        )
+        self.assertEqual(
+            Component.objects.filter(
+                pk__in=preserved_component_ids
+            ).count(),
+            2,
+        )
+        self.assertTrue(
+            ComponentCpeGroundTruth.objects.filter(
+                pk=preserved_ground_truth.pk
+            ).exists()
+        )
+        self.assertTrue(preserved_uploaded_path.exists())
         self.assertTrue(
             GroundTruthCorrectionType.objects.filter(
                 pk=correction_type.pk
             ).exists()
         )
         self.assertTrue(
+            GroundTruthDiscrepancyType.objects.filter(
+                pk=discrepancy_type.pk
+            ).exists()
+        )
+        self.assertTrue(
             CpeDictionarySnapshot.objects.filter(pk=snapshot.pk).exists()
         )
-        self.assertTrue(uploaded_path.exists())
+        self.assertTrue(CpeName.objects.filter(pk=cpe_name.pk).exists())
+        self.assertEqual(cpe_name.component_ground_truths.count(), 1)
+        self.assertEqual(snapshot.component_ground_truths.count(), 1)
+        self.assertEqual(
+            correction_type.ground_truth_records.count(),
+            1,
+        )
+        self.assertEqual(
+            discrepancy_type.ground_truth_records.count(),
+            1,
+        )
 
     def test_delete_missing_document_returns_not_found(self) -> None:
         response = self.client.delete(self.delete_url(999999))
@@ -327,6 +380,17 @@ class SBOMDocumentDeleteAPITests(APITestCase):
             product_name="database-failure",
         )
         uploaded_path = Path(document.uploaded_file.path)
+        component = document.components.first()
+        assert component is not None
+        snapshot = self.create_snapshot()
+        ground_truth = ComponentCpeGroundTruth.objects.create(
+            component=component,
+            snapshot=snapshot,
+            decision=GroundTruthDecision.OFFICIAL_CPE_MAPPED,
+            manual_ground_truth_cpe=(
+                "cpe:2.3:a:example:reviewed:1.0:*:*:*:*:*:*:*"
+            ),
+        )
 
         def fail_after_component_delete(**kwargs) -> None:
             del kwargs
@@ -354,6 +418,11 @@ class SBOMDocumentDeleteAPITests(APITestCase):
             SBOMDocument.objects.filter(pk=document.id).exists()
         )
         self.assertEqual(document.components.count(), 2)
+        self.assertTrue(
+            ComponentCpeGroundTruth.objects.filter(
+                pk=ground_truth.pk
+            ).exists()
+        )
         self.assertTrue(uploaded_path.exists())
 
     def test_file_cleanup_failure_is_logged_after_successful_delete(

@@ -7,14 +7,14 @@ from django.core.files.storage import Storage
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 
-from sboms.models import SBOMDocument
+from sboms.models import ComponentCpeGroundTruth, SBOMDocument
 
 
 logger = logging.getLogger(__name__)
 
 
 class SBOMDeleteConflictError(Exception):
-    """Raised when protected review data prevents an SBOM deletion."""
+    """Raised when a protected dependency prevents an SBOM deletion."""
 
 
 def _delete_unreferenced_uploaded_file(
@@ -45,15 +45,28 @@ def _delete_unreferenced_uploaded_file(
 
 
 def delete_sbom_document(document: SBOMDocument) -> None:
-    """Delete one SBOM and clean up its unshared upload after commit."""
+    """Delete one SBOM, its owned review data, and its upload."""
 
     using = document._state.db or "default"
-    stored_name = document.uploaded_file.name
-    storage = document.uploaded_file.storage if stored_name else None
 
     try:
         with transaction.atomic(using=using):
-            document.delete(using=using)
+            locked_document = (
+                SBOMDocument.objects.using(using)
+                .select_for_update()
+                .get(pk=document.pk)
+            )
+            stored_name = locked_document.uploaded_file.name
+            storage = (
+                locked_document.uploaded_file.storage
+                if stored_name
+                else None
+            )
+
+            ComponentCpeGroundTruth.objects.using(using).filter(
+                component__sbom_document=locked_document
+            ).delete()
+            locked_document.delete(using=using)
             if storage is not None and stored_name:
                 transaction.on_commit(
                     partial(
@@ -66,6 +79,6 @@ def delete_sbom_document(document: SBOMDocument) -> None:
                 )
     except ProtectedError as error:
         raise SBOMDeleteConflictError(
-            "This SBOM cannot be deleted while its components have "
-            "protected review data."
+            "This SBOM cannot be deleted because protected data outside "
+            "its owned component review records depends on it."
         ) from error
