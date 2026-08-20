@@ -225,6 +225,11 @@ data/cpe-dictionary/*/nvdcpe-2.0.json
 data/cpe-dictionary/.*.tmp-*/
 data/cpe-dictionary/**/*.part
 
+# NVD CVE snapshot archives and partial work
+data/nvd-cve/*/feeds/*.json.gz
+data/nvd-cve/.*.tmp-*/
+data/nvd-cve/**/*.part
+
 # Uploaded SBOM originals
 data/uploaded-sboms/
 data/source-artifacts/

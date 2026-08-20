@@ -203,7 +203,21 @@ Then run `import_cpe_dictionary --dry-run` before the real import. Only COMPLETE
 snapshots are selectable. If `CPE_DICTIONARY_SNAPSHOT_ID` is empty, selection
 succeeds only when the database contains exactly one COMPLETE snapshot.
 
-## 9. SBOM Data
+## 9. NVD CVE Snapshot Data
+
+Freeze the complete NVD CVE JSON 2.0 yearly feed set, from 2002 through the
+current UTC year, as a verified filesystem artifact:
+
+```bash
+backend/.venv/bin/python backend/manage.py download_nvd_cve_snapshot
+```
+
+The command preserves every original META and `.json.gz` file under
+`data/nvd-cve/<SNAPSHOT_ID>/`, validates every feed, detects duplicate CVE IDs,
+rechecks all META documents, and publishes the snapshot atomically. It does not
+write to the database.
+
+## 10. SBOM Data
 
 The pilot uses ten Docker Official Images listed in `pilot/images.yaml`. All
 images target `linux/amd64`; their platform manifest digests and pinned
@@ -229,7 +243,7 @@ python3 scripts/generate_sbom.py
 The scripts do not overwrite existing results unless overwrite behavior is
 explicitly requested.
 
-## 10. Running the Application
+## 11. Running the Application
 
 Start or inspect PostgreSQL from the repository root:
 
@@ -279,7 +293,7 @@ CPEs and Manual CPEs, but not for original-confirmed or no-direct-official-CPE
 outcomes. The Ground Truth list keeps the Exact Match filter, while the review
 screen keeps Exact Match evidence in Component Context.
 
-## 11. Testing and Build
+## 12. Testing and Build
 
 Backend checks and tests, from the repository root:
 
@@ -307,7 +321,7 @@ cd pilot
 python3 -m unittest discover -s tests -v
 ```
 
-## 12. Current Limitations
+## 13. Current Limitations
 
 - This is a local, single-researcher prototype without authentication or
   authorization.

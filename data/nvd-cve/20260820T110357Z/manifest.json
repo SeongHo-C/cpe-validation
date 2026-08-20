@@ -1,0 +1,534 @@
+{
+  "schema_version": 1,
+  "snapshot_id": "20260820T110357Z",
+  "status": "VERIFIED",
+  "source": "NVD CVE JSON 2.0 Yearly Feeds",
+  "source_base_url": "https://nvd.nist.gov/feeds/json/cve/2.0",
+  "capture_started_at": "2026-08-20T11:03:57Z",
+  "retrieved_at": "2026-08-20T11:43:53Z",
+  "capture_completed_at": "2026-08-20T11:44:10Z",
+  "feed_count": 25,
+  "feeds": [
+    {
+      "year": 2002,
+      "meta_filename": "nvdcve-2.0-2002.meta",
+      "meta_size": 165,
+      "meta_sha256": "119c6b94bbf8003fe435ca7ce2f611f81952ae1210e70d293737b1b819d1ec39",
+      "feed_filename": "nvdcve-2.0-2002.json.gz",
+      "feed_last_modified": "2026-07-24T07:03:22Z",
+      "meta": {
+        "size": 27075219,
+        "zip_size": 2176365,
+        "gz_size": 2176229,
+        "sha256": "5ac67638bd5854b476757e68f844d287306551becef83bc8051552d76d8df06b"
+      },
+      "compressed_size": 2176229,
+      "compressed_sha256": "f0dc5a0b5f1b0ef9e1d4d213e00d41a836f07cc1a993970afdf32b32940f579f",
+      "uncompressed_size": 27075219,
+      "uncompressed_sha256": "5ac67638bd5854b476757e68f844d287306551becef83bc8051552d76d8df06b",
+      "declared_count": 6771,
+      "parsed_count": 6771
+    },
+    {
+      "year": 2003,
+      "meta_filename": "nvdcve-2.0-2003.meta",
+      "meta_size": 162,
+      "meta_sha256": "72aa0ac9bfb18981c9d234aba4011cb7f782c5a9ac99759f9e8ed238993dec0c",
+      "feed_filename": "nvdcve-2.0-2003.json.gz",
+      "feed_last_modified": "2026-06-22T14:34:47Z",
+      "meta": {
+        "size": 7908123,
+        "zip_size": 728975,
+        "gz_size": 728839,
+        "sha256": "5d439a7b9d6d41e74824ff1d00a7b002d32f8d7dce7fe4adcca4d897021c11a3"
+      },
+      "compressed_size": 728839,
+      "compressed_sha256": "cee8407b3d42270e5b83fd2734c2fbb27f679b79c68dd78dce98a75756c5f748",
+      "uncompressed_size": 7908123,
+      "uncompressed_sha256": "5d439a7b9d6d41e74824ff1d00a7b002d32f8d7dce7fe4adcca4d897021c11a3",
+      "declared_count": 1555,
+      "parsed_count": 1555
+    },
+    {
+      "year": 2004,
+      "meta_filename": "nvdcve-2.0-2004.meta",
+      "meta_size": 165,
+      "meta_sha256": "e0342d7d87b172522d19f7ec38508582b0201297afe6915a22e5748fb3f5226f",
+      "feed_filename": "nvdcve-2.0-2004.json.gz",
+      "feed_last_modified": "2026-06-22T14:34:45Z",
+      "meta": {
+        "size": 16380792,
+        "zip_size": 1490065,
+        "gz_size": 1489929,
+        "sha256": "f3b27b864dcb602f14b1b4f9f6bcbd8fe5acf6ee3fe04df4634fcd60a28824e0"
+      },
+      "compressed_size": 1489929,
+      "compressed_sha256": "6d03dd067cfbce69e7b2cc3c0a49cac75af109cf8e73570964f642ae7b5b2de0",
+      "uncompressed_size": 16380792,
+      "uncompressed_sha256": "f3b27b864dcb602f14b1b4f9f6bcbd8fe5acf6ee3fe04df4634fcd60a28824e0",
+      "declared_count": 2707,
+      "parsed_count": 2707
+    },
+    {
+      "year": 2005,
+      "meta_filename": "nvdcve-2.0-2005.meta",
+      "meta_size": 165,
+      "meta_sha256": "7c39b543c44bd4c080d64cbafdc7359e150b96be39de1e3282648255b48bcde3",
+      "feed_filename": "nvdcve-2.0-2005.json.gz",
+      "feed_last_modified": "2026-07-15T07:04:09Z",
+      "meta": {
+        "size": 25789741,
+        "zip_size": 2172744,
+        "gz_size": 2172608,
+        "sha256": "8d0e26fe6772d1de213b32b1d434c6eb2f6e27b782593692820c3d948ef4f9a3"
+      },
+      "compressed_size": 2172608,
+      "compressed_sha256": "c369ab43f4bf02113b02e7676f9e1d6c7c41a43051f31d7de5e5055d34cf8345",
+      "uncompressed_size": 25789741,
+      "uncompressed_sha256": "8d0e26fe6772d1de213b32b1d434c6eb2f6e27b782593692820c3d948ef4f9a3",
+      "declared_count": 4770,
+      "parsed_count": 4770
+    },
+    {
+      "year": 2006,
+      "meta_filename": "nvdcve-2.0-2006.meta",
+      "meta_size": 165,
+      "meta_sha256": "8758dc72b5f5c79b63012021ead61127f9d5162bf0c4054d2073ba2b84d2396e",
+      "feed_filename": "nvdcve-2.0-2006.json.gz",
+      "feed_last_modified": "2026-07-15T07:04:04Z",
+      "meta": {
+        "size": 41220718,
+        "zip_size": 3499442,
+        "gz_size": 3499306,
+        "sha256": "fa6d2cc8e5099c5c7b4c96a6264b9a4a93d27293a22e13295fc15ed6a78e6634"
+      },
+      "compressed_size": 3499306,
+      "compressed_sha256": "12dee72c42d42c89a5d2097f00b260540fc8e60d50dba244cf37cf0bfa1ee4c8",
+      "uncompressed_size": 41220718,
+      "uncompressed_sha256": "fa6d2cc8e5099c5c7b4c96a6264b9a4a93d27293a22e13295fc15ed6a78e6634",
+      "declared_count": 7145,
+      "parsed_count": 7145
+    },
+    {
+      "year": 2007,
+      "meta_filename": "nvdcve-2.0-2007.meta",
+      "meta_size": 165,
+      "meta_sha256": "74ce3a0b6367c6902f1c03c78b858db9978c678a0bff1f3992b513816df85b97",
+      "feed_filename": "nvdcve-2.0-2007.json.gz",
+      "feed_last_modified": "2026-06-22T14:34:32Z",
+      "meta": {
+        "size": 39412640,
+        "zip_size": 3606026,
+        "gz_size": 3605890,
+        "sha256": "c7017e3f5b841fed5daf44a1c55d62e86529482874e9095813579c0c04fdd7f4"
+      },
+      "compressed_size": 3605890,
+      "compressed_sha256": "952a814a80bfd170bcdfc6db091b8b4397e183dd607862d0d123c90bb3df59d8",
+      "uncompressed_size": 39412640,
+      "uncompressed_sha256": "c7017e3f5b841fed5daf44a1c55d62e86529482874e9095813579c0c04fdd7f4",
+      "declared_count": 6580,
+      "parsed_count": 6580
+    },
+    {
+      "year": 2008,
+      "meta_filename": "nvdcve-2.0-2008.meta",
+      "meta_size": 165,
+      "meta_sha256": "83af0e4947eee2700f36a92ebb7b27f370c2bea85c1fb47f6f0ab22af957578f",
+      "feed_filename": "nvdcve-2.0-2008.json.gz",
+      "feed_last_modified": "2026-07-14T07:02:57Z",
+      "meta": {
+        "size": 45541269,
+        "zip_size": 4185775,
+        "gz_size": 4185639,
+        "sha256": "7632c41a9dd2d579e6554c8b5336ef71496e02920f57bc1612bee08724a9a45a"
+      },
+      "compressed_size": 4185639,
+      "compressed_sha256": "bd6020b8b49e208216dc2d7ec9f20201c2ea0b28608c7a7eb51cd66ffcadb110",
+      "uncompressed_size": 45541269,
+      "uncompressed_sha256": "7632c41a9dd2d579e6554c8b5336ef71496e02920f57bc1612bee08724a9a45a",
+      "declared_count": 7179,
+      "parsed_count": 7179
+    },
+    {
+      "year": 2009,
+      "meta_filename": "nvdcve-2.0-2009.meta",
+      "meta_size": 165,
+      "meta_sha256": "68d675fa8a66cd46c728bf6a25b1493238e1a7e68dd507869a252da5fac9e173",
+      "feed_filename": "nvdcve-2.0-2009.json.gz",
+      "feed_last_modified": "2026-08-06T07:03:02Z",
+      "meta": {
+        "size": 43659291,
+        "zip_size": 4528171,
+        "gz_size": 4528035,
+        "sha256": "800200e11afb0eab3a40e9c45cea5a0744eeb49faf13de9d9edc9b19253f9574"
+      },
+      "compressed_size": 4528035,
+      "compressed_sha256": "06fdbf86e6a646257d261ee94bf5fb9f4f99d4b411340805e22410ebf3e797bb",
+      "uncompressed_size": 43659291,
+      "uncompressed_sha256": "800200e11afb0eab3a40e9c45cea5a0744eeb49faf13de9d9edc9b19253f9574",
+      "declared_count": 5054,
+      "parsed_count": 5054
+    },
+    {
+      "year": 2010,
+      "meta_filename": "nvdcve-2.0-2010.meta",
+      "meta_size": 165,
+      "meta_sha256": "4dabd2eb44134ca98f4ecf57c2d885e5ba58abe50eb35091ea0a7ad547f7618f",
+      "feed_filename": "nvdcve-2.0-2010.json.gz",
+      "feed_last_modified": "2026-08-14T07:03:19Z",
+      "meta": {
+        "size": 47114422,
+        "zip_size": 4359903,
+        "gz_size": 4359767,
+        "sha256": "5bf5c1e7cf57dc6ce4afaf13b258d00d64e4b76b5f42d9a6a95e5e7ad6ac76d6"
+      },
+      "compressed_size": 4359767,
+      "compressed_sha256": "3612ffd37b160446c1f75a67830ec7cd38f0baa75047c410cd0c3f67992e1ad8",
+      "uncompressed_size": 47114422,
+      "uncompressed_sha256": "5bf5c1e7cf57dc6ce4afaf13b258d00d64e4b76b5f42d9a6a95e5e7ad6ac76d6",
+      "declared_count": 5249,
+      "parsed_count": 5249
+    },
+    {
+      "year": 2011,
+      "meta_filename": "nvdcve-2.0-2011.meta",
+      "meta_size": 165,
+      "meta_sha256": "18cca9cde907902830e348ceb36a054f53a677d9690861966ca595a5cdd135e8",
+      "feed_filename": "nvdcve-2.0-2011.json.gz",
+      "feed_last_modified": "2026-07-10T07:03:18Z",
+      "meta": {
+        "size": 46638968,
+        "zip_size": 4275029,
+        "gz_size": 4274893,
+        "sha256": "0b0be13dab670835f0159751f1fbd8fda2f774270b743eafb0656401d5e792d6"
+      },
+      "compressed_size": 4274893,
+      "compressed_sha256": "bb506be1d3abdae84184576d085d76eb088171d97e9fe536b4a4be6f7ccce32d",
+      "uncompressed_size": 46638968,
+      "uncompressed_sha256": "0b0be13dab670835f0159751f1fbd8fda2f774270b743eafb0656401d5e792d6",
+      "declared_count": 4899,
+      "parsed_count": 4899
+    },
+    {
+      "year": 2012,
+      "meta_filename": "nvdcve-2.0-2012.meta",
+      "meta_size": 165,
+      "meta_sha256": "6e10a6417fd17a590874e641d54209398aae79c11205f5d1a3d9b8ff2df332ef",
+      "feed_filename": "nvdcve-2.0-2012.json.gz",
+      "feed_last_modified": "2026-08-14T07:03:13Z",
+      "meta": {
+        "size": 54356766,
+        "zip_size": 4864197,
+        "gz_size": 4864061,
+        "sha256": "4239396b857267cff337766675feb610d09349292a074e27d1772ce163c8f4a6"
+      },
+      "compressed_size": 4864061,
+      "compressed_sha256": "e3907a79184b29276deb56d0cd4349868e180b34657fdb1be78af2c9ca4cc13a",
+      "uncompressed_size": 54356766,
+      "uncompressed_sha256": "4239396b857267cff337766675feb610d09349292a074e27d1772ce163c8f4a6",
+      "declared_count": 5939,
+      "parsed_count": 5939
+    },
+    {
+      "year": 2013,
+      "meta_filename": "nvdcve-2.0-2013.meta",
+      "meta_size": 165,
+      "meta_sha256": "9bdba87556a4f6066114ebc56f5c9cec17c2979dc80b526da854a741842445fa",
+      "feed_filename": "nvdcve-2.0-2013.json.gz",
+      "feed_last_modified": "2026-08-20T07:04:02Z",
+      "meta": {
+        "size": 59654586,
+        "zip_size": 5798474,
+        "gz_size": 5798338,
+        "sha256": "f46f3b455e88f43f7234553b68d2120b95eb8a3832cc9a468970f3e6cfb087ab"
+      },
+      "compressed_size": 5798338,
+      "compressed_sha256": "2ded5b32e982d6e2242a0ce1237f01bd15e50ef4aae22238698d7b7a9c5c1baf",
+      "uncompressed_size": 59654586,
+      "uncompressed_sha256": "f46f3b455e88f43f7234553b68d2120b95eb8a3832cc9a468970f3e6cfb087ab",
+      "declared_count": 6830,
+      "parsed_count": 6830
+    },
+    {
+      "year": 2014,
+      "meta_filename": "nvdcve-2.0-2014.meta",
+      "meta_size": 165,
+      "meta_sha256": "8b92c37c95d58faeaefa36d74bc8c457277639e02e201de85cd0e73221fdedac",
+      "feed_filename": "nvdcve-2.0-2014.json.gz",
+      "feed_last_modified": "2026-07-14T07:02:51Z",
+      "meta": {
+        "size": 55250799,
+        "zip_size": 4546439,
+        "gz_size": 4546303,
+        "sha256": "f3e408c1442afce3153c96fba9983bd29c9f046ebef21abf083da0e7780717c3"
+      },
+      "compressed_size": 4546303,
+      "compressed_sha256": "2ba3757299a7516855405ad6d9ac471517e52f40a8c36639b2f9e1ab85f0e7ad",
+      "uncompressed_size": 55250799,
+      "uncompressed_sha256": "f3e408c1442afce3153c96fba9983bd29c9f046ebef21abf083da0e7780717c3",
+      "declared_count": 9002,
+      "parsed_count": 9002
+    },
+    {
+      "year": 2015,
+      "meta_filename": "nvdcve-2.0-2015.meta",
+      "meta_size": 165,
+      "meta_sha256": "b0039d4bf34c2c8f6fb39b4693949100128b0539be2e1c2596acfbc1a8f25cc8",
+      "feed_filename": "nvdcve-2.0-2015.json.gz",
+      "feed_last_modified": "2026-08-20T07:03:55Z",
+      "meta": {
+        "size": 55160480,
+        "zip_size": 4190193,
+        "gz_size": 4190057,
+        "sha256": "470a2fbb54a07f40788ffae177e39debd917d255cc73b2b8b679cb35c14f5cb2"
+      },
+      "compressed_size": 4190057,
+      "compressed_sha256": "6b9531f2c2dc08b6181838c9df08ccc8c9d28455a8ea77b8917c347e1cf8f16f",
+      "uncompressed_size": 55160480,
+      "uncompressed_sha256": "470a2fbb54a07f40788ffae177e39debd917d255cc73b2b8b679cb35c14f5cb2",
+      "declared_count": 8779,
+      "parsed_count": 8779
+    },
+    {
+      "year": 2016,
+      "meta_filename": "nvdcve-2.0-2016.meta",
+      "meta_size": 165,
+      "meta_sha256": "7c044560692f9d13bec7172808a6b097064fe75406e74f03fb75635e8a22c5eb",
+      "feed_filename": "nvdcve-2.0-2016.json.gz",
+      "feed_last_modified": "2026-08-15T07:03:11Z",
+      "meta": {
+        "size": 70187136,
+        "zip_size": 5159961,
+        "gz_size": 5159825,
+        "sha256": "f26a46f4ba00eb3c2a88997de658cf737a4ac52a5e54879ed201ca5d331bff08"
+      },
+      "compressed_size": 5159825,
+      "compressed_sha256": "17ed05886434172f581a9ffc240a5bf4bb7404d117e0323f19365a5a611ce2ce",
+      "uncompressed_size": 70187136,
+      "uncompressed_sha256": "f26a46f4ba00eb3c2a88997de658cf737a4ac52a5e54879ed201ca5d331bff08",
+      "declared_count": 10647,
+      "parsed_count": 10647
+    },
+    {
+      "year": 2017,
+      "meta_filename": "nvdcve-2.0-2017.meta",
+      "meta_size": 166,
+      "meta_sha256": "a81a991eedcffd4760633c315e15824a2e1d578898d202c9c4a64a0b0e244b4e",
+      "feed_filename": "nvdcve-2.0-2017.json.gz",
+      "feed_last_modified": "2026-08-20T07:03:44Z",
+      "meta": {
+        "size": 101764711,
+        "zip_size": 7708565,
+        "gz_size": 7708429,
+        "sha256": "d30f93aaddacf64c13ef119494c9bd01f48be422e236d19757f500fc98b8419e"
+      },
+      "compressed_size": 7708429,
+      "compressed_sha256": "2ec5be753c93560343b9335f4c28b2b8093666656d0182dc14f5218354d6498a",
+      "uncompressed_size": 101764711,
+      "uncompressed_sha256": "d30f93aaddacf64c13ef119494c9bd01f48be422e236d19757f500fc98b8419e",
+      "declared_count": 17104,
+      "parsed_count": 17104
+    },
+    {
+      "year": 2018,
+      "meta_filename": "nvdcve-2.0-2018.meta",
+      "meta_size": 166,
+      "meta_sha256": "a9f820dc790090ddeb8076eda65e9dc321e9c06e6bc22b40a0e600ba3b975c6b",
+      "feed_filename": "nvdcve-2.0-2018.json.gz",
+      "feed_last_modified": "2026-08-20T07:03:32Z",
+      "meta": {
+        "size": 108675681,
+        "zip_size": 8264649,
+        "gz_size": 8264513,
+        "sha256": "f1898db127a8935914d3df687b40d0c057101aa308103e6b51891e64ff583a6d"
+      },
+      "compressed_size": 8264513,
+      "compressed_sha256": "32d7ede44008063924c6a41a0f54ba2dc5c5257abb3b7f0f8a7effe5b80fbdf3",
+      "uncompressed_size": 108675681,
+      "uncompressed_sha256": "f1898db127a8935914d3df687b40d0c057101aa308103e6b51891e64ff583a6d",
+      "declared_count": 17817,
+      "parsed_count": 17817
+    },
+    {
+      "year": 2019,
+      "meta_filename": "nvdcve-2.0-2019.meta",
+      "meta_size": 168,
+      "meta_sha256": "2caded84b5925367c3e45d44d4b7bfdd0e75de7f0063aec602f3f12a792a4cc3",
+      "feed_filename": "nvdcve-2.0-2019.json.gz",
+      "feed_last_modified": "2026-08-20T07:03:18Z",
+      "meta": {
+        "size": 125831864,
+        "zip_size": 10172889,
+        "gz_size": 10172753,
+        "sha256": "75ff9fb9d1fa8ec2dfa9b95a3d47f08d5f033074d8eed64ad7cb92a210e89f9f"
+      },
+      "compressed_size": 10172753,
+      "compressed_sha256": "8d7ca19e546c76ebc089c1cb79a3fe6bfbc93e216d01cc479aeab4a3936d37e1",
+      "uncompressed_size": 125831864,
+      "uncompressed_sha256": "75ff9fb9d1fa8ec2dfa9b95a3d47f08d5f033074d8eed64ad7cb92a210e89f9f",
+      "declared_count": 17621,
+      "parsed_count": 17621
+    },
+    {
+      "year": 2020,
+      "meta_filename": "nvdcve-2.0-2020.meta",
+      "meta_size": 168,
+      "meta_sha256": "523f9d8960258655f00eb508345f54d8af9430cc0e7d9c625eac49db2864b693",
+      "feed_filename": "nvdcve-2.0-2020.json.gz",
+      "feed_last_modified": "2026-08-20T07:03:01Z",
+      "meta": {
+        "size": 165354001,
+        "zip_size": 13978486,
+        "gz_size": 13978350,
+        "sha256": "cccc5530220cd2edb40dbf60098fb11bc22d36673920e9d4da2731e4ded13aac"
+      },
+      "compressed_size": 13978350,
+      "compressed_sha256": "4c4b615c573f7ef030b36c9420bbebea1a7246fb2046b3f5f4ea2f7c7d6aa5ca",
+      "uncompressed_size": 165354001,
+      "uncompressed_sha256": "cccc5530220cd2edb40dbf60098fb11bc22d36673920e9d4da2731e4ded13aac",
+      "declared_count": 21070,
+      "parsed_count": 21070
+    },
+    {
+      "year": 2021,
+      "meta_filename": "nvdcve-2.0-2021.meta",
+      "meta_size": 168,
+      "meta_sha256": "2f8e16c2e999b4cec11c24f124d670b2c560103acc9789406f122712cf90c879",
+      "feed_filename": "nvdcve-2.0-2021.json.gz",
+      "feed_last_modified": "2026-08-20T07:02:39Z",
+      "meta": {
+        "size": 197559188,
+        "zip_size": 16832151,
+        "gz_size": 16832015,
+        "sha256": "d30f5550a263f4c365da18941bd534b43ef729d79a6861bf1cb75894a9cfbc68"
+      },
+      "compressed_size": 16832015,
+      "compressed_sha256": "9e71fcee76c01270b9c5014d170c5a395ad173aad30ddd85ae7a157d233f0293",
+      "uncompressed_size": 197559188,
+      "uncompressed_sha256": "d30f5550a263f4c365da18941bd534b43ef729d79a6861bf1cb75894a9cfbc68",
+      "declared_count": 23448,
+      "parsed_count": 23448
+    },
+    {
+      "year": 2022,
+      "meta_filename": "nvdcve-2.0-2022.meta",
+      "meta_size": 168,
+      "meta_sha256": "51682af67a5ed5cf5163b9f918bfa66029128528c24d8d602b5f6efffda9817e",
+      "feed_filename": "nvdcve-2.0-2022.json.gz",
+      "feed_last_modified": "2026-08-20T07:02:16Z",
+      "meta": {
+        "size": 216469449,
+        "zip_size": 18338534,
+        "gz_size": 18338398,
+        "sha256": "99701b50d0248063dce22af6c6167c89fe8c64aae10a2ed54dc6c14993759f50"
+      },
+      "compressed_size": 18338398,
+      "compressed_sha256": "343d349e5ae9d056aef12c46fa326cf4605c3f62602943b8dae8aad7185e8aaa",
+      "uncompressed_size": 216469449,
+      "uncompressed_sha256": "99701b50d0248063dce22af6c6167c89fe8c64aae10a2ed54dc6c14993759f50",
+      "declared_count": 27527,
+      "parsed_count": 27527
+    },
+    {
+      "year": 2023,
+      "meta_filename": "nvdcve-2.0-2023.meta",
+      "meta_size": 168,
+      "meta_sha256": "6ac794e348ae26a4c70253ab9e78743ef1a0e7cac9255bc04698c32b853f6ec7",
+      "feed_filename": "nvdcve-2.0-2023.json.gz",
+      "feed_last_modified": "2026-08-20T07:01:50Z",
+      "meta": {
+        "size": 247139476,
+        "zip_size": 20147691,
+        "gz_size": 20147555,
+        "sha256": "09f096eaa888fcb0aed57cc0e9bb52f2fb1142a6735c331553b36d954dee01a5"
+      },
+      "compressed_size": 20147555,
+      "compressed_sha256": "8fbd5ecdfd5ea1e1f9efbb4cb75a4740a7056d24eeaff0115da467ae73fda4fd",
+      "uncompressed_size": 247139476,
+      "uncompressed_sha256": "09f096eaa888fcb0aed57cc0e9bb52f2fb1142a6735c331553b36d954dee01a5",
+      "declared_count": 31245,
+      "parsed_count": 31245
+    },
+    {
+      "year": 2024,
+      "meta_filename": "nvdcve-2.0-2024.meta",
+      "meta_size": 168,
+      "meta_sha256": "4f848b6aec55457981eda146daa9057abc64238affacd799195e806ce950c94b",
+      "feed_filename": "nvdcve-2.0-2024.json.gz",
+      "feed_last_modified": "2026-08-20T07:01:18Z",
+      "meta": {
+        "size": 291762263,
+        "zip_size": 24981882,
+        "gz_size": 24981746,
+        "sha256": "c33c928f22641e8d824989a4fcc1b8806dc8f7a9e733de1475a08f033a09db8c"
+      },
+      "compressed_size": 24981746,
+      "compressed_sha256": "0aada3546812bfd0f3533608cd0f0c2f737bd9b2718b6397fe5a9788b748463b",
+      "uncompressed_size": 291762263,
+      "uncompressed_sha256": "c33c928f22641e8d824989a4fcc1b8806dc8f7a9e733de1475a08f033a09db8c",
+      "declared_count": 39225,
+      "parsed_count": 39225
+    },
+    {
+      "year": 2025,
+      "meta_filename": "nvdcve-2.0-2025.meta",
+      "meta_size": 168,
+      "meta_sha256": "9aacea406d00f1e4e293cd5ae484d7046b2d88601ad6c059da0224a44ab3f028",
+      "feed_filename": "nvdcve-2.0-2025.json.gz",
+      "feed_last_modified": "2026-08-20T07:00:44Z",
+      "meta": {
+        "size": 284680824,
+        "zip_size": 23795741,
+        "gz_size": 23795605,
+        "sha256": "cb8b5d84b2f64f4778f9a7473c233c36154e000da1b2380932c87b9e0a7ff516"
+      },
+      "compressed_size": 23795605,
+      "compressed_sha256": "65ead8ecb4c002888b116b8d86bbf334294dbdd06736d52df966adfb2eda79bb",
+      "uncompressed_size": 284680824,
+      "uncompressed_sha256": "cb8b5d84b2f64f4778f9a7473c233c36154e000da1b2380932c87b9e0a7ff516",
+      "declared_count": 45158,
+      "parsed_count": 45158
+    },
+    {
+      "year": 2026,
+      "meta_filename": "nvdcve-2.0-2026.meta",
+      "meta_size": 168,
+      "meta_sha256": "7c28e5aafe20eae2bbb4ab4fe9248428c246f102543aa231ce64b19113f122d0",
+      "feed_filename": "nvdcve-2.0-2026.json.gz",
+      "feed_last_modified": "2026-08-20T07:00:11Z",
+      "meta": {
+        "size": 290894524,
+        "zip_size": 24539936,
+        "gz_size": 24539800,
+        "sha256": "8c4c13cfd5b2ab699f34ebeed993e749eb96cd68dc7bd67d1183eb247b0c4484"
+      },
+      "compressed_size": 24539800,
+      "compressed_sha256": "9d1f434d7d08e303712828727281e2458d0b10f0bce29bd6f535b14e110ea869",
+      "uncompressed_size": 290894524,
+      "uncompressed_sha256": "8c4c13cfd5b2ab699f34ebeed993e749eb96cd68dc7bd67d1183eb247b0c4484",
+      "declared_count": 47544,
+      "parsed_count": 47544
+    }
+  ],
+  "total_declared_count": 380865,
+  "total_parsed_count": 380865,
+  "duplicate_cve_count": 0,
+  "content": {
+    "format": "nvd-cve-json-2.0-yearly-feeds",
+    "ordering": "feed-year-ascending",
+    "separator": "none",
+    "aggregate_size": 2665482931,
+    "aggregate_sha256": "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab"
+  },
+  "validation": {
+    "yearly_feed_range_complete": true,
+    "meta_stable_during_acquisition": true,
+    "compressed_sizes_match_meta": true,
+    "uncompressed_sizes_match_meta": true,
+    "uncompressed_sha256_matches_meta": true,
+    "json_valid": true,
+    "record_counts_match": true,
+    "cve_ids_valid": true,
+    "duplicate_cve_ids_absent": true
+  }
+}

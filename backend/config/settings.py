@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "sboms",
     "cpe_dictionary",
+    "nvd_cve",
 ]
 
 MIDDLEWARE = [
