@@ -1,0 +1,143 @@
+{
+  "schema_version": 2,
+  "snapshot_id": "20260819T035002Z",
+  "status": "VERIFIED",
+  "source": "NVD CPE Dictionary 2.0",
+  "source_meta_url": "https://nvd.nist.gov/feeds/json/cpe/2.0/nvdcpe-2.0.meta",
+  "source_feed_url": "https://nvd.nist.gov/feeds/json/cpe/2.0/nvdcpe-2.0.tar.gz",
+  "source_schema_url": "https://csrc.nist.gov/schema/nvd/api/2.0/cpe_api_json_2.0.schema",
+  "feed_last_modified": "2026-08-19T03:50:02Z",
+  "retrieved_at": "2026-08-20T01:25:56Z",
+  "meta": {
+    "size": 879715474,
+    "zip_size": 82511153,
+    "gz_size": 82499493,
+    "sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a"
+  },
+  "archive": {
+    "filename": "nvdcpe-2.0.tar.gz",
+    "size": 82499493,
+    "sha256": "7e44ea57d5bc36f239468d5c10cd8fe7af8cf1eb81e8527edeb192120d90a66f"
+  },
+  "content": {
+    "format": "chunked-json",
+    "member_count": 17,
+    "ordering": "numeric-chunk-sequence",
+    "separator": "none",
+    "aggregate_size": 879715474,
+    "aggregate_sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+    "members": [
+      {
+        "sequence": 1,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00001.json",
+        "size": 52569179,
+        "sha256": "2d68de12b626b53d4093c3e2961154f93808008ec9340eb3859f04d00c389147"
+      },
+      {
+        "sequence": 2,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00002.json",
+        "size": 52546776,
+        "sha256": "b93da6758c5a6232f0c591a7bf0b0568e11c26b8c0249627401a73e348c80f67"
+      },
+      {
+        "sequence": 3,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00003.json",
+        "size": 52544865,
+        "sha256": "36198f51eac035dec01c94f515e4b3df5787c99a90a14ebc1e34d375f5c82e78"
+      },
+      {
+        "sequence": 4,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00004.json",
+        "size": 52546224,
+        "sha256": "e4f186dd41d050a1b82e588e26b287219534e8509f08afebc3b9054bcc08521a"
+      },
+      {
+        "sequence": 5,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00005.json",
+        "size": 52541622,
+        "sha256": "5e58933c5788c7509e44977f2785d71b9793f112f5ec684ab833c2679ec8a435"
+      },
+      {
+        "sequence": 6,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00006.json",
+        "size": 52540271,
+        "sha256": "9f52577b15ce2c3bbfb00ab345698861060d35f9d81b4ff4e600042cc4040530"
+      },
+      {
+        "sequence": 7,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00007.json",
+        "size": 52535712,
+        "sha256": "a57dc35dcd9518245db5cb05265dd059ee37eb3edb43f7062f8384fbe7fb50a7"
+      },
+      {
+        "sequence": 8,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00008.json",
+        "size": 52533293,
+        "sha256": "a6488485d0169036eb6af497f1974da88df54ca91bd75b4923b3fa18c1b983c4"
+      },
+      {
+        "sequence": 9,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00009.json",
+        "size": 52537539,
+        "sha256": "67f2f1df4af407f6a88477f68aa41de4d4dfdd5f6f872aa8a24db217a0d79036"
+      },
+      {
+        "sequence": 10,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00010.json",
+        "size": 52529000,
+        "sha256": "c1a968cfe62ea82c12b82eb2a8f0316fcbf2a82863ff0e34e8cb95c67c52f6f1"
+      },
+      {
+        "sequence": 11,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00011.json",
+        "size": 52530563,
+        "sha256": "0d4fe208821f20932fed2aa0e0c6defcf6b7db2451bbb91f915c15a0fc244bba"
+      },
+      {
+        "sequence": 12,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00012.json",
+        "size": 52524044,
+        "sha256": "8ac0057d9f464b6af56470beb3975809489dd6a1cebd0dd5033977a38baa299b"
+      },
+      {
+        "sequence": 13,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00013.json",
+        "size": 52525510,
+        "sha256": "207644d4d1481db913c86b0fc205f8332590af85f9ffc9cfb424a2016216526f"
+      },
+      {
+        "sequence": 14,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00014.json",
+        "size": 52532360,
+        "sha256": "5f1be5af553d68eea0cc4b5a2fb429884ca8c3b5faad5ac01d98ff6b704f13b9"
+      },
+      {
+        "sequence": 15,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00015.json",
+        "size": 52531126,
+        "sha256": "36c5c67c9414404ace986a8cb49d9312af569cded77bcf1acc6afb97c9868fa2"
+      },
+      {
+        "sequence": 16,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00016.json",
+        "size": 52534314,
+        "sha256": "287c418ed6497f473932e8abfd5edf9c1b1837bf591ca1667542768aa44d8bf9"
+      },
+      {
+        "sequence": 17,
+        "name": "nvdcpe-2.0-chunks/nvdcpe-2.0-chunk-00017.json",
+        "size": 39113076,
+        "sha256": "cf52be4eb19de1b68bb729d5e7a82132c86b1ed2a25a75ca5128e80b568d1ab5"
+      }
+    ]
+  },
+  "validation": {
+    "archive_size_matches_meta": true,
+    "safe_archive_members": true,
+    "member_names_valid": true,
+    "member_sequences_unique": true,
+    "member_sequences_contiguous": true,
+    "aggregate_size_matches_meta": true,
+    "aggregate_sha256_matches_meta": true
+  }
+}
