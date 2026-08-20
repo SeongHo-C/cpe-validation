@@ -220,10 +220,10 @@ __marimo__/
 .streamlit/secrets.toml
 
 # NVD CPE Dictionary snapshot archives and partial work
-data/cpe-dictionary/snapshots/*/nvdcpe-2.0.tar.gz
-data/cpe-dictionary/snapshots/*/nvdcpe-2.0.json
-data/cpe-dictionary/snapshots/.*.tmp-*/
-data/cpe-dictionary/snapshots/**/*.part
+data/cpe-dictionary/*/nvdcpe-2.0.tar.gz
+data/cpe-dictionary/*/nvdcpe-2.0.json
+data/cpe-dictionary/.*.tmp-*/
+data/cpe-dictionary/**/*.part
 
 # Uploaded SBOM originals
 data/uploaded-sboms/

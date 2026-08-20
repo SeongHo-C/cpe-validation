@@ -17,7 +17,7 @@ from cpe_dictionary.importer import (
 
 
 DEFAULT_INPUT_ROOT = Path(
-    "data/cpe-dictionary/snapshots"
+    "data/cpe-dictionary"
 )
 
 

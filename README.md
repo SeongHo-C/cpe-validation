@@ -172,14 +172,14 @@ Open <http://127.0.0.1:5173>.
 The verified snapshot manifest is:
 
 ```text
-data/cpe-dictionary/snapshots/20260725T035002Z/manifest.json
+data/cpe-dictionary/20260725T035002Z/manifest.json
 ```
 
 The matching NVD archive is intentionally excluded from Git and must be placed
 at:
 
 ```text
-data/cpe-dictionary/snapshots/20260725T035002Z/nvdcpe-2.0.tar.gz
+data/cpe-dictionary/20260725T035002Z/nvdcpe-2.0.tar.gz
 ```
 
 The manifest records the source URLs, retrieval time, archive SHA-256, aggregate
