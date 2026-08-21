@@ -233,3 +233,6 @@ data/nvd-cve/**/*.part
 # Uploaded SBOM originals
 data/uploaded-sboms/
 data/source-artifacts/
+
+# Reproducible but large generated NVD/Dictionary coverage detail
+analysis/results/nvd-cpe-dictionary-coverage/*/criteria_coverage.csv.gz

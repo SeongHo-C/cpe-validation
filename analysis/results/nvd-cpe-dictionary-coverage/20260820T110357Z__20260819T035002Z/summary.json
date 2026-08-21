@@ -1,0 +1,3185 @@
+{
+  "analysis_scope": "Read-only raw-string exact and raw part/vendor/product tuple coverage analysis between active COMPLETE NVD CVE and CPE Dictionary snapshots. A distinct criteria string is called a distinct Configuration criteria expression, not a unique CPE. No normalization, deprecated replacement traversal, range evaluation, or applicability matching is performed.",
+  "comparison_definitions": {
+    "exact": "case-sensitive raw criteria == CpeName.cpe_name",
+    "expression_term": "distinct Configuration criteria expression",
+    "expression_unit": "DISTINCT NvdCpeMatch.criteria",
+    "product_tuple": "case-sensitive raw parsed (part, vendor, product)",
+    "range_identity": "not compared; only NO_RANGE_ONLY, RANGE_ONLY, and BOTH_RANGE_AND_NO_RANGE usage are retained"
+  },
+  "configuration_only_product_tuples": {
+    "criteria_expressions_with_parseable_tuple": 75956,
+    "distinct_product_tuple_count": 31895,
+    "distinct_product_value_count": 30450,
+    "distinct_vendor_value_count": 15974,
+    "occurrences_with_parseable_tuple": 157574,
+    "part_distribution": {
+      "a": 23073,
+      "h": 3663,
+      "o": 5159,
+      "other": 0
+    },
+    "top_by_distinct_cve": [
+      {
+        "distinct_criteria_expression_count": 44,
+        "distinct_cve_count": 215,
+        "occurrence_count": 623,
+        "part": "a",
+        "product": "joomla",
+        "vendor": "joomla",
+        "vulnerable_false_count": 205,
+        "vulnerable_true_count": 418
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 170,
+        "occurrence_count": 170,
+        "part": "a",
+        "product": "microsoft_365",
+        "vendor": "microsoft",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 170
+      },
+      {
+        "distinct_criteria_expression_count": 450,
+        "distinct_cve_count": 115,
+        "occurrence_count": 11327,
+        "part": "o",
+        "product": "opensolaris",
+        "vendor": "sun",
+        "vulnerable_false_count": 6,
+        "vulnerable_true_count": 11321
+      },
+      {
+        "distinct_criteria_expression_count": 58,
+        "distinct_cve_count": 105,
+        "occurrence_count": 1889,
+        "part": "a",
+        "product": "ethereal",
+        "vendor": "ethereal_group",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 1889
+      },
+      {
+        "distinct_criteria_expression_count": 42,
+        "distinct_cve_count": 96,
+        "occurrence_count": 713,
+        "part": "a",
+        "product": "php-nuke",
+        "vendor": "francisco_burzi",
+        "vulnerable_false_count": 29,
+        "vulnerable_true_count": 684
+      },
+      {
+        "distinct_criteria_expression_count": 47,
+        "distinct_cve_count": 82,
+        "occurrence_count": 932,
+        "part": "a",
+        "product": "phpbb",
+        "vendor": "phpbb_group",
+        "vulnerable_false_count": 1,
+        "vulnerable_true_count": 931
+      },
+      {
+        "distinct_criteria_expression_count": 48,
+        "distinct_cve_count": 75,
+        "occurrence_count": 241,
+        "part": "o",
+        "product": "ubuntu_linux",
+        "vendor": "ubuntu",
+        "vulnerable_false_count": 53,
+        "vulnerable_true_count": 188
+      },
+      {
+        "distinct_criteria_expression_count": 24,
+        "distinct_cve_count": 66,
+        "occurrence_count": 128,
+        "part": "o",
+        "product": "unixware",
+        "vendor": "sco",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 128
+      },
+      {
+        "distinct_criteria_expression_count": 44,
+        "distinct_cve_count": 63,
+        "occurrence_count": 347,
+        "part": "a",
+        "product": "mybulletinboard",
+        "vendor": "mybulletinboard",
+        "vulnerable_false_count": 13,
+        "vulnerable_true_count": 334
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 62,
+        "occurrence_count": 62,
+        "part": "o",
+        "product": "qualcomm_215_firmware",
+        "vendor": "qualcomm",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 62
+      },
+      {
+        "distinct_criteria_expression_count": 101,
+        "distinct_cve_count": 61,
+        "occurrence_count": 974,
+        "part": "a",
+        "product": "clamav",
+        "vendor": "clam_anti-virus",
+        "vulnerable_false_count": 1,
+        "vulnerable_true_count": 973
+      },
+      {
+        "distinct_criteria_expression_count": 2,
+        "distinct_cve_count": 59,
+        "occurrence_count": 59,
+        "part": "a",
+        "product": "ftp_server",
+        "vendor": "pcman",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 59
+      },
+      {
+        "distinct_criteria_expression_count": 258,
+        "distinct_cve_count": 57,
+        "occurrence_count": 5411,
+        "part": "a",
+        "product": "tor",
+        "vendor": "tor",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 5411
+      },
+      {
+        "distinct_criteria_expression_count": 69,
+        "distinct_cve_count": 55,
+        "occurrence_count": 496,
+        "part": "a",
+        "product": "vbulletin",
+        "vendor": "jelsoft",
+        "vulnerable_false_count": 21,
+        "vulnerable_true_count": 475
+      },
+      {
+        "distinct_criteria_expression_count": 68,
+        "distinct_cve_count": 52,
+        "occurrence_count": 660,
+        "part": "a",
+        "product": "oracle9i",
+        "vendor": "oracle",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 660
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 49,
+        "occurrence_count": 49,
+        "part": "a",
+        "product": "vasion_print",
+        "vendor": "printerlogic",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 49
+      },
+      {
+        "distinct_criteria_expression_count": 56,
+        "distinct_cve_count": 47,
+        "occurrence_count": 612,
+        "part": "a",
+        "product": "punbb",
+        "vendor": "punbb",
+        "vulnerable_false_count": 6,
+        "vulnerable_true_count": 606
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 47,
+        "occurrence_count": 47,
+        "part": "a",
+        "product": "hardened_images",
+        "vendor": "redhat",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 47
+      },
+      {
+        "distinct_criteria_expression_count": 99,
+        "distinct_cve_count": 46,
+        "occurrence_count": 1231,
+        "part": "a",
+        "product": "mantis",
+        "vendor": "mantis",
+        "vulnerable_false_count": 62,
+        "vulnerable_true_count": 1169
+      },
+      {
+        "distinct_criteria_expression_count": 60,
+        "distinct_cve_count": 46,
+        "occurrence_count": 318,
+        "part": "a",
+        "product": "oracle8i",
+        "vendor": "oracle",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 318
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 45,
+        "occurrence_count": 45,
+        "part": "h",
+        "product": "cologne",
+        "vendor": "qualcomm",
+        "vulnerable_false_count": 45,
+        "vulnerable_true_count": 0
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 45,
+        "occurrence_count": 45,
+        "part": "o",
+        "product": "cologne_firmware",
+        "vendor": "qualcomm",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 45
+      },
+      {
+        "distinct_criteria_expression_count": 41,
+        "distinct_cve_count": 44,
+        "occurrence_count": 169,
+        "part": "a",
+        "product": "peoplesoft_and_jdedwards_product_suite",
+        "vendor": "oracle",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 169
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 44,
+        "occurrence_count": 44,
+        "part": "o",
+        "product": "linux_desktop",
+        "vendor": "redhat",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 44
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 44,
+        "occurrence_count": 44,
+        "part": "o",
+        "product": "linux_server",
+        "vendor": "redhat",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 44
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 44,
+        "occurrence_count": 44,
+        "part": "o",
+        "product": "linux_workstation",
+        "vendor": "redhat",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 44
+      },
+      {
+        "distinct_criteria_expression_count": 45,
+        "distinct_cve_count": 42,
+        "occurrence_count": 366,
+        "part": "a",
+        "product": "invision_power_board",
+        "vendor": "invision_power_services",
+        "vulnerable_false_count": 8,
+        "vulnerable_true_count": 358
+      },
+      {
+        "distinct_criteria_expression_count": 34,
+        "distinct_cve_count": 40,
+        "occurrence_count": 126,
+        "part": "a",
+        "product": "mambo",
+        "vendor": "mambo",
+        "vulnerable_false_count": 14,
+        "vulnerable_true_count": 112
+      },
+      {
+        "distinct_criteria_expression_count": 2,
+        "distinct_cve_count": 40,
+        "occurrence_count": 41,
+        "part": "o",
+        "product": "unix",
+        "vendor": "unix",
+        "vulnerable_false_count": 39,
+        "vulnerable_true_count": 2
+      },
+      {
+        "distinct_criteria_expression_count": 31,
+        "distinct_cve_count": 39,
+        "occurrence_count": 89,
+        "part": "a",
+        "product": "postnuke",
+        "vendor": "postnuke_software_foundation",
+        "vulnerable_false_count": 1,
+        "vulnerable_true_count": 88
+      }
+    ],
+    "top_by_occurrence": [
+      {
+        "distinct_criteria_expression_count": 450,
+        "distinct_cve_count": 115,
+        "occurrence_count": 11327,
+        "part": "o",
+        "product": "opensolaris",
+        "vendor": "sun",
+        "vulnerable_false_count": 6,
+        "vulnerable_true_count": 11321
+      },
+      {
+        "distinct_criteria_expression_count": 258,
+        "distinct_cve_count": 57,
+        "occurrence_count": 5411,
+        "part": "a",
+        "product": "tor",
+        "vendor": "tor",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 5411
+      },
+      {
+        "distinct_criteria_expression_count": 58,
+        "distinct_cve_count": 105,
+        "occurrence_count": 1889,
+        "part": "a",
+        "product": "ethereal",
+        "vendor": "ethereal_group",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 1889
+      },
+      {
+        "distinct_criteria_expression_count": 99,
+        "distinct_cve_count": 46,
+        "occurrence_count": 1231,
+        "part": "a",
+        "product": "mantis",
+        "vendor": "mantis",
+        "vulnerable_false_count": 62,
+        "vulnerable_true_count": 1169
+      },
+      {
+        "distinct_criteria_expression_count": 73,
+        "distinct_cve_count": 28,
+        "occurrence_count": 1020,
+        "part": "a",
+        "product": "poppler",
+        "vendor": "poppler",
+        "vulnerable_false_count": 1,
+        "vulnerable_true_count": 1019
+      },
+      {
+        "distinct_criteria_expression_count": 101,
+        "distinct_cve_count": 61,
+        "occurrence_count": 974,
+        "part": "a",
+        "product": "clamav",
+        "vendor": "clam_anti-virus",
+        "vulnerable_false_count": 1,
+        "vulnerable_true_count": 973
+      },
+      {
+        "distinct_criteria_expression_count": 263,
+        "distinct_cve_count": 4,
+        "occurrence_count": 947,
+        "part": "h",
+        "product": "ios_transmission_control_protocol",
+        "vendor": "cisco",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 947
+      },
+      {
+        "distinct_criteria_expression_count": 47,
+        "distinct_cve_count": 82,
+        "occurrence_count": 932,
+        "part": "a",
+        "product": "phpbb",
+        "vendor": "phpbb_group",
+        "vulnerable_false_count": 1,
+        "vulnerable_true_count": 931
+      },
+      {
+        "distinct_criteria_expression_count": 68,
+        "distinct_cve_count": 38,
+        "occurrence_count": 819,
+        "part": "a",
+        "product": "xine-lib",
+        "vendor": "xine",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 819
+      },
+      {
+        "distinct_criteria_expression_count": 42,
+        "distinct_cve_count": 96,
+        "occurrence_count": 713,
+        "part": "a",
+        "product": "php-nuke",
+        "vendor": "francisco_burzi",
+        "vulnerable_false_count": 29,
+        "vulnerable_true_count": 684
+      },
+      {
+        "distinct_criteria_expression_count": 68,
+        "distinct_cve_count": 52,
+        "occurrence_count": 660,
+        "part": "a",
+        "product": "oracle9i",
+        "vendor": "oracle",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 660
+      },
+      {
+        "distinct_criteria_expression_count": 44,
+        "distinct_cve_count": 215,
+        "occurrence_count": 623,
+        "part": "a",
+        "product": "joomla",
+        "vendor": "joomla",
+        "vulnerable_false_count": 205,
+        "vulnerable_true_count": 418
+      },
+      {
+        "distinct_criteria_expression_count": 56,
+        "distinct_cve_count": 47,
+        "occurrence_count": 612,
+        "part": "a",
+        "product": "punbb",
+        "vendor": "punbb",
+        "vulnerable_false_count": 6,
+        "vulnerable_true_count": 606
+      },
+      {
+        "distinct_criteria_expression_count": 102,
+        "distinct_cve_count": 37,
+        "occurrence_count": 579,
+        "part": "a",
+        "product": "squid",
+        "vendor": "squid",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 579
+      },
+      {
+        "distinct_criteria_expression_count": 1,
+        "distinct_cve_count": 12,
+        "occurrence_count": 532,
+        "part": "o",
+        "product": "aos-cx",
+        "vendor": "arubanetworks",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 532
+      },
+      {
+        "distinct_criteria_expression_count": 272,
+        "distinct_cve_count": 8,
+        "occurrence_count": 514,
+        "part": "o",
+        "product": "cisco_ios",
+        "vendor": "cisco",
+        "vulnerable_false_count": 41,
+        "vulnerable_true_count": 473
+      },
+      {
+        "distinct_criteria_expression_count": 35,
+        "distinct_cve_count": 15,
+        "occurrence_count": 497,
+        "part": "a",
+        "product": "domain_technologie_control",
+        "vendor": "gplhost",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 497
+      },
+      {
+        "distinct_criteria_expression_count": 69,
+        "distinct_cve_count": 55,
+        "occurrence_count": 496,
+        "part": "a",
+        "product": "vbulletin",
+        "vendor": "jelsoft",
+        "vulnerable_false_count": 21,
+        "vulnerable_true_count": 475
+      },
+      {
+        "distinct_criteria_expression_count": 134,
+        "distinct_cve_count": 36,
+        "occurrence_count": 450,
+        "part": "a",
+        "product": "f-secure_anti-virus",
+        "vendor": "f-secure",
+        "vulnerable_false_count": 6,
+        "vulnerable_true_count": 444
+      },
+      {
+        "distinct_criteria_expression_count": 190,
+        "distinct_cve_count": 20,
+        "occurrence_count": 441,
+        "part": "a",
+        "product": "asterisk",
+        "vendor": "asterisk",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 441
+      },
+      {
+        "distinct_criteria_expression_count": 242,
+        "distinct_cve_count": 3,
+        "occurrence_count": 417,
+        "part": "a",
+        "product": "jp1_file_transmission_server",
+        "vendor": "hitachi",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 417
+      },
+      {
+        "distinct_criteria_expression_count": 59,
+        "distinct_cve_count": 35,
+        "occurrence_count": 411,
+        "part": "a",
+        "product": "cups",
+        "vendor": "easy_software_products",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 411
+      },
+      {
+        "distinct_criteria_expression_count": 51,
+        "distinct_cve_count": 26,
+        "occurrence_count": 385,
+        "part": "a",
+        "product": "gaim",
+        "vendor": "rob_flynn",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 385
+      },
+      {
+        "distinct_criteria_expression_count": 64,
+        "distinct_cve_count": 9,
+        "occurrence_count": 368,
+        "part": "a",
+        "product": "smf",
+        "vendor": "simplemachines",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 368
+      },
+      {
+        "distinct_criteria_expression_count": 45,
+        "distinct_cve_count": 42,
+        "occurrence_count": 366,
+        "part": "a",
+        "product": "invision_power_board",
+        "vendor": "invision_power_services",
+        "vulnerable_false_count": 8,
+        "vulnerable_true_count": 358
+      },
+      {
+        "distinct_criteria_expression_count": 44,
+        "distinct_cve_count": 63,
+        "occurrence_count": 347,
+        "part": "a",
+        "product": "mybulletinboard",
+        "vendor": "mybulletinboard",
+        "vulnerable_false_count": 13,
+        "vulnerable_true_count": 334
+      },
+      {
+        "distinct_criteria_expression_count": 109,
+        "distinct_cve_count": 4,
+        "occurrence_count": 336,
+        "part": "a",
+        "product": "bugport",
+        "vendor": "incogen",
+        "vulnerable_false_count": 9,
+        "vulnerable_true_count": 327
+      },
+      {
+        "distinct_criteria_expression_count": 57,
+        "distinct_cve_count": 22,
+        "occurrence_count": 333,
+        "part": "a",
+        "product": "kerio_mailserver",
+        "vendor": "kerio",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 333
+      },
+      {
+        "distinct_criteria_expression_count": 50,
+        "distinct_cve_count": 12,
+        "occurrence_count": 329,
+        "part": "a",
+        "product": "winroute_firewall",
+        "vendor": "kerio",
+        "vulnerable_false_count": 37,
+        "vulnerable_true_count": 292
+      },
+      {
+        "distinct_criteria_expression_count": 60,
+        "distinct_cve_count": 46,
+        "occurrence_count": 318,
+        "part": "a",
+        "product": "oracle8i",
+        "vendor": "oracle",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 318
+      }
+    ],
+    "unparseable_criteria_expression_count": 0,
+    "unparseable_occurrence_count": 0
+  },
+  "coverage_by_criteria_form": {
+    "CONCRETE": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 55706,
+          "distinct_cve_count": 25361,
+          "expression_percent_within_group": 20.51680576,
+          "occurrence_count": 116862,
+          "occurrence_percent_within_group": 6.77387437
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 27657,
+          "distinct_cve_count": 17568,
+          "expression_percent_within_group": 10.18621508,
+          "occurrence_count": 89915,
+          "occurrence_percent_within_group": 5.21189877
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 188151,
+          "distinct_cve_count": 138035,
+          "expression_percent_within_group": 69.29697916,
+          "occurrence_count": 1518410,
+          "occurrence_percent_within_group": 88.01422686
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 83363,
+          "distinct_cve_count": 41789,
+          "occurrence_count": 206777
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 188151,
+          "distinct_cve_count": 138035,
+          "occurrence_count": 1518410
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 55706,
+          "distinct_cve_count": 25361,
+          "expression_percent_of_exact_absent": 66.82341087,
+          "occurrence_count": 116862,
+          "occurrence_percent_of_exact_absent": 56.5159568
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 27657,
+          "distinct_cve_count": 17568,
+          "expression_percent_of_exact_absent": 33.17658913,
+          "occurrence_count": 89915,
+          "occurrence_percent_of_exact_absent": 43.4840432
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 271514,
+        "distinct_cve_count": 168050,
+        "occurrence_count": 1725187
+      }
+    },
+    "HYPHEN": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 3383,
+          "distinct_cve_count": 3063,
+          "expression_percent_within_group": 3.98830506,
+          "occurrence_count": 9180,
+          "occurrence_percent_within_group": 1.01421447
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 324,
+          "distinct_cve_count": 545,
+          "expression_percent_within_group": 0.38197187,
+          "occurrence_count": 812,
+          "occurrence_percent_within_group": 0.08971047
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 81116,
+          "distinct_cve_count": 53669,
+          "expression_percent_within_group": 95.62972307,
+          "occurrence_count": 895142,
+          "occurrence_percent_within_group": 98.89607506
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 3707,
+          "distinct_cve_count": 3574,
+          "occurrence_count": 9992
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 81116,
+          "distinct_cve_count": 53669,
+          "occurrence_count": 895142
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 3383,
+          "distinct_cve_count": 3063,
+          "expression_percent_of_exact_absent": 91.2597788,
+          "occurrence_count": 9180,
+          "occurrence_percent_of_exact_absent": 91.8734988
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 324,
+          "distinct_cve_count": 545,
+          "expression_percent_of_exact_absent": 8.7402212,
+          "occurrence_count": 812,
+          "occurrence_percent_of_exact_absent": 8.1265012
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 84823,
+        "distinct_cve_count": 55910,
+        "occurrence_count": 905134
+      }
+    },
+    "OTHER": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "occurrence_count": 0
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "occurrence_count": 0
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_of_exact_absent": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_of_exact_absent": 0.0
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_of_exact_absent": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_of_exact_absent": 0.0
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 0,
+        "distinct_cve_count": 0,
+        "occurrence_count": 0
+      }
+    },
+    "WILDCARD_BOTH": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 250,
+          "distinct_cve_count": 1133,
+          "expression_percent_within_group": 14.96110114,
+          "occurrence_count": 1380,
+          "occurrence_percent_within_group": 0.87734356
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 1421,
+          "distinct_cve_count": 52662,
+          "expression_percent_within_group": 85.03889886,
+          "occurrence_count": 155913,
+          "occurrence_percent_within_group": 99.12265644
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 1671,
+          "distinct_cve_count": 53707,
+          "occurrence_count": 157293
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "occurrence_count": 0
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 250,
+          "distinct_cve_count": 1133,
+          "expression_percent_of_exact_absent": 14.96110114,
+          "occurrence_count": 1380,
+          "occurrence_percent_of_exact_absent": 0.87734356
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 1421,
+          "distinct_cve_count": 52662,
+          "expression_percent_of_exact_absent": 85.03889886,
+          "occurrence_count": 155913,
+          "occurrence_percent_of_exact_absent": 99.12265644
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 1671,
+        "distinct_cve_count": 53707,
+        "occurrence_count": 157293
+      }
+    },
+    "WILDCARD_NO_RANGE": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 3688,
+          "distinct_cve_count": 3591,
+          "expression_percent_within_group": 39.77566868,
+          "occurrence_count": 5200,
+          "occurrence_percent_within_group": 17.22824106
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 5584,
+          "distinct_cve_count": 6610,
+          "expression_percent_within_group": 60.22433132,
+          "occurrence_count": 24983,
+          "occurrence_percent_within_group": 82.77175894
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 9272,
+          "distinct_cve_count": 9930,
+          "occurrence_count": 30183
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "occurrence_count": 0
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 3688,
+          "distinct_cve_count": 3591,
+          "expression_percent_of_exact_absent": 39.77566868,
+          "occurrence_count": 5200,
+          "occurrence_percent_of_exact_absent": 17.22824106
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 5584,
+          "distinct_cve_count": 6610,
+          "expression_percent_of_exact_absent": 60.22433132,
+          "occurrence_count": 24983,
+          "occurrence_percent_of_exact_absent": 82.77175894
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 9272,
+        "distinct_cve_count": 9930,
+        "occurrence_count": 30183
+      }
+    },
+    "WILDCARD_RANGE": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 12929,
+          "distinct_cve_count": 13798,
+          "expression_percent_within_group": 21.14758657,
+          "occurrence_count": 24952,
+          "occurrence_percent_within_group": 7.08157491
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 48208,
+          "distinct_cve_count": 123530,
+          "expression_percent_within_group": 78.85241343,
+          "occurrence_count": 327399,
+          "occurrence_percent_within_group": 92.91842509
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 61137,
+          "distinct_cve_count": 135967,
+          "occurrence_count": 352351
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "occurrence_count": 0
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 12929,
+          "distinct_cve_count": 13798,
+          "expression_percent_of_exact_absent": 21.14758657,
+          "occurrence_count": 24952,
+          "occurrence_percent_of_exact_absent": 7.08157491
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 48208,
+          "distinct_cve_count": 123530,
+          "expression_percent_of_exact_absent": 78.85241343,
+          "occurrence_count": 327399,
+          "occurrence_percent_of_exact_absent": 92.91842509
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 61137,
+        "distinct_cve_count": 135967,
+        "occurrence_count": 352351
+      }
+    }
+  },
+  "coverage_by_part": {
+    "a": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 64180,
+          "distinct_cve_count": 37180,
+          "expression_percent_within_group": 24.05475098,
+          "occurrence_count": 118080,
+          "occurrence_percent_within_group": 8.76359013
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 55418,
+          "distinct_cve_count": 139357,
+          "expression_percent_within_group": 20.77074151,
+          "occurrence_count": 319431,
+          "occurrence_percent_within_group": 23.70733706
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 147210,
+          "distinct_cve_count": 92777,
+          "expression_percent_within_group": 55.17450751,
+          "occurrence_count": 909882,
+          "occurrence_percent_within_group": 67.52907281
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 119598,
+          "distinct_cve_count": 173885,
+          "occurrence_count": 437511
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 147210,
+          "distinct_cve_count": 92777,
+          "occurrence_count": 909882
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 64180,
+          "distinct_cve_count": 37180,
+          "expression_percent_of_exact_absent": 53.66310473,
+          "occurrence_count": 118080,
+          "occurrence_percent_of_exact_absent": 26.9890357
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 55418,
+          "distinct_cve_count": 139357,
+          "expression_percent_of_exact_absent": 46.33689527,
+          "occurrence_count": 319431,
+          "occurrence_percent_of_exact_absent": 73.0109643
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 266808,
+        "distinct_cve_count": 237886,
+        "occurrence_count": 1347393
+      }
+    },
+    "h": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 5038,
+          "distinct_cve_count": 3116,
+          "expression_percent_within_group": 7.33717814,
+          "occurrence_count": 12376,
+          "occurrence_percent_within_group": 2.09382983
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 3989,
+          "distinct_cve_count": 1462,
+          "expression_percent_within_group": 5.80944891,
+          "occurrence_count": 8834,
+          "occurrence_percent_within_group": 1.49457763
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 59637,
+          "distinct_cve_count": 28689,
+          "expression_percent_within_group": 86.85337295,
+          "occurrence_count": 569860,
+          "occurrence_percent_within_group": 96.41159254
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 9027,
+          "distinct_cve_count": 4403,
+          "occurrence_count": 21210
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 59637,
+          "distinct_cve_count": 28689,
+          "occurrence_count": 569860
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 5038,
+          "distinct_cve_count": 3116,
+          "expression_percent_of_exact_absent": 55.81034674,
+          "occurrence_count": 12376,
+          "occurrence_percent_of_exact_absent": 58.34983498
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 3989,
+          "distinct_cve_count": 1462,
+          "expression_percent_of_exact_absent": 44.18965326,
+          "occurrence_count": 8834,
+          "occurrence_percent_of_exact_absent": 41.65016502
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 68664,
+        "distinct_cve_count": 32199,
+        "occurrence_count": 591070
+      }
+    },
+    "o": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 6738,
+          "distinct_cve_count": 4022,
+          "expression_percent_within_group": 7.2494486,
+          "occurrence_count": 27118,
+          "occurrence_percent_within_group": 2.2016993
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 23787,
+          "distinct_cve_count": 46693,
+          "expression_percent_within_group": 25.59255474,
+          "occurrence_count": 270757,
+          "occurrence_percent_within_group": 21.98264978
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 62420,
+          "distinct_cve_count": 74850,
+          "expression_percent_within_group": 67.15799666,
+          "occurrence_count": 933810,
+          "occurrence_percent_within_group": 75.81565092
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 30525,
+          "distinct_cve_count": 49648,
+          "occurrence_count": 297875
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 62420,
+          "distinct_cve_count": 74850,
+          "occurrence_count": 933810
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 6738,
+          "distinct_cve_count": 4022,
+          "expression_percent_of_exact_absent": 22.07371007,
+          "occurrence_count": 27118,
+          "occurrence_percent_of_exact_absent": 9.10381872
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 23787,
+          "distinct_cve_count": 46693,
+          "expression_percent_of_exact_absent": 77.92628993,
+          "occurrence_count": 270757,
+          "occurrence_percent_of_exact_absent": 90.89618128
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 92945,
+        "distinct_cve_count": 104789,
+        "occurrence_count": 1231685
+      }
+    },
+    "other": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_within_group": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_within_group": 0.0
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "occurrence_count": 0
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "occurrence_count": 0
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_of_exact_absent": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_of_exact_absent": 0.0
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 0,
+          "distinct_cve_count": 0,
+          "expression_percent_of_exact_absent": 0.0,
+          "occurrence_count": 0,
+          "occurrence_percent_of_exact_absent": 0.0
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 0,
+        "distinct_cve_count": 0,
+        "occurrence_count": 0
+      }
+    }
+  },
+  "coverage_by_vulnerable_usage": {
+    "BOTH_TRUE_AND_FALSE": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 742,
+          "distinct_cve_count": 1410,
+          "expression_percent_within_group": 8.26096638,
+          "occurrence_count": 5200,
+          "occurrence_percent_within_group": 0.74232161
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 1146,
+          "distinct_cve_count": 50654,
+          "expression_percent_within_group": 12.75885104,
+          "occurrence_count": 163130,
+          "occurrence_percent_within_group": 23.28748546
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 7094,
+          "distinct_cve_count": 57461,
+          "expression_percent_within_group": 78.98018259,
+          "occurrence_count": 532175,
+          "occurrence_percent_within_group": 75.97019293
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 1888,
+          "distinct_cve_count": 51895,
+          "occurrence_count": 168330
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 7094,
+          "distinct_cve_count": 57461,
+          "occurrence_count": 532175
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 742,
+          "distinct_cve_count": 1410,
+          "expression_percent_of_exact_absent": 39.30084746,
+          "occurrence_count": 5200,
+          "occurrence_percent_of_exact_absent": 3.08917008
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 1146,
+          "distinct_cve_count": 50654,
+          "expression_percent_of_exact_absent": 60.69915254,
+          "occurrence_count": 163130,
+          "occurrence_percent_of_exact_absent": 96.91082992
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 8982,
+        "distinct_cve_count": 91623,
+        "occurrence_count": 700505
+      }
+    },
+    "FALSE_ONLY": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 2790,
+          "distinct_cve_count": 2238,
+          "expression_percent_within_group": 4.97974191,
+          "occurrence_count": 8028,
+          "occurrence_percent_within_group": 2.30668444
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 2232,
+          "distinct_cve_count": 897,
+          "expression_percent_within_group": 3.98379353,
+          "occurrence_count": 4636,
+          "occurrence_percent_within_group": 1.33206142
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 51005,
+          "distinct_cve_count": 26599,
+          "expression_percent_within_group": 91.03646456,
+          "occurrence_count": 335368,
+          "occurrence_percent_within_group": 96.36125414
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 5022,
+          "distinct_cve_count": 3062,
+          "occurrence_count": 12664
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 51005,
+          "distinct_cve_count": 26599,
+          "occurrence_count": 335368
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 2790,
+          "distinct_cve_count": 2238,
+          "expression_percent_of_exact_absent": 55.55555556,
+          "occurrence_count": 8028,
+          "occurrence_percent_of_exact_absent": 63.39229311
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 2232,
+          "distinct_cve_count": 897,
+          "expression_percent_of_exact_absent": 44.44444444,
+          "occurrence_count": 4636,
+          "occurrence_percent_of_exact_absent": 36.60770689
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 56027,
+        "distinct_cve_count": 28953,
+        "occurrence_count": 348032
+      }
+    },
+    "TRUE_ONLY": {
+      "coverage_classes": {
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 72424,
+          "distinct_cve_count": 41041,
+          "expression_percent_within_group": 19.92911548,
+          "occurrence_count": 144346,
+          "occurrence_percent_within_group": 6.80360349
+        },
+        "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 79816,
+          "distinct_cve_count": 142693,
+          "expression_percent_within_group": 21.96319289,
+          "occurrence_count": 431256,
+          "occurrence_percent_within_group": 20.32681769
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 211168,
+          "distinct_cve_count": 126363,
+          "expression_percent_within_group": 58.10769163,
+          "occurrence_count": 1546009,
+          "occurrence_percent_within_group": 72.86957882
+        }
+      },
+      "coverage_rollups": {
+        "EXACT_ABSENT": {
+          "distinct_criteria_expression_count": 152240,
+          "distinct_cve_count": 180937,
+          "occurrence_count": 575602
+        },
+        "EXACT_PRESENT": {
+          "distinct_criteria_expression_count": 211168,
+          "distinct_cve_count": 126363,
+          "occurrence_count": 1546009
+        },
+        "SAME_PRODUCT_TUPLE_ABSENT": {
+          "distinct_criteria_expression_count": 72424,
+          "distinct_cve_count": 41041,
+          "expression_percent_of_exact_absent": 47.57225434,
+          "occurrence_count": 144346,
+          "occurrence_percent_of_exact_absent": 25.07739723
+        },
+        "SAME_PRODUCT_TUPLE_PRESENT": {
+          "distinct_criteria_expression_count": 79816,
+          "distinct_cve_count": 142693,
+          "expression_percent_of_exact_absent": 52.42774566,
+          "occurrence_count": 431256,
+          "occurrence_percent_of_exact_absent": 74.92260277
+        }
+      },
+      "total": {
+        "distinct_criteria_expression_count": 363408,
+        "distinct_cve_count": 275941,
+        "occurrence_count": 2121611
+      }
+    }
+  },
+  "criteria_coverage_artifact": {
+    "columns": [
+      "criteria",
+      "criteria_structural_status",
+      "part",
+      "vendor",
+      "product",
+      "version",
+      "version_category",
+      "occurrence_count",
+      "distinct_cve_count",
+      "vulnerable_true_count",
+      "vulnerable_false_count",
+      "vulnerable_usage_group",
+      "range_usage_pattern",
+      "exact_present",
+      "exact_dictionary_status",
+      "same_product_tuple_present",
+      "tuple_dictionary_count",
+      "tuple_active_count",
+      "tuple_deprecated_count",
+      "tuple_status_composition",
+      "final_coverage_class",
+      "nvd_snapshot_id",
+      "cpe_dictionary_snapshot_id"
+    ],
+    "compressed_size_bytes": 4763494,
+    "compression": "gzip (mtime=0)",
+    "filename": "criteria_coverage.csv.gz",
+    "row_count": 428417,
+    "sha256": "90f3a9fca2e0982300eb8a8b42be73062cd6cfe9b0e2c5c2e77d980cff1e2ecf"
+  },
+  "criteria_structural_status": [
+    {
+      "distinct_criteria_expression_count": 428417,
+      "occurrence_count": 3170148,
+      "status": "STRUCTURALLY_VALID"
+    },
+    {
+      "distinct_criteria_expression_count": 0,
+      "occurrence_count": 0,
+      "status": "INVALID_PREFIX"
+    },
+    {
+      "distinct_criteria_expression_count": 0,
+      "occurrence_count": 0,
+      "status": "INVALID_FIELD_COUNT"
+    },
+    {
+      "distinct_criteria_expression_count": 0,
+      "occurrence_count": 0,
+      "status": "INVALID_ESCAPE"
+    },
+    {
+      "distinct_criteria_expression_count": 0,
+      "occurrence_count": 0,
+      "status": "INVALID_PART"
+    }
+  ],
+  "dataset": {
+    "cpe_dictionary_active_count": 1711630,
+    "cpe_dictionary_content_sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+    "cpe_dictionary_deprecated_count": 99631,
+    "cpe_dictionary_manifest_sha256": "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+    "cpe_dictionary_name_count": 1811261,
+    "cpe_dictionary_product_tuple_count": 152784,
+    "cpe_dictionary_snapshot_id": "20260819T035002Z",
+    "cpe_dictionary_snapshot_status": "COMPLETE",
+    "cpe_match_occurrence_count": 3170148,
+    "cve_count": 380865,
+    "cves_with_cpe_matches": 311367,
+    "distinct_configuration_criteria_expression_count": 428417,
+    "nvd_content_sha256": "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab",
+    "nvd_manifest_sha256": "80b6107f5225923794d725b252527f575ad2b0c800765fc5ce6d0b07c18d94eb",
+    "nvd_snapshot_id": "20260820T110357Z",
+    "nvd_snapshot_status": "COMPLETE"
+  },
+  "exact_dictionary_status": [
+    {
+      "distinct_criteria_expression_count": 264738,
+      "occurrence_count": 2330746,
+      "value": "ACTIVE"
+    },
+    {
+      "distinct_criteria_expression_count": 4529,
+      "occurrence_count": 82806,
+      "value": "DEPRECATED"
+    }
+  ],
+  "generated_at_utc": "2026-08-21T10:48:54.392110+00:00",
+  "overall_coverage": {
+    "coverage_classes": {
+      "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": {
+        "distinct_criteria_expression_count": 75956,
+        "distinct_cve_count": 42516,
+        "expression_percent_within_group": 17.72945518,
+        "occurrence_count": 157574,
+        "occurrence_percent_within_group": 4.97055658
+      },
+      "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": {
+        "distinct_criteria_expression_count": 83194,
+        "distinct_cve_count": 181413,
+        "expression_percent_within_group": 19.41893062,
+        "occurrence_count": 599022,
+        "occurrence_percent_within_group": 18.89571086
+      },
+      "EXACT_PRESENT": {
+        "distinct_criteria_expression_count": 269267,
+        "distinct_cve_count": 166958,
+        "expression_percent_within_group": 62.8516142,
+        "occurrence_count": 2413552,
+        "occurrence_percent_within_group": 76.13373256
+      }
+    },
+    "coverage_rollups": {
+      "EXACT_ABSENT": {
+        "distinct_criteria_expression_count": 159150,
+        "distinct_cve_count": 219085,
+        "occurrence_count": 756596
+      },
+      "EXACT_PRESENT": {
+        "distinct_criteria_expression_count": 269267,
+        "distinct_cve_count": 166958,
+        "occurrence_count": 2413552
+      },
+      "SAME_PRODUCT_TUPLE_ABSENT": {
+        "distinct_criteria_expression_count": 75956,
+        "distinct_cve_count": 42516,
+        "expression_percent_of_exact_absent": 47.72604461,
+        "occurrence_count": 157574,
+        "occurrence_percent_of_exact_absent": 20.82670276
+      },
+      "SAME_PRODUCT_TUPLE_PRESENT": {
+        "distinct_criteria_expression_count": 83194,
+        "distinct_cve_count": 181413,
+        "expression_percent_of_exact_absent": 52.27395539,
+        "occurrence_count": 599022,
+        "occurrence_percent_of_exact_absent": 79.17329724
+      }
+    },
+    "total": {
+      "distinct_criteria_expression_count": 428417,
+      "distinct_cve_count": 311367,
+      "occurrence_count": 3170148
+    }
+  },
+  "representative_cases": {
+    "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT": [
+      {
+        "criteria": "cpe:2.3:o:arubanetworks:aos-cx:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 12,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 532,
+        "part": "o",
+        "part_group": "o",
+        "product": "aos-cx",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "arubanetworks",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 532,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:microsoft:microsoft_365:-:*:*:*:*:macos:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 170,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 170,
+        "part": "a",
+        "part_group": "a",
+        "product": "microsoft_365",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "microsoft",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 170,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:joomla:joomla:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 163,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 164,
+        "part": "a",
+        "part_group": "a",
+        "product": "joomla",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "joomla",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 132,
+        "vulnerable_true_count": 32,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:arubanetworks:aos-cx_firmware:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 3,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 84,
+        "part": "o",
+        "part_group": "o",
+        "product": "aos-cx_firmware",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "arubanetworks",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 84,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:bender:icc15xx_firmware:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 8,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 80,
+        "part": "o",
+        "part_group": "o",
+        "product": "icc15xx_firmware",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "bender",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 80,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.7:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 63,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 63,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.7",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 63,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:h:qualcomm:cologne:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 45,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 45,
+        "part": "h",
+        "part_group": "h",
+        "product": "cologne",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "qualcomm",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 45,
+        "vulnerable_true_count": 0,
+        "vulnerable_usage_group": "FALSE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:unix:unix:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_NO_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 36,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 37,
+        "part": "o",
+        "part_group": "o",
+        "product": "unix",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "unix",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 35,
+        "vulnerable_true_count": 2,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:lexmark:lw80_firmware:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 5,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 75,
+        "part": "o",
+        "part_group": "o",
+        "product": "lw80_firmware",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "lexmark",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 75,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.3:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 62,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 62,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.3",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 62,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:qualcomm:qualcomm_215_firmware:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 62,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 62,
+        "part": "o",
+        "part_group": "o",
+        "product": "qualcomm_215_firmware",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "qualcomm",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 62,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.1:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 61,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 61,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.1",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 61,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.2:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 61,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 61,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.2",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 61,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.6:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 61,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 61,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.6",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 61,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.4:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 60,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 60,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.4",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 60,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.5:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 58,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 58,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.5",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 58,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:ethereal_group:ethereal:0.10.8:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 58,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 58,
+        "part": "a",
+        "part_group": "a",
+        "product": "ethereal",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "ethereal_group",
+        "version": "0.10.8",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 58,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_69:*:x86:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_69",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_70:*:x86:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_70",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_72:*:x86:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_72",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_73:*:sparc:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_73",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_73:*:x86:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_73",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_74:*:sparc:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_74",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_74:*:x86:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_74",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_75:*:sparc:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_75",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_76:*:sparc:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_76",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_76:*:x86:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_76",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_77:*:sparc:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_77",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_77:*:x86:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_77",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:sun:opensolaris:snv_78:*:sparc:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 57,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_ABSENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "opensolaris",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": false,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 0,
+        "tuple_status_composition": "ABSENT",
+        "vendor": "sun",
+        "version": "snv_78",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      }
+    ],
+    "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT": [
+      {
+        "criteria": "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 14306,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 51458,
+        "part": "o",
+        "part_group": "o",
+        "product": "linux_kernel",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 6270,
+        "tuple_deprecated_count": 135,
+        "tuple_dictionary_count": 6405,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "linux",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 524,
+        "vulnerable_true_count": 50934,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 5810,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 6037,
+        "part": "a",
+        "part_group": "a",
+        "product": "chrome",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 9532,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 9532,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "google",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 6,
+        "vulnerable_true_count": 6031,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:apple:macos:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2938,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 4836,
+        "part": "o",
+        "part_group": "o",
+        "product": "macos",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 161,
+        "tuple_deprecated_count": 13,
+        "tuple_dictionary_count": 174,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "apple",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 44,
+        "vulnerable_true_count": 4792,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:apple:iphone_os:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 4245,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 4608,
+        "part": "o",
+        "part_group": "o",
+        "product": "iphone_os",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 329,
+        "tuple_deprecated_count": 2,
+        "tuple_dictionary_count": 331,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "apple",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 161,
+        "vulnerable_true_count": 4447,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:apple:mac_os_x:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 3315,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 4145,
+        "part": "o",
+        "part_group": "o",
+        "product": "mac_os_x",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 216,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 216,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "apple",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 1419,
+        "vulnerable_true_count": 2726,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_NO_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 1524,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2123,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 9,
+        "tuple_deprecated_count": 16,
+        "tuple_dictionary_count": 25,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 2008,
+        "vulnerable_true_count": 115,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:a:microsoft:internet_explorer:11:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 204,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 210,
+        "part": "a",
+        "part_group": "a",
+        "product": "internet_explorer",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 108,
+        "tuple_deprecated_count": 1,
+        "tuple_dictionary_count": 109,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "11",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 5,
+        "vulnerable_true_count": 205,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:a:gitlab:gitlab:*:*:*:*:enterprise:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 1327,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 3282,
+        "part": "a",
+        "part_group": "a",
+        "product": "gitlab",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 3128,
+        "tuple_deprecated_count": 38,
+        "tuple_dictionary_count": 3166,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "gitlab",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 3282,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_server_2008:-:-:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 32,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 57,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_server_2008",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 122,
+        "tuple_deprecated_count": 19,
+        "tuple_dictionary_count": 141,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 56,
+        "vulnerable_true_count": 1,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:h:cisco:5500_series_adaptive_security_appliance:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_NO_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 52,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 58,
+        "part": "h",
+        "part_group": "h",
+        "product": "5500_series_adaptive_security_appliance",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 2,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 2,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "cisco",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 1,
+        "vulnerable_true_count": 57,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:a:mozilla:firefox_esr:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 432,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 443,
+        "part": "a",
+        "part_group": "a",
+        "product": "firefox_esr",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 0,
+        "tuple_deprecated_count": 203,
+        "tuple_dictionary_count": 203,
+        "tuple_status_composition": "DEPRECATED_ONLY",
+        "vendor": "mozilla",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 443,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:mozilla:firefox:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2312,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2803,
+        "part": "a",
+        "part_group": "a",
+        "product": "firefox",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 1037,
+        "tuple_deprecated_count": 159,
+        "tuple_dictionary_count": 1196,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "mozilla",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 33,
+        "vulnerable_true_count": 2770,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:a:gitlab:gitlab:*:*:*:*:community:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 1116,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2793,
+        "part": "a",
+        "part_group": "a",
+        "product": "gitlab",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 3128,
+        "tuple_deprecated_count": 38,
+        "tuple_dictionary_count": 3166,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "gitlab",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 2793,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:apple:ipados:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2038,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2454,
+        "part": "o",
+        "part_group": "o",
+        "product": "ipados",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 138,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 138,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "apple",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 2454,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:adobe:acrobat_dc:*:*:*:*:classic:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 1401,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2383,
+        "part": "a",
+        "part_group": "a",
+        "product": "acrobat_dc",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 251,
+        "tuple_deprecated_count": 2,
+        "tuple_dictionary_count": 253,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "adobe",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 2383,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:a:adobe:acrobat_reader_dc:*:*:*:*:classic:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 1400,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2380,
+        "part": "a",
+        "part_group": "a",
+        "product": "acrobat_reader_dc",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 242,
+        "tuple_deprecated_count": 3,
+        "tuple_dictionary_count": 245,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "adobe",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 2380,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_server_2022:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2264,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2278,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_server_2022",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 341,
+        "tuple_deprecated_count": 6,
+        "tuple_dictionary_count": 347,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 8,
+        "vulnerable_true_count": 2270,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_server_2019:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2178,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2186,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_server_2019",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 217,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 217,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "microsoft",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 16,
+        "vulnerable_true_count": 2170,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_server_2016:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_BOTH",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2152,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2156,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_server_2016",
+        "range_usage_pattern": "BOTH_RANGE_AND_NO_RANGE",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 72,
+        "tuple_deprecated_count": 6,
+        "tuple_dictionary_count": 78,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 125,
+        "vulnerable_true_count": 2031,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:apple:tvos:*:*:*:*:*:*:*:*",
+        "criteria_form": "WILDCARD_RANGE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2077,
+        "exact_dictionary_status": "",
+        "exact_present": false,
+        "final_coverage_class": "EXACT_ABSENT_SAME_PRODUCT_TUPLE_PRESENT",
+        "occurrence_count": 2079,
+        "part": "o",
+        "part_group": "o",
+        "product": "tvos",
+        "range_usage_pattern": "RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 123,
+        "tuple_deprecated_count": 3,
+        "tuple_dictionary_count": 126,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "apple",
+        "version": "*",
+        "version_category": "STAR",
+        "vulnerable_false_count": 9,
+        "vulnerable_true_count": 2070,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      }
+    ],
+    "EXACT_PRESENT": [
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 8635,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 10249,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 9,
+        "tuple_deprecated_count": 16,
+        "tuple_dictionary_count": 25,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 10242,
+        "vulnerable_true_count": 7,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_server_2012:r2:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 4359,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 4555,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_server_2012",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 25,
+        "tuple_deprecated_count": 4,
+        "tuple_dictionary_count": 29,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "r2",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 537,
+        "vulnerable_true_count": 4018,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_server_2012:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 4137,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 4363,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_server_2012",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 25,
+        "tuple_deprecated_count": 4,
+        "tuple_dictionary_count": 29,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 543,
+        "vulnerable_true_count": 3820,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 3767,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 4339,
+        "part": "o",
+        "part_group": "o",
+        "product": "macos",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 161,
+        "tuple_deprecated_count": 13,
+        "tuple_dictionary_count": 174,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "apple",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 4336,
+        "vulnerable_true_count": 3,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 3746,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 4259,
+        "part": "o",
+        "part_group": "o",
+        "product": "linux_kernel",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 6270,
+        "tuple_deprecated_count": 135,
+        "tuple_dictionary_count": 6405,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "linux",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 4186,
+        "vulnerable_true_count": 73,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:debian:debian_linux:9.0:*:*:*:*:*:*:*",
+        "criteria_form": "CONCRETE",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 4003,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 4020,
+        "part": "o",
+        "part_group": "o",
+        "product": "debian_linux",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 64,
+        "tuple_deprecated_count": 1,
+        "tuple_dictionary_count": 65,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "debian",
+        "version": "9.0",
+        "version_category": "CONCRETE",
+        "vulnerable_false_count": 21,
+        "vulnerable_true_count": 3999,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:a:netapp:oncommand_insight:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 963,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 963,
+        "part": "a",
+        "part_group": "a",
+        "product": "oncommand_insight",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 31,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 31,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "netapp",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 0,
+        "vulnerable_true_count": 963,
+        "vulnerable_usage_group": "TRUE_ONLY"
+      },
+      {
+        "criteria": "cpe:2.3:h:qualcomm:wcd9380:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 1205,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 1205,
+        "part": "h",
+        "part_group": "h",
+        "product": "wcd9380",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 1,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 1,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "qualcomm",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 1173,
+        "vulnerable_true_count": 32,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_10:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 2660,
+        "exact_dictionary_status": "DEPRECATED",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 2833,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_10",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 2,
+        "tuple_deprecated_count": 57,
+        "tuple_dictionary_count": 59,
+        "tuple_status_composition": "MIXED_ACTIVE_AND_DEPRECATED",
+        "vendor": "microsoft",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 947,
+        "vulnerable_true_count": 1886,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      },
+      {
+        "criteria": "cpe:2.3:o:microsoft:windows_server_2019:-:*:*:*:*:*:*:*",
+        "criteria_form": "HYPHEN",
+        "criteria_structural_status": "STRUCTURALLY_VALID",
+        "distinct_cve_count": 3051,
+        "exact_dictionary_status": "ACTIVE",
+        "exact_present": true,
+        "final_coverage_class": "EXACT_PRESENT",
+        "occurrence_count": 3168,
+        "part": "o",
+        "part_group": "o",
+        "product": "windows_server_2019",
+        "range_usage_pattern": "NO_RANGE_ONLY",
+        "same_product_tuple_present": true,
+        "tuple_active_count": 217,
+        "tuple_deprecated_count": 0,
+        "tuple_dictionary_count": 217,
+        "tuple_status_composition": "ACTIVE_ONLY",
+        "vendor": "microsoft",
+        "version": "-",
+        "version_category": "HYPHEN",
+        "vulnerable_false_count": 467,
+        "vulnerable_true_count": 2701,
+        "vulnerable_usage_group": "BOTH_TRUE_AND_FALSE"
+      }
+    ]
+  },
+  "safety": {
+    "after": {
+      "cpe_dictionary_snapshot_metadata": [
+        [
+          "20260725T035002Z",
+          "COMPLETE",
+          "f754ca6144a8791b70e2a27cba9b39f3db814aa5b9fe07d539a7640e58ae3dac",
+          "11aaebc8bc76c9db83fd5d51b9d5e176cac617596efc52b76513e6e7dc0af34c",
+          1786125,
+          1687483,
+          98642
+        ],
+        [
+          "20260819T035002Z",
+          "COMPLETE",
+          "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+          "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+          1811261,
+          1711630,
+          99631
+        ]
+      ],
+      "nvd_snapshot_metadata": [
+        [
+          "20260820T110357Z",
+          "COMPLETE",
+          "80b6107f5225923794d725b252527f575ad2b0c800765fc5ce6d0b07c18d94eb",
+          "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab",
+          380865,
+          760120,
+          3170148
+        ]
+      ],
+      "table_counts": {
+        "auth_group": 0,
+        "auth_group_permissions": 0,
+        "auth_permission": 96,
+        "auth_user": 0,
+        "auth_user_groups": 0,
+        "auth_user_user_permissions": 0,
+        "cpe_dictionary_cpedictionarysnapshot": 2,
+        "cpe_dictionary_cpename": 3597386,
+        "django_admin_log": 0,
+        "django_content_type": 24,
+        "django_migrations": 30,
+        "django_session": 0,
+        "nvd_cve_nvdcpematch": 3170148,
+        "nvd_cve_nvdcverecord": 380865,
+        "nvd_cve_nvdcvesnapshot": 1,
+        "sboms_component": 2038,
+        "sboms_componentcpegroundtruth": 0,
+        "sboms_componentcpegroundtruth_correction_types": 0,
+        "sboms_componentcpegroundtruth_discrepancy_types": 0,
+        "sboms_dockerimage": 0,
+        "sboms_groundtruthcorrectiontype": 6,
+        "sboms_groundtruthdiscrepancytype": 6,
+        "sboms_sbomdocument": 4,
+        "sboms_sourceartifact": 2
+      },
+      "transaction_read_only": true
+    },
+    "before": {
+      "cpe_dictionary_snapshot_metadata": [
+        [
+          "20260725T035002Z",
+          "COMPLETE",
+          "f754ca6144a8791b70e2a27cba9b39f3db814aa5b9fe07d539a7640e58ae3dac",
+          "11aaebc8bc76c9db83fd5d51b9d5e176cac617596efc52b76513e6e7dc0af34c",
+          1786125,
+          1687483,
+          98642
+        ],
+        [
+          "20260819T035002Z",
+          "COMPLETE",
+          "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+          "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+          1811261,
+          1711630,
+          99631
+        ]
+      ],
+      "nvd_snapshot_metadata": [
+        [
+          "20260820T110357Z",
+          "COMPLETE",
+          "80b6107f5225923794d725b252527f575ad2b0c800765fc5ce6d0b07c18d94eb",
+          "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab",
+          380865,
+          760120,
+          3170148
+        ]
+      ],
+      "table_counts": {
+        "auth_group": 0,
+        "auth_group_permissions": 0,
+        "auth_permission": 96,
+        "auth_user": 0,
+        "auth_user_groups": 0,
+        "auth_user_user_permissions": 0,
+        "cpe_dictionary_cpedictionarysnapshot": 2,
+        "cpe_dictionary_cpename": 3597386,
+        "django_admin_log": 0,
+        "django_content_type": 24,
+        "django_migrations": 30,
+        "django_session": 0,
+        "nvd_cve_nvdcpematch": 3170148,
+        "nvd_cve_nvdcverecord": 380865,
+        "nvd_cve_nvdcvesnapshot": 1,
+        "sboms_component": 2038,
+        "sboms_componentcpegroundtruth": 0,
+        "sboms_componentcpegroundtruth_correction_types": 0,
+        "sboms_componentcpegroundtruth_discrepancy_types": 0,
+        "sboms_dockerimage": 0,
+        "sboms_groundtruthcorrectiontype": 6,
+        "sboms_groundtruthdiscrepancytype": 6,
+        "sboms_sbomdocument": 4,
+        "sboms_sourceartifact": 2
+      },
+      "transaction_read_only": true
+    },
+    "database_state_unchanged": true,
+    "database_writes": 0,
+    "postgresql_read_only_transactions": true,
+    "prohibited_operations_performed": []
+  },
+  "tuple_status_composition": [
+    {
+      "distinct_criteria_expression_count": 297419,
+      "occurrence_count": 1928126,
+      "value": "ACTIVE_ONLY"
+    },
+    {
+      "distinct_criteria_expression_count": 3682,
+      "occurrence_count": 16342,
+      "value": "DEPRECATED_ONLY"
+    },
+    {
+      "distinct_criteria_expression_count": 51360,
+      "occurrence_count": 1068106,
+      "value": "MIXED_ACTIVE_AND_DEPRECATED"
+    },
+    {
+      "distinct_criteria_expression_count": 75956,
+      "occurrence_count": 157574,
+      "value": "ABSENT"
+    }
+  ],
+  "validation": {
+    "coverage_invariants_passed": true,
+    "database_state_unchanged": true
+  },
+  "version_range_exceptional_forms": [
+    {
+      "distinct_criteria_expression_count": 0,
+      "distinct_cve_count": 0,
+      "occurrence_count": 0,
+      "representative_cases": [],
+      "type": "CONCRETE_WITH_RANGE"
+    },
+    {
+      "distinct_criteria_expression_count": 0,
+      "distinct_cve_count": 0,
+      "occurrence_count": 0,
+      "representative_cases": [],
+      "type": "HYPHEN_WITH_RANGE"
+    }
+  ]
+}
