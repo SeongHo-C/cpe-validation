@@ -108,6 +108,9 @@ DATABASES = {
 CPE_DICTIONARY_SNAPSHOT_ID = (
     os.getenv("CPE_DICTIONARY_SNAPSHOT_ID", "").strip() or None
 )
+NVD_CVE_SNAPSHOT_ID = (
+    os.getenv("NVD_CVE_SNAPSHOT_ID", "").strip() or None
+)
 
 
 # Password validation
