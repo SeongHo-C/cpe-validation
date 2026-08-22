@@ -1,0 +1,22 @@
+font.family: sans-serif
+font.sans-serif: Liberation Sans, DejaVu Sans
+font.size: 8.0
+font.weight: normal
+axes.labelsize: 8.0
+axes.titlesize: 8.0
+axes.linewidth: 0.8
+axes.unicode_minus: False
+legend.fontsize: 7.0
+legend.frameon: False
+lines.linewidth: 0.8
+patch.linewidth: 0.8
+figure.facecolor: white
+axes.facecolor: white
+savefig.facecolor: white
+savefig.edgecolor: white
+savefig.bbox: standard
+savefig.pad_inches: 0.035
+pdf.fonttype: 42
+ps.fonttype: 42
+svg.fonttype: none
+svg.hashsalt: nvd-cpe-dictionary-coverage-v1
