@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "rulebook_version": "PRODUCT_RUNTIME-v1",
+  "analysis_scope": "Representative exact-firmware runtime-role dry-run only; no Ground Truth or CPE mapping",
+  "dataset": {
+    "sbom_document_id": 1364,
+    "sbom_sha256": "61602e128acb7cdc378bdd868da489100bfb8f3dc587f0f12c5cf08cb26dd13e",
+    "manufacturer": "Unitronics",
+    "product": "UCR-ST-B8",
+    "firmware_version": "52.07.13.7",
+    "firmware_sha256": "6fe59fb6e3fa2883bc96faa1488f9de56c5ecd5324f2d2c68ec5364b315ed81c",
+    "sbom_component_count": 582,
+    "installed_opkg_package_count": 575,
+    "non_opkg_artifact_count": 7,
+    "distinct_source_count": 303,
+    "multi_package_source_count": 42
+  },
+  "guardrails": {
+    "unit_of_decision": "binary package or directly observed SBOM component",
+    "source_status_inheritance_allowed": false,
+    "original_sbom_cpe_used_as_evidence": false,
+    "control_cpe_id_used_as_evidence": false,
+    "cpe_dictionary_queried": false,
+    "nvd_configuration_queried": false,
+    "cve_analysis_performed": false,
+    "ground_truth_records_written": 0,
+    "database_writes": 0
+  },
+  "representative_set": {
+    "total": 32,
+    "opkg_packages": 31,
+    "direct_non_opkg_artifacts": 1,
+    "opkg_status_version_matches": 31,
+    "opkg_status_architecture_matches": 31,
+    "status_counts": {
+      "PRODUCT_RUNTIME": 10,
+      "NON_PRODUCT_RUNTIME": 19,
+      "REVIEW_REQUIRED": 3
+    },
+    "status_percent": {
+      "PRODUCT_RUNTIME": 31.25,
+      "NON_PRODUCT_RUNTIME": 59.375,
+      "REVIEW_REQUIRED": 9.375
+    },
+    "evidence_strength_counts": {
+      "STRONG": 19,
+      "MODERATE": 13,
+      "WEAK": 0
+    }
+  },
+  "family_results": {
+    "openssl": {
+      "total": 4,
+      "PRODUCT_RUNTIME": [
+        "libopenssl3",
+        "openssl-util"
+      ],
+      "NON_PRODUCT_RUNTIME": [
+        "libopenssl-conf",
+        "libopenssl-legacy"
+      ],
+      "REVIEW_REQUIRED": []
+    },
+    "curl": {
+      "total": 2,
+      "PRODUCT_RUNTIME": [
+        "curl",
+        "libcurl4"
+      ],
+      "NON_PRODUCT_RUNTIME": [],
+      "REVIEW_REQUIRED": []
+    },
+    "iptables": {
+      "total": 8,
+      "PRODUCT_RUNTIME": [
+        "iptables",
+        "ip6tables"
+      ],
+      "NON_PRODUCT_RUNTIME": [
+        "iptables-mod-conntrack-extra",
+        "iptables-mod-ipopt",
+        "iptables-mod-ipsec",
+        "libip4tc2",
+        "libip6tc2",
+        "libxtables12"
+      ],
+      "REVIEW_REQUIRED": []
+    },
+    "strongswan": {
+      "total": 8,
+      "PRODUCT_RUNTIME": [
+        "strongswan",
+        "strongswan-charon"
+      ],
+      "NON_PRODUCT_RUNTIME": [
+        "strongswan-minimal",
+        "strongswan-mod-openssl",
+        "strongswan-mod-vici",
+        "strongswan-swanctl"
+      ],
+      "REVIEW_REQUIRED": [
+        "strongswan-mod-kernel-netlink",
+        "strongswan-mod-socket-default"
+      ]
+    },
+    "e2fsprogs": {
+      "total": 4,
+      "PRODUCT_RUNTIME": [
+        "e2fsprogs"
+      ],
+      "NON_PRODUCT_RUNTIME": [
+        "libcomerr0",
+        "libss2"
+      ],
+      "REVIEW_REQUIRED": [
+        "libext2fs2"
+      ]
+    },
+    "util_linux": {
+      "total": 2,
+      "PRODUCT_RUNTIME": [],
+      "NON_PRODUCT_RUNTIME": [
+        "libblkid1",
+        "libuuid1"
+      ],
+      "REVIEW_REQUIRED": []
+    },
+    "linux_opkg_splits": {
+      "total": 3,
+      "PRODUCT_RUNTIME": [],
+      "NON_PRODUCT_RUNTIME": [
+        "kernel",
+        "kmod-fs-ext4",
+        "kmod-wireguard"
+      ],
+      "REVIEW_REQUIRED": []
+    },
+    "linux_direct_artifact": {
+      "total": 1,
+      "PRODUCT_RUNTIME": [
+        "linux_kernel"
+      ],
+      "NON_PRODUCT_RUNTIME": [],
+      "REVIEW_REQUIRED": []
+    }
+  },
+  "review_required": [
+    {
+      "case_id": "STRONGSWAN-04",
+      "package": "strongswan-mod-kernel-netlink",
+      "reason": "Official architecture makes the kernel interface core-like and the exact minimal profile depends on this plugin, but exclusive selected-backend evidence is absent.",
+      "needed_evidence": "Exact plugin load configuration or runtime/startup evidence that proves this backend is selected and indispensable."
+    },
+    {
+      "case_id": "STRONGSWAN-06",
+      "package": "strongswan-mod-socket-default",
+      "reason": "The socket is in the daemon runtime path and the exact minimal profile depends on the plugin, but replaceability and active selection are not fully resolved.",
+      "needed_evidence": "Exact plugin load configuration or runtime/startup evidence that proves the default socket backend is selected and indispensable."
+    },
+    {
+      "case_id": "E2FSPROGS-03",
+      "package": "libext2fs2",
+      "reason": "It is a required dynamic filesystem-access library in the exact split, while upstream program/library documentation leaves the selected product boundary mixed.",
+      "needed_evidence": "An approved independent-library versus suite boundary, or official evidence explicitly identifying libext2fs as a principal product runtime."
+    }
+  ],
+  "role_cross_axis_examples": {
+    "UTILITY_OR_CLI_PACKAGE_to_PRODUCT_RUNTIME": [
+      "openssl-util",
+      "curl",
+      "iptables",
+      "ip6tables",
+      "e2fsprogs"
+    ],
+    "UTILITY_OR_CLI_PACKAGE_to_NON_PRODUCT_RUNTIME": [
+      "strongswan-swanctl"
+    ],
+    "LIBRARY_PACKAGE_to_PRODUCT_RUNTIME": [
+      "libopenssl3",
+      "libcurl4"
+    ],
+    "LIBRARY_PACKAGE_to_REVIEW_REQUIRED": [
+      "libext2fs2"
+    ],
+    "PLUGIN_OR_MODULE_to_REVIEW_REQUIRED": [
+      "strongswan-mod-kernel-netlink",
+      "strongswan-mod-socket-default"
+    ]
+  },
+  "rule_refinements": [
+    {
+      "id": "mandatory-plugin-gate",
+      "finding": "A blanket plugin exclusion conflicts with architectures that implement core ports as plugins.",
+      "v1_resolution": "Require official mandatory role, exact selection, and absence of an active alternative; otherwise return REVIEW_REQUIRED."
+    },
+    {
+      "id": "explicit-product-boundary",
+      "finding": "A dynamically required split library can still have an ambiguous relationship to a program-oriented suite identity.",
+      "v1_resolution": "State the upstream_product boundary per record and preserve REVIEW_REQUIRED when official evidence supports competing boundaries."
+    },
+    {
+      "id": "functional-cli-test",
+      "finding": "CLI packaging alone cannot distinguish a product implementation from a management frontend.",
+      "v1_resolution": "Include a CLI only when it directly performs the defining product operation."
+    }
+  ],
+  "contradictions": {
+    "terminal_status_contradictions": 0,
+    "boundary_tensions_found": 2,
+    "resolved_in_rulebook_v1": 2
+  },
+  "validation": {
+    "status_partition_equals_representative_total": true,
+    "status_partition_expression": "10 + 19 + 3 = 32",
+    "all_records_have_one_terminal_status": true,
+    "all_required_families_present": true,
+    "same_source_status_propagation_uses": 0,
+    "forbidden_cpe_evidence_uses": 0,
+    "existing_package_role_terminal_uses": 0
+  },
+  "artifacts": [
+    "rulebook.md",
+    "representative_cases.csv",
+    "dry_run_report.md",
+    "summary.json"
+  ],
+  "stop_condition_reached": true,
+  "next_stage_executed": false
+}
