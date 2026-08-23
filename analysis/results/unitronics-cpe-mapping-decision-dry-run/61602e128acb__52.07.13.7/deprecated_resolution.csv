@@ -1,0 +1,1 @@
+case_id,component_id,source_cpe,source_status,direct_replacement_count,deprecated_by,replacement_chain,chain_depth,cycle_detected,missing_reference,active_endpoints,resolved_active_cpe,resolution_status,semantic_compatibility,review_required,provenance
