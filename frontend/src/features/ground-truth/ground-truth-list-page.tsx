@@ -169,10 +169,7 @@ export function GroundTruthListPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    getGroundTruthDiscrepancyTypes(
-      { is_active: "all" },
-      controller.signal,
-    )
+    getGroundTruthDiscrepancyTypes({}, controller.signal)
       .then(setDiscrepancyTypes)
       .catch(() => setDiscrepancyTypes([]))
     return () => controller.abort()
@@ -328,9 +325,9 @@ export function GroundTruthListPage() {
                 </select>
               </label>
               <label className={formLabelClassName}>
-                <span className="block">Ground Truth Decision</span>
+                <span className="block">CPE Validation Result</span>
                 <select
-                  aria-label="Ground Truth Decision"
+                  aria-label="CPE Validation Result"
                   className={`${selectControlClassName} w-full`}
                   value={query.decision ?? ""}
                   onChange={(event) =>
@@ -352,9 +349,9 @@ export function GroundTruthListPage() {
                 </select>
               </label>
               <label className={formLabelClassName}>
-                <span className="block">Discrepancy Type</span>
+                <span className="block">Incorrect CPE Field</span>
                 <select
-                  aria-label="Discrepancy Type"
+                  aria-label="Incorrect CPE Field"
                   className={`${selectControlClassName} w-full`}
                   value={query.discrepancy_type ?? ""}
                   onChange={(event) =>
@@ -365,7 +362,7 @@ export function GroundTruthListPage() {
                     })
                   }
                 >
-                  <option value="">All Discrepancy Types</option>
+                  <option value="">All Incorrect CPE Fields</option>
                   {discrepancyTypes.map((discrepancyType) => (
                     <option
                       key={discrepancyType.id}
@@ -471,10 +468,10 @@ export function GroundTruthListPage() {
                   <TableHead className="text-left">Original CPE</TableHead>
                   <TableHead className="text-left">Ground Truth</TableHead>
                   <TableHead className="text-center">
-                    Ground Truth Decision
+                    CPE Validation Result
                   </TableHead>
                   <TableHead className="text-center">
-                    Discrepancy Types
+                    Incorrect CPE Fields
                   </TableHead>
                   <TableHead className="text-center">Action</TableHead>
                 </TableRow>
@@ -520,10 +517,18 @@ export function GroundTruthListPage() {
                         {component.decision ? (
                           <Badge
                             className="max-w-full truncate"
-                            title={component.decision.name}
+                            title={
+                              groundTruthDecisionNames[
+                                component.decision.code
+                              ]
+                            }
                             variant="secondary"
                           >
-                            {component.decision.name}
+                            {
+                              groundTruthDecisionNames[
+                                component.decision.code
+                              ]
+                            }
                           </Badge>
                         ) : (
                           "—"

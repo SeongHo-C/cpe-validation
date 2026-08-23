@@ -21,8 +21,8 @@ const visibleSelectedCount = 2
 function selectionLabel(
   value: GroundTruthDiscrepancyType[],
 ): string {
-  if (!value.length) return "Discrepancy Types: None selected"
-  return `Discrepancy Types: ${value.map((item) => item.name).join(", ")}`
+  if (!value.length) return "Incorrect CPE Fields: None selected"
+  return `Incorrect CPE Fields: ${value.map((item) => item.name).join(", ")}`
 }
 
 export function GroundTruthDiscrepancyTypeField({
@@ -50,22 +50,29 @@ export function GroundTruthDiscrepancyTypeField({
     () => new Set(value.map((item) => item.id)),
     [value],
   )
+  const availableOptions = useMemo(
+    () => [
+      ...options,
+      ...value.filter(
+        (selected) =>
+          !options.some((option) => option.id === selected.id),
+      ),
+    ],
+    [options, value],
+  )
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
     setError(null)
-    getGroundTruthDiscrepancyTypes(
-      { is_active: "all" },
-      controller.signal,
-    )
+    getGroundTruthDiscrepancyTypes({}, controller.signal)
       .then((items) => {
         setOptions(items)
         setLoading(false)
       })
       .catch((reason: unknown) => {
         if (isAbortError(reason)) return
-        setError("Unable to load Discrepancy Types.")
+        setError("Unable to load Incorrect CPE Fields.")
         setLoading(false)
       })
     return () => controller.abort()
@@ -84,13 +91,15 @@ export function GroundTruthDiscrepancyTypeField({
       if (!item.is_active) return
       nextSelectedIds.add(item.id)
     }
-    const knownOptions = options.filter((option) =>
+    const knownOptions = availableOptions.filter((option) =>
       nextSelectedIds.has(option.id),
     )
     const unknownRetainedValues = value.filter(
       (selected) =>
         nextSelectedIds.has(selected.id) &&
-        !options.some((option) => option.id === selected.id),
+        !availableOptions.some(
+          (option) => option.id === selected.id,
+        ),
     )
     onChange([...knownOptions, ...unknownRetainedValues])
   }
@@ -111,7 +120,7 @@ export function GroundTruthDiscrepancyTypeField({
           id="ground-truth-discrepancy-types-title"
           className="text-sm font-medium"
         >
-          Discrepancy Types
+          Incorrect CPE Fields
         </h4>
         {value.length ? (
           <span className="text-xs text-muted-foreground">
@@ -138,7 +147,7 @@ export function GroundTruthDiscrepancyTypeField({
                     aria-hidden="true"
                   />
                   <span className="truncate text-muted-foreground">
-                    Loading Discrepancy Types…
+                    Loading Incorrect CPE Fields…
                   </span>
                 </>
               ) : value.length ? (
@@ -160,7 +169,7 @@ export function GroundTruthDiscrepancyTypeField({
                 </>
               ) : (
                 <span className="truncate text-muted-foreground">
-                  Select discrepancy types
+                  Select incorrect fields
                 </span>
               )}
             </span>
@@ -172,11 +181,11 @@ export function GroundTruthDiscrepancyTypeField({
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          aria-label="Discrepancy Type options"
+          aria-label="Incorrect CPE Field options"
           className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] p-1"
         >
           <div className="max-h-72 overflow-y-auto p-1">
-            {options.map((item) => {
+            {availableOptions.map((item) => {
               const checked = selectedIds.has(item.id)
               const descriptionId =
                 `ground-truth-discrepancy-description-${item.id}`
@@ -192,6 +201,7 @@ export function GroundTruthDiscrepancyTypeField({
                       className="peer absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
                       checked={checked}
                       disabled={!item.is_active && !checked}
+                      aria-label={item.name}
                       aria-describedby={descriptionId}
                       onChange={() => toggle(item)}
                     />

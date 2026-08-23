@@ -20,50 +20,89 @@ const mappedCpe =
 const discrepancyTypes: GroundTruthDiscrepancyType[] = [
   {
     id: 35,
-    code: "PART_MISMATCH",
-    name: "Part mismatch",
-    description: "The original part differs.",
+    code: "PART",
+    name: "Part (Application / OS / Hardware)",
+    description: "The original part attribute is incorrect.",
     is_active: true,
     usage_count: 0,
   },
   {
-    id: 32,
-    code: "PRODUCT_MISMATCH",
-    name: "Product mismatch",
-    description: "The original product differs.",
-    is_active: true,
-    usage_count: 1,
-  },
-  {
     id: 31,
-    code: "VENDOR_MISMATCH",
-    name: "Vendor mismatch",
-    description: "The original vendor differs.",
+    code: "VENDOR",
+    name: "Vendor",
+    description: "The original vendor attribute is incorrect.",
     is_active: true,
     usage_count: 2,
   },
   {
-    id: 36,
-    code: "VERSION_MISMATCH",
-    name: "Version mismatch",
-    description:
-      "The original CPE version differs from the verified product or upstream version, and the difference cannot be explained solely by distribution or vendor package version normalization.",
-    is_active: true,
-    usage_count: 0,
-  },
-  {
-    id: 33,
-    code: "DISTRIBUTION_PACKAGE_VERSION_NORMALIZED",
-    name: "Distribution package version normalized",
-    description: "The distribution package revision was removed.",
+    id: 32,
+    code: "PRODUCT",
+    name: "Product",
+    description: "The original product attribute is incorrect.",
     is_active: true,
     usage_count: 1,
   },
   {
-    id: 34,
-    code: "VERSION_NOT_IN_DICTIONARY",
-    name: "Version not in Dictionary",
-    description: "The exact version is absent from the Dictionary.",
+    id: 36,
+    code: "VERSION",
+    name: "Version",
+    description: "The original version attribute is incorrect.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 37,
+    code: "UPDATE",
+    name: "Update",
+    description: "The original update attribute is incorrect.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 38,
+    code: "EDITION",
+    name: "Edition",
+    description: "The original edition attribute is incorrect.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 39,
+    code: "LANGUAGE",
+    name: "Language",
+    description: "The original language attribute is incorrect.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 40,
+    code: "SW_EDITION",
+    name: "Software Edition",
+    description: "The original software edition attribute is incorrect.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 41,
+    code: "TARGET_SW",
+    name: "Target Software",
+    description: "The original target software attribute is incorrect.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 42,
+    code: "TARGET_HW",
+    name: "Target Hardware",
+    description: "The original target hardware attribute is incorrect.",
+    is_active: true,
+    usage_count: 0,
+  },
+  {
+    id: 43,
+    code: "OTHER",
+    name: "Other",
+    description: "The original other attribute is incorrect.",
     is_active: true,
     usage_count: 0,
   },
@@ -133,10 +172,13 @@ function jsonResponse<T>(body: T, status = 200): Response {
 function decisionName(code: GroundTruthDecisionCode): string {
   return {
     CPE_CONFIRMED: "CPE Confirmed",
-    OFFICIAL_CPE_MAPPED: "Official CPE mapped",
-    DIRECT_OFFICIAL_CPE_NOT_CONFIRMED:
-      "Direct official CPE not confirmed",
-    UNRESOLVED: "Unresolved",
+    OFFICIAL_CPE_MAPPED: "Correct CPE Found",
+    VERSION_NOT_IN_DICTIONARY:
+      "Product Found, Version Not Registered",
+    NVD_CONFIGURATION_ONLY:
+      "Found Only in NVD Configuration",
+    DIRECT_OFFICIAL_CPE_NOT_CONFIRMED: "No Direct CPE Found",
+    UNRESOLVED: "Unable to Determine",
   }[code]
 }
 
@@ -182,7 +224,7 @@ function restoredRecord(): ComponentCpeGroundTruthRecord {
     decision: "OFFICIAL_CPE_MAPPED",
     dictionary_cpe_id: null,
     manual_cpe: mappedCpe,
-    discrepancy_type_ids: [31, 33],
+    discrepancy_type_ids: [31, 32],
     note: "Reviewed from upstream evidence",
   })
 }
@@ -316,11 +358,22 @@ async function openDiscrepancyTypes(
   user: ReturnType<typeof userEvent.setup>,
 ): Promise<HTMLElement> {
   const trigger = within(editor()).getByRole("button", {
-    name: /Discrepancy Types:/,
+    name: /Incorrect CPE Fields:/,
   })
   await user.click(trigger)
-  await screen.findByLabelText("Discrepancy Type options")
+  await screen.findByLabelText("Incorrect CPE Field options")
   return trigger
+}
+
+async function chooseDecision(
+  user: ReturnType<typeof userEvent.setup>,
+  code: GroundTruthDecisionCode,
+): Promise<HTMLElement> {
+  const select = await within(editor()).findByRole("combobox", {
+    name: "CPE Validation Result",
+  })
+  await user.selectOptions(select, code)
+  return select
 }
 
 describe("Ground Truth decision and discrepancy workflow", () => {
@@ -333,29 +386,89 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     vi.unstubAllGlobals()
   })
 
-  it("renders one required Decision selector with the four values", async () => {
+  it("renders one Decision select with six concise options and no initial description", async () => {
     installFetch()
     renderAppAt("/ground-truth/components/101")
 
-    const decision = await within(editor()).findByRole("combobox", {
-      name: "Ground Truth Decision",
-    })
+    const decision = await within(editor()).findByRole(
+      "combobox",
+      { name: "CPE Validation Result" },
+    )
     expect(
-      within(decision).getAllByRole("option").map((option) =>
-        option.textContent,
-      ),
+      within(decision).getAllByRole("option").map((option) => ({
+        code: option.getAttribute("value"),
+        label: option.textContent,
+      })),
     ).toEqual([
-      "Select a decision",
-      "CPE Confirmed",
-      "Official CPE mapped",
-      "Direct official CPE not confirmed",
-      "Unresolved",
+      { code: "", label: "Select a validation result" },
+      { code: "CPE_CONFIRMED", label: "CPE Confirmed" },
+      {
+        code: "OFFICIAL_CPE_MAPPED",
+        label: "Correct CPE Found",
+      },
+      {
+        code: "VERSION_NOT_IN_DICTIONARY",
+        label: "Version Not Registered",
+      },
+      {
+        code: "NVD_CONFIGURATION_ONLY",
+        label: "NVD Configuration Only",
+      },
+      {
+        code: "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        label: "No Direct CPE Found",
+      },
+      { code: "UNRESOLVED", label: "Unable to Determine" },
     ])
+    expect(within(editor()).queryAllByRole("radio")).toHaveLength(0)
+    for (const description of [
+      "The original CPE is correct.",
+      "The original CPE was incorrect, and the correct official CPE was identified.",
+      "The product exists in the CPE Dictionary, but this version is not registered.",
+      "The product is not in the CPE Dictionary but is referenced in an NVD CVE Configuration.",
+      "The software product was identified, but no direct CPE could be confirmed.",
+      "The software product or version could not be determined with sufficient evidence.",
+    ]) {
+      expect(
+        within(editor()).queryByText(description),
+      ).not.toBeInTheDocument()
+    }
     expect(
       within(editor()).getByRole("button", {
         name: "Save Ground Truth",
       }),
     ).toBeDisabled()
+  })
+
+  it("saves a user-facing Decision as its internal code", async () => {
+    const user = userEvent.setup()
+    installFetch()
+    renderAppAt("/ground-truth/components/101")
+
+    const decision = await chooseDecision(
+      user,
+      "NVD_CONFIGURATION_ONLY",
+    )
+    expect(decision).toHaveValue("NVD_CONFIGURATION_ONLY")
+    expect(
+      within(editor()).getByText(
+        "The product is not in the CPE Dictionary but is referenced in an NVD CVE Configuration.",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(editor()).queryByText("The original CPE is correct."),
+    ).not.toBeInTheDocument()
+    await user.click(
+      within(editor()).getByRole("button", {
+        name: "Save Ground Truth",
+      }),
+    )
+
+    await waitFor(() =>
+      expect(putPayload().decision).toBe(
+        "NVD_CONFIGURATION_ONLY",
+      ),
+    )
   })
 
   it("restores an existing Decision and multiple Discrepancy Types", async () => {
@@ -366,9 +479,14 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     const review = editor()
     expect(
       await within(review).findByRole("combobox", {
-        name: "Ground Truth Decision",
+        name: "CPE Validation Result",
       }),
     ).toHaveValue("OFFICIAL_CPE_MAPPED")
+    expect(
+      within(review).getByText(
+        "The original CPE was incorrect, and the correct official CPE was identified.",
+      ),
+    ).toBeInTheDocument()
     expect(
       within(review).getByRole("textbox", {
         name: "Manual CPE 2.3",
@@ -376,7 +494,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     ).toHaveValue(mappedCpe)
     expect(
       within(review).queryByRole("checkbox", {
-        name: /Vendor mismatch/,
+        name: /^Vendor/,
       }),
     ).not.toBeInTheDocument()
     expect(within(review).getByText("2 selected")).toBeInTheDocument()
@@ -384,12 +502,12 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "true")
     expect(
       screen.getByRole("checkbox", {
-        name: /Vendor mismatch/,
+        name: /^Vendor/,
       }),
     ).toBeChecked()
     expect(
       screen.getByRole("checkbox", {
-        name: /Distribution package version normalized/,
+        name: /^Product/,
       }),
     ).toBeChecked()
     await user.keyboard("{Escape}")
@@ -404,10 +522,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     renderAppAt("/ground-truth/components/101")
 
     const review = editor()
-    const decision = await within(review).findByRole("combobox", {
-      name: "Ground Truth Decision",
-    })
-    await user.selectOptions(decision, "OFFICIAL_CPE_MAPPED")
+    await chooseDecision(user, "OFFICIAL_CPE_MAPPED")
     await user.type(
       within(review).getByRole("textbox", {
         name: "Manual CPE 2.3",
@@ -417,12 +532,12 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     await openDiscrepancyTypes(user)
     await user.click(
       await screen.findByRole("checkbox", {
-        name: /Vendor mismatch/,
+        name: /^Vendor/,
       }),
     )
     await user.click(
       await screen.findByRole("checkbox", {
-        name: /Distribution package version normalized/,
+        name: /^Product/,
       }),
     )
     await within(review).findByText("2 selected")
@@ -438,7 +553,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
         decision: "OFFICIAL_CPE_MAPPED",
         dictionary_cpe_id: null,
         manual_cpe: mappedCpe,
-        discrepancy_type_ids: [31, 33],
+        discrepancy_type_ids: [31, 32],
         note: "",
       })
     })
@@ -451,12 +566,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     renderAppAt("/ground-truth/components/101")
 
     const review = editor()
-    await user.selectOptions(
-      await within(review).findByRole("combobox", {
-        name: "Ground Truth Decision",
-      }),
-      "OFFICIAL_CPE_MAPPED",
-    )
+    await chooseDecision(user, "OFFICIAL_CPE_MAPPED")
     await user.type(
       within(review).getByRole("textbox", {
         name: "Manual CPE 2.3",
@@ -471,7 +581,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
 
     expect(
       within(review).getAllByText(
-        "Select at least one Discrepancy Type for Official CPE mapped.",
+        "Select at least one Incorrect CPE Field for Correct CPE Found.",
       ).length,
     ).toBeGreaterThan(0)
     expect(
@@ -487,22 +597,19 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     renderAppAt("/ground-truth/components/101")
 
     const review = editor()
-    const decision = await within(review).findByRole("combobox", {
-      name: "Ground Truth Decision",
-    })
-    await user.selectOptions(decision, "UNRESOLVED")
+    await chooseDecision(user, "UNRESOLVED")
     const manual = within(review).getByRole("textbox", {
       name: "Manual CPE 2.3",
     })
     await user.type(manual, mappedCpe)
     await openDiscrepancyTypes(user)
     const vendor = await screen.findByRole("checkbox", {
-      name: /Vendor mismatch/,
+      name: /^Vendor/,
     })
     await user.click(vendor)
     await user.click(screen.getByRole("button", { name: "Done" }))
-    await user.selectOptions(
-      decision,
+    await chooseDecision(
+      user,
       "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
     )
 
@@ -510,7 +617,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     expect(manual).toBeDisabled()
     expect(
       within(review).getByRole("button", {
-        name: /Discrepancy Types: Vendor mismatch/,
+        name: /Incorrect CPE Fields: Vendor/,
       }),
     ).toBeInTheDocument()
   })
@@ -521,63 +628,62 @@ describe("Ground Truth decision and discrepancy workflow", () => {
     renderAppAt("/ground-truth/components/101")
 
     const review = editor()
-    await user.selectOptions(
-      await within(review).findByRole("combobox", {
-        name: "Ground Truth Decision",
-      }),
-      "UNRESOLVED",
-    )
+    await chooseDecision(user, "UNRESOLVED")
     expect(within(review).queryAllByRole("checkbox")).toHaveLength(0)
     const trigger = await openDiscrepancyTypes(user)
-    const options = screen.getByLabelText("Discrepancy Type options")
+    const options = screen.getByLabelText(
+      "Incorrect CPE Field options",
+    )
     const checkboxes = within(options).getAllByRole("checkbox")
     expect(
       checkboxes.map((checkbox) => checkbox.dataset.code),
     ).toEqual([
-      "PART_MISMATCH",
-      "PRODUCT_MISMATCH",
-      "VENDOR_MISMATCH",
-      "VERSION_MISMATCH",
-      "DISTRIBUTION_PACKAGE_VERSION_NORMALIZED",
-      "VERSION_NOT_IN_DICTIONARY",
+      "PART",
+      "VENDOR",
+      "PRODUCT",
+      "VERSION",
+      "UPDATE",
+      "EDITION",
+      "LANGUAGE",
+      "SW_EDITION",
+      "TARGET_SW",
+      "TARGET_HW",
+      "OTHER",
     ])
     expect(
-      within(options).getByText(
-        /cannot be explained solely by distribution or vendor package version normalization/,
-      ),
+      within(options).getByText(/software edition attribute/),
     ).toBeInTheDocument()
 
-    for (const code of [
-      "PART_MISMATCH",
-      "PRODUCT_MISMATCH",
-      "VENDOR_MISMATCH",
-      "VERSION_MISMATCH",
-    ]) {
+    for (const code of ["PART", "VENDOR", "PRODUCT", "VERSION"]) {
+      const field = discrepancyTypes.find(
+        (item) => item.code === code,
+      )!
       await user.click(
         within(options).getByRole("checkbox", {
-          name: new RegExp(
-            discrepancyTypes.find((item) => item.code === code)!
-              .name,
-          ),
+          name: field.name,
         }),
       )
     }
     expect(trigger).toHaveAccessibleName(
-      "Discrepancy Types: Part mismatch, Product mismatch, Vendor mismatch, Version mismatch",
+      "Incorrect CPE Fields: Part (Application / OS / Hardware), Vendor, Product, Version",
     )
-    expect(within(trigger).getByText("Part mismatch")).toBeInTheDocument()
     expect(
-      within(trigger).getByText("Product mismatch"),
+      within(trigger).getByText(
+        "Part (Application / OS / Hardware)",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(trigger).getByText("Vendor"),
     ).toBeInTheDocument()
     expect(within(trigger).getByText("+2")).toBeInTheDocument()
 
     await user.click(
       within(options).getByRole("checkbox", {
-        name: /Product mismatch/,
+        name: /^Product/,
       }),
     )
     expect(trigger).toHaveAccessibleName(
-      "Discrepancy Types: Part mismatch, Vendor mismatch, Version mismatch",
+      "Incorrect CPE Fields: Part (Application / OS / Hardware), Vendor, Version",
     )
     expect(within(trigger).getByText("+1")).toBeInTheDocument()
   })
@@ -589,23 +695,18 @@ describe("Ground Truth decision and discrepancy workflow", () => {
 
     const review = editor()
     await within(review).findByText("2 selected")
-    await user.selectOptions(
-      within(review).getByRole("combobox", {
-        name: "Ground Truth Decision",
-      }),
-      "CPE_CONFIRMED",
-    )
+    await chooseDecision(user, "CPE_CONFIRMED")
 
     await waitFor(() =>
       expect(
         within(review).getByRole("button", {
-          name: "Discrepancy Types: None selected",
+          name: "Incorrect CPE Fields: None selected",
         }),
       ).toBeDisabled(),
     )
     expect(
       within(review).getByText(
-        "Discrepancy Types were cleared because the original CPE is confirmed.",
+        "Incorrect CPE Fields were cleared because the original CPE is confirmed.",
       ),
     ).toBeInTheDocument()
   })
@@ -616,7 +717,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
 
     const review = editor()
     await within(review).findByRole("combobox", {
-      name: "Ground Truth Decision",
+      name: "CPE Validation Result",
     })
     const scrollRegion = within(review).getByTestId(
       "ground-truth-editor-scroll-region",
@@ -655,18 +756,18 @@ describe("Ground Truth decision and discrepancy workflow", () => {
       "Version",
       "Original CPE",
       "Ground Truth",
-      "Ground Truth Decision",
-      "Discrepancy Types",
+      "CPE Validation Result",
+      "Incorrect CPE Fields",
       "Action",
     ])
 
     await user.selectOptions(
-      screen.getByLabelText("Ground Truth Decision"),
+      screen.getByLabelText("CPE Validation Result"),
       "OFFICIAL_CPE_MAPPED",
     )
     await user.selectOptions(
-      screen.getByLabelText("Discrepancy Type"),
-      "VENDOR_MISMATCH",
+      screen.getByLabelText("Incorrect CPE Field"),
+      "VENDOR",
     )
 
     await waitFor(() => {
@@ -681,7 +782,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
         "OFFICIAL_CPE_MAPPED",
       )
       expect(last.searchParams.get("discrepancy_type")).toBe(
-        "VENDOR_MISMATCH",
+        "VENDOR",
       )
     })
   })

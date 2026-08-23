@@ -292,13 +292,21 @@ class GroundTruthDecision(models.TextChoices):
     CPE_CONFIRMED = "CPE_CONFIRMED", "CPE Confirmed"
     OFFICIAL_CPE_MAPPED = (
         "OFFICIAL_CPE_MAPPED",
-        "Official CPE mapped",
+        "Correct CPE Found",
+    )
+    VERSION_NOT_IN_DICTIONARY = (
+        "VERSION_NOT_IN_DICTIONARY",
+        "Product Found, Version Not Registered",
+    )
+    NVD_CONFIGURATION_ONLY = (
+        "NVD_CONFIGURATION_ONLY",
+        "Found Only in NVD Configuration",
     )
     DIRECT_OFFICIAL_CPE_NOT_CONFIRMED = (
         "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
-        "Direct official CPE not confirmed",
+        "No Direct CPE Found",
     )
-    UNRESOLVED = "UNRESOLVED", "Unresolved"
+    UNRESOLVED = "UNRESOLVED", "Unable to Determine"
 
 
 def derive_resolution_outcome(
@@ -633,7 +641,7 @@ class ComponentCpeGroundTruth(models.Model):
                 raise ValidationError(
                     {
                         "decision": (
-                            "Official CPE mapped requires a Ground Truth "
+                            "Correct CPE Found requires a Ground Truth "
                             "CPE."
                         )
                     }
@@ -642,7 +650,7 @@ class ComponentCpeGroundTruth(models.Model):
                 raise ValidationError(
                     {
                         "decision": (
-                            "Official CPE mapped requires a CPE different "
+                            "Correct CPE Found requires a CPE different "
                             "from the original SBOM CPE."
                         )
                     }
@@ -655,7 +663,7 @@ class ComponentCpeGroundTruth(models.Model):
             raise ValidationError(
                 {
                     "decision": (
-                        "Direct official CPE not confirmed requires the "
+                        "No Direct CPE Found requires the "
                         "Ground Truth CPE to be empty."
                     )
                 }

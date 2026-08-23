@@ -17,6 +17,8 @@ export type GroundTruthResolutionOutcomeCode =
 export type GroundTruthDecisionCode =
   | "CPE_CONFIRMED"
   | "OFFICIAL_CPE_MAPPED"
+  | "VERSION_NOT_IN_DICTIONARY"
+  | "NVD_CONFIGURATION_ONLY"
   | "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
   | "UNRESOLVED"
 

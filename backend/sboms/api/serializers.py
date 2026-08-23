@@ -798,7 +798,7 @@ class ComponentCpeGroundTruthWriteSerializer(
                 raise serializers.ValidationError(
                     {
                         "decision": (
-                            "Official CPE mapped requires a Ground Truth "
+                            "Correct CPE Found requires a Ground Truth "
                             "CPE."
                         )
                     }
@@ -807,7 +807,7 @@ class ComponentCpeGroundTruthWriteSerializer(
                 raise serializers.ValidationError(
                     {
                         "decision": (
-                            "Official CPE mapped requires a CPE different "
+                            "Correct CPE Found requires a CPE different "
                             "from the original SBOM CPE."
                         )
                     }
@@ -816,8 +816,8 @@ class ComponentCpeGroundTruthWriteSerializer(
                 raise serializers.ValidationError(
                     {
                         "discrepancy_type_ids": (
-                            "Select at least one Discrepancy Type for "
-                            "Official CPE mapped."
+                            "Select at least one Incorrect CPE Field for "
+                            "Correct CPE Found."
                         )
                     }
                 )
@@ -829,7 +829,7 @@ class ComponentCpeGroundTruthWriteSerializer(
             raise serializers.ValidationError(
                 {
                     "decision": (
-                        "Direct official CPE not confirmed requires the "
+                        "No Direct CPE Found requires the "
                         "Ground Truth CPE to be empty."
                     )
                 }

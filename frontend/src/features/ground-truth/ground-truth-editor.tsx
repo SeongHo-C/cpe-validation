@@ -30,6 +30,7 @@ import {
 } from "@/features/ground-truth/ground-truth-api"
 import {
   groundTruthDecisionCodes,
+  groundTruthDecisionDescriptions,
   groundTruthDecisionNames,
 } from "@/features/ground-truth/ground-truth-decision"
 import { GroundTruthDiscrepancyTypeField } from "@/features/ground-truth/ground-truth-discrepancy-type-field"
@@ -73,7 +74,7 @@ function decisionValidationMessage(
   discrepancyTypes: GroundTruthDiscrepancyType[],
 ): string | null {
   const groundTruthCpe = selectedCpe?.cpe_name ?? manualCpe.trim()
-  if (!decision) return "Select a Ground Truth Decision."
+  if (!decision) return "Select a CPE Validation Result."
   if (decision === "CPE_CONFIRMED") {
     if (!originalCpe) {
       return "CPE Confirmed requires an original SBOM CPE."
@@ -82,25 +83,25 @@ function decisionValidationMessage(
       return "Select the original CPE from the Dictionary to confirm it."
     }
     if (discrepancyTypes.length) {
-      return "CPE Confirmed cannot include Discrepancy Types."
+      return "CPE Confirmed cannot include Incorrect CPE Fields."
     }
   }
   if (decision === "OFFICIAL_CPE_MAPPED") {
     if (!groundTruthCpe) {
-      return "Official CPE mapped requires a Ground Truth CPE."
+      return "Correct CPE Found requires a Ground Truth CPE."
     }
     if (groundTruthCpe === originalCpe) {
-      return "Official CPE mapped requires a CPE different from the original."
+      return "Correct CPE Found requires a CPE different from the original."
     }
     if (!discrepancyTypes.length) {
-      return "Select at least one Discrepancy Type for Official CPE mapped."
+      return "Select at least one Incorrect CPE Field for Correct CPE Found."
     }
   }
   if (
     decision === "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED" &&
     groundTruthCpe
   ) {
-    return "Direct official CPE not confirmed requires an empty Ground Truth CPE."
+    return "No Direct CPE Found requires an empty Ground Truth CPE."
   }
   return null
 }
@@ -168,7 +169,7 @@ export function GroundTruthEditor({
   const discrepancyValidationMessage =
     decision === "OFFICIAL_CPE_MAPPED" &&
     discrepancyTypes.length === 0
-      ? "Select at least one Discrepancy Type for Official CPE mapped."
+      ? "Select at least one Incorrect CPE Field for Correct CPE Found."
       : undefined
   const discrepancyTypesDisabled =
     decision === "" || decision === "CPE_CONFIRMED"
@@ -197,7 +198,7 @@ export function GroundTruthEditor({
     if (discrepancyTypes.length) {
       setDiscrepancyTypes([])
       setDiscrepancyNotice(
-        "Discrepancy Types were cleared because the original CPE is confirmed.",
+        "Incorrect CPE Fields were cleared because the original CPE is confirmed.",
       )
     }
   }, [decision, discrepancyTypes.length])
@@ -491,11 +492,16 @@ export function GroundTruthEditor({
                     htmlFor={`ground-truth-decision-${componentId}`}
                     className="text-sm font-medium"
                   >
-                    Decision
+                    CPE Validation Result
                   </label>
                   <select
                     id={`ground-truth-decision-${componentId}`}
-                    aria-label="Ground Truth Decision"
+                    aria-label="CPE Validation Result"
+                    aria-describedby={
+                      decision
+                        ? `ground-truth-decision-description-${componentId}`
+                        : undefined
+                    }
                     className={`${selectControlClassName} w-full`}
                     value={decision}
                     onChange={(event) => {
@@ -508,13 +514,23 @@ export function GroundTruthEditor({
                       setSuccess(null)
                     }}
                   >
-                    <option value="">Select a decision</option>
+                    <option value="">
+                      Select a validation result
+                    </option>
                     {groundTruthDecisionCodes.map((code) => (
                       <option key={code} value={code}>
                         {groundTruthDecisionNames[code]}
                       </option>
                     ))}
                   </select>
+                  {decision ? (
+                    <p
+                      id={`ground-truth-decision-description-${componentId}`}
+                      className="text-xs leading-4 text-muted-foreground"
+                    >
+                      {groundTruthDecisionDescriptions[decision]}
+                    </p>
+                  ) : null}
                 </div>
 
                 <GroundTruthDiscrepancyTypeField
@@ -523,9 +539,9 @@ export function GroundTruthEditor({
                   disabled={discrepancyTypesDisabled}
                   disabledMessage={
                     decision === "CPE_CONFIRMED"
-                      ? "A confirmed original CPE has no discrepancy."
+                      ? "A confirmed original CPE has no incorrect fields."
                       : decision === ""
-                        ? "Select a Ground Truth Decision first."
+                        ? "Select a CPE Validation Result first."
                         : undefined
                   }
                   validationMessage={discrepancyValidationMessage}
