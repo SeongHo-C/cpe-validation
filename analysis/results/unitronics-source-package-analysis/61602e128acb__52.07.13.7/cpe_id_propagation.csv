@@ -1,0 +1,40 @@
+cpe_id,global_package_count,global_source_count,source,source_package_count,cpe_id_package_count_within_source,cpe_id_coverage_percent_within_source,packages,propagation_status,source_cpe_id_consistency
+cpe:/a:libcap-ng_project:libcap-ng,1,1,feeds/packages/libs/libcap-ng,1,1,100.0,libcap-ng,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:c-ares:c-ares,1,1,package/libs/c-ares,1,1,100.0,libcares,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:strongswan:davici,1,1,package/libs/davici,1,1,100.0,davici,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:libcap_project:libcap,2,1,package/libs/libcap,2,2,100.0,libcap | libcap-bin,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:json-c_project:json-c,1,1,package/libs/libjson-c,1,1,100.0,libjson-c5,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:netfilter:libmnl,1,1,package/libs/libmnl,1,1,100.0,libmnl0,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:libmodbus:libmodbus,1,1,package/libs/libmodbus,1,1,100.0,libmodbus,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:netfilter:libnetfilter_conntrack,1,1,package/libs/libnetfilter-conntrack,1,1,100.0,libnetfilter-conntrack3,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:netfilter:libnfnetlink,1,1,package/libs/libnfnetlink,1,1,100.0,libnfnetlink0,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:netfilter:libnftnl,1,1,package/libs/libnftnl,1,1,100.0,libnftnl11,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:libnl_project:libnl,2,1,package/libs/libnl,2,2,100.0,libnl-core200 | libnl-genl200,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:tcpdump:libpcap,1,1,package/libs/libpcap,1,1,100.0,libpcap1,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:libusb:libusb,1,1,package/libs/libusb,1,1,100.0,libusb-1.0-0,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:oberhumer:lzo,1,1,package/libs/lzo,1,1,100.0,liblzo2,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:nghttp2:nghttp2,1,1,package/libs/nghttp2,1,1,100.0,libnghttp2-14,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:openssl:openssl,4,1,package/libs/openssl,4,4,100.0,libopenssl-conf | libopenssl-legacy | libopenssl3 | openssl-util,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:pcre:pcre,1,1,package/libs/pcre2,1,1,100.0,libpcre2,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:sqlite:sqlite,1,1,package/libs/sqlite3,1,1,100.0,libsqlite3-0,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:gnu:zlib,1,1,package/libs/zlib,1,1,100.0,zlib,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:thekelleys:dnsmasq,1,1,package/network/services/dnsmasq,1,1,100.0,dnsmasq,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:matt_johnston:dropbear_ssh_server,1,1,package/network/services/dropbear,1,1,100.0,dropbear,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:w1.fi:hostapd,2,1,package/network/services/hostapd,2,2,100.0,hostapd-common | wpad-openssl,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:eclipse:mosquitto,1,1,package/network/services/mosquitto,1,1,100.0,libmosquitto-ssl,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:openssh:openssh,1,1,package/network/services/openssh,1,1,100.0,openssh-sftp-server,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:openvpn:openvpn,1,1,package/network/services/openvpn,1,1,100.0,openvpn-openssl,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:samba:ppp,4,1,package/network/services/ppp,4,4,100.0,ppp | ppp-mod-pppoe | ppp-mod-pppol2tp | ppp-mod-pptp,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:poptop:pptp_server,1,1,package/network/services/pptpd,1,1,100.0,pptpd,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:strongswan:strongswan,28,1,package/network/services/strongswan,28,28,100.0,strongswan | strongswan-charon | strongswan-minimal | strongswan-mod-connmark | strongswan-mod-constraints | strongswan-mod-des | strongswan-mod-eap-identity | strongswan-mod-eap-mschapv2 | strongswan-mod-kernel-netlink | strongswan-mod-md4 | strongswan-mod-mgf1 | strongswan-mod-nonce | strongswan-mod-openssl | strongswan-mod-pem | strongswan-mod-pgp | strongswan-mod-pkcs1 | strongswan-mod-pkcs8 | strongswan-mod-pubkey | strongswan-mod-random | strongswan-mod-revocation | strongswan-mod-sha1 | strongswan-mod-socket-default | strongswan-mod-updown | strongswan-mod-vici | strongswan-mod-x509 | strongswan-mod-xauth-generic | strongswan-mod-xcbc | strongswan-swanctl,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:haxx:libcurl,2,1,package/network/utils/curl,2,2,100.0,curl | libcurl4,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:kernel:ethtool,1,1,package/network/utils/ethtool,1,1,100.0,ethtool,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:iproute2_project:iproute2,1,1,package/network/utils/iproute2,1,1,100.0,ip-full,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:netfilter:ipset,2,1,package/network/utils/ipset,2,2,100.0,ipset | libipset13,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:netfilter:iptables,8,1,package/network/utils/iptables,8,8,100.0,ip6tables | iptables | iptables-mod-conntrack-extra | iptables-mod-ipopt | iptables-mod-ipsec | libip4tc2 | libip6tc2 | libxtables12,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:busybox:busybox,1,1,package/utils/busybox,1,1,100.0,busybox,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:e2fsprogs_project:e2fsprogs,4,1,package/utils/e2fsprogs,4,4,100.0,e2fsprogs | libcomerr0 | libext2fs2 | libss2,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:namjaejeon:exfatprogs,1,1,package/utils/exfatprogs,1,1,100.0,exfat-mkfs,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:lua:lua,2,1,package/utils/lua,2,2,100.0,liblua5.1.5 | lua,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:zlib-ng:minizip-ng,1,1,package/utils/minizip,1,1,100.0,minizip,SINGLE_PACKAGE_ONLY,ALL_PACKAGES_SAME_CPE_ID
+cpe:/a:kernel:util-linux,2,1,package/utils/util-linux,2,2,100.0,libblkid1 | libuuid1,PROPAGATED_TO_MULTIPLE_PACKAGES,ALL_PACKAGES_SAME_CPE_ID
