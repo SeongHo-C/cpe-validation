@@ -29,6 +29,9 @@ from cpe.mapping_boundaries import (
 from cpe_dictionary.models import CpeDictionarySnapshot, CpeName
 from nvd_cve.models import NvdCveSnapshot
 from sboms.models import ComponentCpeGroundTruth
+from sboms.unitronics_ground_truth_candidate_build import (
+    APPROVED_DERIVED_SPLITS,
+)
 
 
 SBOM_ID = 1364
@@ -85,9 +88,10 @@ RESULT_LABELS = {
 }
 EXPECTED_CURRENT_COUNTS = {
     "CPE_CONFIRMED": 2,
-    "OFFICIAL_CPE_MAPPED": 24,
-    "VERSION_NOT_IN_DICTIONARY": 22,
+    "OFFICIAL_CPE_MAPPED": 21,
+    "VERSION_NOT_IN_DICTIONARY": 16,
 }
+EXPECTED_SCOPE_COUNT = 39
 PASS_A_STATUSES = (
     "PRODUCT_VERSION_CONFIRMED",
     "PRODUCT_CORRECTION_REQUIRED",
@@ -202,7 +206,7 @@ def _spec(
     )
 
 
-AUDIT_PRODUCT_SPECS = {
+_PRE_POLICY_AUDIT_PRODUCT_SPECS = {
     "busybox": _spec("BusyBox", "BusyBox", "1.34.1", ("a", "busybox", "busybox"), strength="STRONG", evidence_refs=("LOCAL-01", "LOCAL-02", "UP-OPENWRT-POLICY", "UP-BUSYBOX-1.34.1")),
     "curl": _spec("curl", "curl project", "8.11.0", ("a", "haxx", "curl"), strength="STRONG", evidence_refs=("LOCAL-01", "LOCAL-02", "LOCAL-04", "LOCAL-06", "UP-OPENWRT-POLICY")),
     "davici": _spec("davici", "strongSwan", "1.4", ("a", "strongswan", "davici")),
@@ -260,6 +264,12 @@ AUDIT_PRODUCT_SPECS = {
         evidence_refs=("LOCAL-01", "LOCAL-11", "UP-WPA-2.11"),
     ),
     "openwrt": _spec("OpenWrt", "OpenWrt", "21.02.0", ("o", "openwrt", "openwrt"), template=("-", "*", "*", "*", "*", "*", "*"), strength="STRONG", evidence_refs=("LOCAL-01", "UP-OPENWRT-21.02.0")),
+}
+
+AUDIT_PRODUCT_SPECS = {
+    name: spec
+    for name, spec in _PRE_POLICY_AUDIT_PRODUCT_SPECS.items()
+    if name not in APPROVED_DERIVED_SPLITS and name != "wireguard-tools"
 }
 
 
@@ -791,15 +801,26 @@ def build_unitronics_cpe_audit(
         for row in _read_csv(root / PREANALYSIS_RELATIVE)
     }
     scope = [row for row in candidate_rows if row["proposed_gt_cpe"]]
-    if len(scope) != 48 or len({row["component_id"] for row in scope}) != 48:
-        raise UnitronicsCpeAuditError("Audit scope is not exactly 48 unique CPE-bearing rows")
+    expected_scope_count = len(AUDIT_PRODUCT_SPECS)
+    if expected_scope_count != EXPECTED_SCOPE_COUNT:
+        raise UnitronicsCpeAuditError(
+            "Independent Pass A registry is not exactly 39 approved representatives"
+        )
+    if (
+        len(scope) != expected_scope_count
+        or len({row["component_id"] for row in scope})
+        != expected_scope_count
+    ):
+        raise UnitronicsCpeAuditError(
+            "Audit scope is not exactly 39 unique CPE-bearing rows"
+        )
     current_counts = Counter(row["proposed_decision"] for row in scope)
     if current_counts != EXPECTED_CURRENT_COUNTS:
         raise UnitronicsCpeAuditError(f"Unexpected current result distribution: {current_counts}")
     names = {row["name"] for row in scope}
     if names != AUDIT_PRODUCT_SPECS.keys():
         raise UnitronicsCpeAuditError(
-            "Independent Pass A registry does not exactly cover the 48-row scope"
+            "Independent Pass A registry does not exactly cover the 39-row scope"
         )
 
     audit_rows: list[dict[str, str]] = []
@@ -915,7 +936,10 @@ def build_unitronics_cpe_audit(
     hashes = source_hashes()
     summary = {
         "schema_version": 1,
-        "analysis_scope": "Independent two-pass audit of exactly 48 existing CPE-bearing Unitronics candidates",
+        "analysis_scope": (
+            "Independent two-pass audit of exactly 39 final CPE-bearing "
+            "Unitronics representative candidates"
+        ),
         "dataset": {
             "sbom_document_id": SBOM_ID,
             "manufacturer": "Unitronics",
@@ -979,20 +1003,20 @@ def build_unitronics_cpe_audit(
         "correction_counts": correction_counts,
         "corrections": corrections,
         "representative_findings": {
-            "OpenSSL": "ACCEPTED: libopenssl3 and openssl-util independently resolve to Active exact OpenSSL 3.0.14.",
+            "OpenSSL": "ACCEPTED: representative libopenssl3 resolves to Active exact OpenSSL 3.0.14; approved CLI split openssl-util is outside the CPE-bearing audit scope.",
             "curl / libcurl": "ACCEPTED: curl resolves Active exact 8.11.0; libcurl 8.11.0 is preserved as Version Not Registered in the distinct haxx:libcurl family.",
-            "iptables / ip6tables": "ACCEPTED: both payloads belong to iptables 1.8.7; the Active family exists, exact version is absent, and the generic '*' template is supported.",
-            "strongSwan": "ACCEPTED: strongswan, charon, and swanctl independently identify 5.9.14; exact Active is absent and 5.9.x final-release history supports update='-'.",
+            "iptables": "ACCEPTED: representative iptables identifies 1.8.7; the Active family exists, exact version is absent, and the generic '*' template is supported.",
+            "strongSwan": "ACCEPTED: representative strongswan identifies 5.9.14; exact Active is absent and 5.9.x final-release history supports update='-'.",
             "e2fsprogs": "ACCEPTED: exact utilities and official 1.47.0 release evidence agree; family exists and exact Active version is absent.",
             "Linux kernel": "ACCEPTED: exact Linux 5.15.176 banner and module tree independently support the Active exact CPE and canonical equality with Original.",
-            "Lua": "ACCEPTED: library and interpreter identify final patch release 5.1.5; family patch-release history supports update='*'.",
+            "Lua": "ACCEPTED: representative lua identifies final patch release 5.1.5; family patch-release history supports update='*'.",
             "musl": "ACCEPTED: exact musl loader/libc payload and version 1.2.4 agree; generic '*' template is applicable to the MIPS firmware rather than x86-specific entries.",
             "wpa_supplicant": "ACCEPTED: exact firmware preserves 2.11-devel; the approved CPE expression uses version=2.11 and update=devel, supported by prerelease-update rows in the fixed family.",
         },
         "conclusion": {
             "unchanged_candidates_ready_for_finalization": final_counts["ACCEPTED"],
             "current_candidates_not_ready_without_correction": final_counts["CORRECTION_REQUIRED"],
-            "current_48_can_be_finalized_as_is": final_counts["CORRECTION_REQUIRED"] == 0
+            "current_39_can_be_finalized_as_is": final_counts["CORRECTION_REQUIRED"] == 0
             and final_counts["EVIDENCE_REVIEW_REQUIRED"] == 0,
             "version_not_registered_current_candidates_fully_satisfying_all_conditions": current_vnr_accepted,
             "version_not_registered_after_recommended_correction_satisfying_all_conditions": audited_result_counts["VERSION_NOT_IN_DICTIONARY"],
@@ -1013,11 +1037,11 @@ def build_unitronics_cpe_audit(
         "source_artifact_hashes": hashes,
         "validation": {
             "audit_rows": len(audit_rows),
-            "audit_rows_equal_48": len(audit_rows) == 48,
+            "audit_rows_equal_39": len(audit_rows) == EXPECTED_SCOPE_COUNT,
             "unique_component_ids": len({row["component_id"] for row in audit_rows}),
             "current_cpe_confirmed_equal_2": current_counts["CPE_CONFIRMED"] == 2,
-            "current_correct_cpe_found_equal_24": current_counts["OFFICIAL_CPE_MAPPED"] == 24,
-            "current_version_not_registered_equal_22": current_counts["VERSION_NOT_IN_DICTIONARY"] == 22,
+            "current_correct_cpe_found_equal_21": current_counts["OFFICIAL_CPE_MAPPED"] == 21,
+            "current_version_not_registered_equal_16": current_counts["VERSION_NOT_IN_DICTIONARY"] == 16,
             "audited_gt_parser_failure_count": sum(
                 canonicalize_cpe23(row["audited_gt_cpe"]) is None
                 for row in audit_rows
@@ -1031,8 +1055,13 @@ def build_unitronics_cpe_audit(
             "ground_truth_count_unchanged": None,
         },
     }
-    if candidate_summary["ground_truth_candidates"]["count"] != 48:
-        raise UnitronicsCpeAuditError("Candidate source summary no longer reports 48 GT CPEs")
+    if (
+        candidate_summary["ground_truth_candidates"]["count"]
+        != EXPECTED_SCOPE_COUNT
+    ):
+        raise UnitronicsCpeAuditError(
+            "Candidate source summary no longer reports 39 final GT CPEs"
+        )
     return CpeAuditAnalysis(rows=audit_rows, summary=summary, source_hashes=hashes)
 
 
@@ -1050,15 +1079,15 @@ def finalize_validation(
         analysis.source_hashes == source_hashes()
     )
     boolean_checks = (
-        "audit_rows_equal_48",
+        "audit_rows_equal_39",
         "current_cpe_confirmed_equal_2",
-        "current_correct_cpe_found_equal_24",
-        "current_version_not_registered_equal_22",
+        "current_correct_cpe_found_equal_21",
+        "current_version_not_registered_equal_16",
         "source_artifacts_unchanged",
         "ground_truth_count_unchanged",
     )
     failures = [key for key in boolean_checks if not validation[key]]
-    if validation["unique_component_ids"] != 48:
+    if validation["unique_component_ids"] != EXPECTED_SCOPE_COUNT:
         failures.append("unique_component_ids")
     if validation["audited_gt_parser_failure_count"]:
         failures.append("audited_gt_parser_failure_count")
@@ -1140,7 +1169,7 @@ def _render_report(analysis: CpeAuditAnalysis) -> str:
 
 - Firmware: Unitronics UCR-ST-B8 `52.07.13.7`
 - SBOMDocument: `{SBOM_ID}`
-- Audited rows: **48 CPE-bearing candidates only**
+- Audited rows: **39 final CPE-bearing representative candidates only**
 - CPE Dictionary: `{CPE_SNAPSHOT_ID}`
 - NVD snapshot identity check: `{NVD_SNAPSHOT_ID}`
 - Unable to Determine rows audited: **0**
@@ -1226,7 +1255,7 @@ component-specific upstream documentation than Strong rows.
 
 - Audit rows: `{validation['audit_rows']}` — PASS
 - Unique Component IDs: `{validation['unique_component_ids']}` — PASS
-- Current distribution: `2 + 24 + 22 = 48` — PASS
+- Current distribution: `2 + 21 + 16 = 39` — PASS
 - Audited GT canonical parse failures: `{validation['audited_gt_parser_failure_count']}` — PASS
 - Final Deprecated GT: `{validation['final_deprecated_gt_count']}` — PASS
 - Candidate source artifacts unchanged: `{validation['source_artifacts_unchanged']}` — PASS

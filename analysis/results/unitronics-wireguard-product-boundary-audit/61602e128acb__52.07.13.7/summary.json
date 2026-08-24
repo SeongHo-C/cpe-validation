@@ -1,0 +1,252 @@
+{
+  "audit": "Unitronics wireguard-tools product-boundary audit",
+  "comparison": {
+    "audit_status": "CHANGE_REQUIRED",
+    "audited": {
+      "audited_actual_product": "wireguard-tools",
+      "audited_actual_version": "1.0.20210223",
+      "recommended_gt_cpe": "",
+      "recommended_validation_result": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+    },
+    "current": {
+      "component_id": 200186,
+      "component_name": "wireguard-tools",
+      "current_actual_product": "WireGuard",
+      "current_actual_version": "1.0.20210223",
+      "current_gt_cpe": "cpe:2.3:a:wireguard:wireguard:1.0.20210223:*:*:*:*:*:*:*",
+      "current_resolution_outcome": "MANUAL_FROM_OFFICIAL_FAMILY",
+      "current_validation_result": "VERSION_NOT_IN_DICTIONARY",
+      "ground_truth_record_id": 1389,
+      "observed_package_version": "1.0.20210223-4"
+    }
+  },
+  "cpe_dictionary": {
+    "canonical_parse_failure_count": 0,
+    "direct_wireguard_tools_matches": [],
+    "direct_wireguard_tools_product_found": false,
+    "status_counts": {
+      "ACTIVE": 1,
+      "DEPRECATED": 0
+    },
+    "vendor_family_record_count": 1,
+    "vendor_family_versions": [
+      "0.5.3"
+    ]
+  },
+  "dataset": {
+    "component_id": 200186,
+    "component_name": "wireguard-tools",
+    "dataset_key": "61602e128acb__52.07.13.7",
+    "observed_package_version": "1.0.20210223-4",
+    "sbom_document_id": 1364
+  },
+  "judgment": {
+    "audited_actual_product": "wireguard-tools",
+    "audited_actual_version": "1.0.20210223",
+    "classification": "DIFFERENT_PRODUCT",
+    "reason": "The only wireguard:wireguard Dictionary version and every fixed NVD use align with the separately versioned Windows client, while wireguard-tools is an official userspace-tools product with its own 1.0.YYYYMMDD release space and no direct Dictionary or Configuration expression.",
+    "recommended_gt_cpe": "",
+    "recommended_validation_result": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+    "recommended_validation_result_label": "No Direct CPE Found"
+  },
+  "mode": "READ_ONLY",
+  "nvd_configuration": {
+    "all_family_cases_windows_constrained": true,
+    "canonical_parse_failure_count": 0,
+    "direct_wireguard_tools_expression_count": 0,
+    "direct_wireguard_tools_expressions": [],
+    "raw_feeds": {
+      "2021": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2021.json.gz",
+        "sha256": "9e71fcee76c01270b9c5014d170c5a395ad173aad30ddd85ae7a157d233f0293"
+      },
+      "2023": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2023.json.gz",
+        "sha256": "8fbd5ecdfd5ea1e1f9efbb4cb75a4740a7056d24eeaff0115da467ae73fda4fd"
+      }
+    },
+    "related_distinct_criteria": [
+      "cpe:2.3:a:pfsense:pfsense-pkg-wireguard:*:*:*:*:*:*:*:*",
+      "cpe:2.3:a:pfsense:pfsense-pkg-wireguard:0.1.6:*:*:*:*:*:*:*",
+      "cpe:2.3:a:wgportal:wireguard_portal:*:*:*:*:*:*:*:*",
+      "cpe:2.3:a:wireguard:wireguard:0.5.3:*:*:*:*:*:*:*"
+    ],
+    "wireguard_family_criteria_count": 1,
+    "wireguard_family_cve_ids": [
+      "CVE-2021-46873",
+      "CVE-2023-35838"
+    ],
+    "wireguard_family_distinct_criteria": [
+      "cpe:2.3:a:wireguard:wireguard:0.5.3:*:*:*:*:*:*:*"
+    ],
+    "wireguard_family_distinct_cve_count": 2,
+    "wireguard_family_occurrence_count": 2,
+    "wireguard_family_range_tuples": [
+      [
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "wireguard_family_versions": [
+      "0.5.3"
+    ]
+  },
+  "official_evidence": {
+    "accessed_at": "2026-08-25",
+    "openwrt_release_semantics": "https://github.com/openwrt/packages/blob/master/CONTRIBUTING.md",
+    "openwrt_version_commit": "https://git.openwrt.org/e0f7f5bbce0d03e5192b5dad5a24fcb8566da97f",
+    "project_catalog": "https://www.wireguard.com/repositories/",
+    "tools_readme": "https://git.zx2c4.com/wireguard-tools/tree/README.md?h=v1.0.20210223",
+    "tools_release_archive": "https://git.zx2c4.com/wireguard-tools/snapshot/wireguard-tools-1.0.20210223.tar.xz",
+    "tools_release_tag": "https://git.zx2c4.com/wireguard-tools/tag/?h=v1.0.20210223",
+    "tools_repository": "https://git.zx2c4.com/wireguard-tools/",
+    "windows_repository": "https://git.zx2c4.com/wireguard-windows/",
+    "windows_tags": "https://git.zx2c4.com/wireguard-windows/refs/tags"
+  },
+  "official_project_structure": [
+    {
+      "canonical_artifacts": "wg(8), wg-quick(8)",
+      "project": "wireguard-tools",
+      "purpose": "Cross-platform userspace tools that configure WireGuard implementations",
+      "release_examples": "1.0.20210223, 1.0.20210315, 1.0.20210424, 1.0.20210914",
+      "url": "https://git.zx2c4.com/wireguard-tools/",
+      "version_scheme": "1.0.YYYYMMDD"
+    },
+    {
+      "canonical_artifacts": "Linux kernel WireGuard driver/module",
+      "project": "wireguard-linux",
+      "purpose": "WireGuard implementation for the Linux kernel",
+      "release_examples": "devel, stable, backport branches",
+      "url": "https://git.zx2c4.com/wireguard-linux/",
+      "version_scheme": "Linux kernel branches/releases"
+    },
+    {
+      "canonical_artifacts": "wireguard kernel module for Linux 3.10-5.5",
+      "project": "wireguard-linux-compat",
+      "purpose": "Out-of-tree Linux kernel module backport",
+      "release_examples": "separate compatibility repository",
+      "url": "https://git.zx2c4.com/wireguard-linux-compat/",
+      "version_scheme": "Kernel compatibility releases"
+    },
+    {
+      "canonical_artifacts": "wireguard.exe, manager service, UI",
+      "project": "wireguard-windows",
+      "purpose": "Official WireGuard client application for Windows",
+      "release_examples": "0.5, 0.5.1, 0.5.2, 0.5.3",
+      "url": "https://git.zx2c4.com/wireguard-windows/refs/tags",
+      "version_scheme": "0.x semantic client releases in the audited era"
+    },
+    {
+      "canonical_artifacts": "wireguard-go userspace tunnel implementation",
+      "project": "wireguard-go",
+      "purpose": "Cross-platform userspace WireGuard implementation",
+      "release_examples": "not the wireguard-tools release space",
+      "url": "https://git.zx2c4.com/wireguard-go/",
+      "version_scheme": "Independent repository history"
+    },
+    {
+      "canonical_artifacts": "Android, macOS, and iOS applications",
+      "project": "wireguard-android / wireguard-apple",
+      "purpose": "Official platform-specific Android and Apple clients",
+      "release_examples": "independent platform repositories",
+      "url": "https://www.wireguard.com/repositories/",
+      "version_scheme": "Platform-specific client releases"
+    }
+  ],
+  "schema_version": 1,
+  "snapshots": {
+    "cpe_dictionary": {
+      "active_count": 1711630,
+      "content_sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+      "deprecated_count": 99631,
+      "manifest_sha256": "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+      "record_count": 1811261,
+      "snapshot_id": "20260819T035002Z",
+      "status": "COMPLETE"
+    },
+    "nvd_cve": {
+      "configuration_count": 760120,
+      "content_sha256": "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab",
+      "cpe_match_count": 3170148,
+      "manifest_sha256": "80b6107f5225923794d725b252527f575ad2b0c800765fc5ce6d0b07c18d94eb",
+      "record_count": 380865,
+      "snapshot_id": "20260820T110357Z",
+      "status": "COMPLETE"
+    }
+  },
+  "validation": {
+    "candidate_artifact_hashes_after": {
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/components.csv": "dbc3f7b149fcc0830b223529985e2326786064f92382d013d4dcd13bd0d6ee9b",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/configuration_only_cases.csv": "923a9ac8caca0993ee992c83dafd6821d471d86ae88dd12602f22f2837adda62",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/deprecated_resolution.csv": "f189a5adebf9bb6dcd86991da0fa8ff3095cbd2a522e0ead18b4ae735a2aa09f",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/evidence_manifest.csv": "efd46dabbb5a7318c704cf03a0fab012239bbdb1a2f2e093062bdcee53b83102",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/human_validation.csv": "fa25383b3d59ffcae6d6c752e2430e9bf3dd4666e47637d6a36276afb0d69db4",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/report.md": "5f4a365791b69ed392ef80fb1cbf567584e6a9391037c8720a08e4ebe2d4bbe5",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/summary.json": "687aa461d76c80962cae4fe4684e827e7465458bafb633b28f1427d02aaa8e29",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unitronics_gt_human_validation.html": "f52fda5dc94f8675241ec1ddad46e7a94eb53c7367cc72258a9d10cf3c22426e",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unresolved.csv": "cb89e06812409c21d3883f56a9014319048796c21eb4ccd2c2ad8f6a7968bd08"
+    },
+    "candidate_artifact_hashes_before": {
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/components.csv": "dbc3f7b149fcc0830b223529985e2326786064f92382d013d4dcd13bd0d6ee9b",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/configuration_only_cases.csv": "923a9ac8caca0993ee992c83dafd6821d471d86ae88dd12602f22f2837adda62",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/deprecated_resolution.csv": "f189a5adebf9bb6dcd86991da0fa8ff3095cbd2a522e0ead18b4ae735a2aa09f",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/evidence_manifest.csv": "efd46dabbb5a7318c704cf03a0fab012239bbdb1a2f2e093062bdcee53b83102",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/human_validation.csv": "fa25383b3d59ffcae6d6c752e2430e9bf3dd4666e47637d6a36276afb0d69db4",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/report.md": "5f4a365791b69ed392ef80fb1cbf567584e6a9391037c8720a08e4ebe2d4bbe5",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/summary.json": "687aa461d76c80962cae4fe4684e827e7465458bafb633b28f1427d02aaa8e29",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unitronics_gt_human_validation.html": "f52fda5dc94f8675241ec1ddad46e7a94eb53c7367cc72258a9d10cf3c22426e",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unresolved.csv": "cb89e06812409c21d3883f56a9014319048796c21eb4ccd2c2ad8f6a7968bd08"
+    },
+    "candidate_artifact_mutation_count": 0,
+    "commit_count": 0,
+    "component_mutation_count": 0,
+    "configuration_case_export_count": 2,
+    "cpe_canonical_parse_failure_count": 0,
+    "cpe_family_export_count": 1,
+    "database_state_after": {
+      "component_count": 582,
+      "component_fingerprint": "6ce2bc5760b3d237d2d73a82ed01f24d5bd1a382e02c48f2f3d30cb4a4c68cdf",
+      "ground_truth_count": 582,
+      "ground_truth_fingerprint": "767b6276ac7d40a9b1efb3611795f88df5d685f2bb882de6fc3c4cc8d6f1d80d"
+    },
+    "database_state_before": {
+      "component_count": 582,
+      "component_fingerprint": "6ce2bc5760b3d237d2d73a82ed01f24d5bd1a382e02c48f2f3d30cb4a4c68cdf",
+      "ground_truth_count": 582,
+      "ground_truth_fingerprint": "767b6276ac7d40a9b1efb3611795f88df5d685f2bb882de6fc3c4cc8d6f1d80d"
+    },
+    "fixed_snapshots_only": true,
+    "ground_truth_db_mutation_count": 0,
+    "migration_count": 0
+  },
+  "version_normalization": {
+    "distribution_suffix": "-4",
+    "distribution_suffix_meaning": "OpenWrt package release/revision; not removed because it looks date-like, but because official upstream and package metadata separate PKG_VERSION from PKG_RELEASE.",
+    "observed_package_version": "1.0.20210223-4",
+    "upstream_archive": "wireguard-tools-1.0.20210223.tar.xz",
+    "upstream_tag": "v1.0.20210223",
+    "verified_upstream_version": "1.0.20210223"
+  },
+  "version_space_comparison": [
+    {
+      "alignment": "AUDITED_COMPONENT",
+      "observed_or_known_versions": "1.0.20210223; 1.0.20210315; 1.0.20210424; 1.0.20210914",
+      "product": "wireguard-tools",
+      "scheme": "1.0.YYYYMMDD"
+    },
+    {
+      "alignment": "CPE_FAMILY",
+      "observed_or_known_versions": "0.5; 0.5.1; 0.5.2; 0.5.3",
+      "product": "wireguard-windows",
+      "scheme": "0.x client releases"
+    },
+    {
+      "alignment": "WIREGUARD_WINDOWS",
+      "observed_or_known_versions": "0.5.3",
+      "product": "CPE wireguard:wireguard",
+      "scheme": "single fixed-snapshot version"
+    }
+  ]
+}

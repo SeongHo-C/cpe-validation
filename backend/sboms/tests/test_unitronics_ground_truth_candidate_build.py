@@ -1,14 +1,21 @@
 import csv
+from unittest import mock
 
 from django.conf import settings
 from django.test import SimpleTestCase
 
 from cpe.cpe23_canonical import canonicalize_cpe23
 from sboms.unitronics_ground_truth_candidate_build import (
+    APPROVED_DERIVED_SPLITS,
+    APPROVED_PRODUCT_BOUNDARY_EXCLUSIONS,
+    APPROVED_REPRESENTATIVES,
     DECISION_CODES,
     EXPECTED_FAMILY_TEMPLATES,
+    apply_representative_component_policy,
     adjudicate_component,
     resolve_prerelease_update_expression,
+    validate_product_boundary_approvals,
+    validate_representative_approvals,
 )
 
 
@@ -83,6 +90,100 @@ class UnitronicsGroundTruthCandidateAdjudicationTests(SimpleTestCase):
                     (judgment.product, judgment.version),
                     result,
                 )
+
+    def test_approved_representative_registry_is_exact(self) -> None:
+        self.assertEqual(
+            set(APPROVED_DERIVED_SPLITS),
+            {
+                "ip6tables",
+                "libcap-bin",
+                "libipset13",
+                "liblua5.1.5",
+                "libsqlite3-0",
+                "openssl-util",
+                "strongswan-charon",
+                "strongswan-swanctl",
+            },
+        )
+        self.assertEqual(
+            APPROVED_REPRESENTATIVES,
+            {
+                "iptables",
+                "libcap",
+                "ipset",
+                "lua",
+                "sqlite",
+                "libopenssl3",
+                "strongswan",
+            },
+        )
+
+    def test_approved_audit_artifacts_match_registry(self) -> None:
+        validate_representative_approvals(
+            settings.REPOSITORY_ROOT / "analysis/results"
+        )
+
+    def test_approved_product_boundary_artifacts_match_registry(self) -> None:
+        validate_product_boundary_approvals(
+            settings.REPOSITORY_ROOT / "analysis/results"
+        )
+
+    def test_wireguard_tools_preserves_version_without_false_cpe_family(
+        self,
+    ) -> None:
+        judgment = self.judgment("wireguard-tools")
+
+        self.assertEqual(
+            set(APPROVED_PRODUCT_BOUNDARY_EXCLUSIONS),
+            {"wireguard-tools"},
+        )
+        self.assertEqual(judgment.classification, "PRODUCT_IDENTITY_CONFIRMED")
+        self.assertEqual(judgment.product, "wireguard-tools")
+        self.assertEqual(judgment.version, "1.0.20210223")
+        self.assertIsNone(judgment.family)
+        self.assertIn(
+            "APPROVED_PRODUCT_BOUNDARY_EXCLUSION:a:wireguard:wireguard",
+            judgment.family_basis,
+        )
+
+    def test_policy_removes_only_approved_split_cpe(self) -> None:
+        parent_cpe = "cpe:2.3:a:openssl:openssl:3.0.14:*:*:*:*:*:*:*"
+        rows = [
+            {
+                "component_id": "199888",
+                "name": "libopenssl3",
+                "proposed_gt_cpe": parent_cpe,
+                "proposed_decision": "OFFICIAL_CPE_MAPPED",
+                "cpe_resolution_path": "ACTIVE_EXACT",
+                "decision_reason": "ACTIVE_EXACT",
+                "discrepancy_fields": '["VENDOR"]',
+            },
+            {
+                "component_id": "199958",
+                "name": "openssl-util",
+                "proposed_gt_cpe": parent_cpe,
+                "proposed_decision": "OFFICIAL_CPE_MAPPED",
+                "cpe_resolution_path": "ACTIVE_EXACT",
+                "decision_reason": "ACTIVE_EXACT",
+                "discrepancy_fields": '["VENDOR"]',
+            },
+        ]
+        subset = {"openssl-util": APPROVED_DERIVED_SPLITS["openssl-util"]}
+        with mock.patch(
+            "sboms.unitronics_ground_truth_candidate_build.APPROVED_DERIVED_SPLITS",
+            subset,
+        ):
+            apply_representative_component_policy(rows)
+
+        representative, split = rows
+        self.assertEqual(representative["proposed_gt_cpe"], parent_cpe)
+        self.assertEqual(representative["proposed_decision"], "OFFICIAL_CPE_MAPPED")
+        self.assertEqual(split["proposed_gt_cpe"], "")
+        self.assertEqual(
+            split["proposed_decision"],
+            "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        )
+        self.assertEqual(split["discrepancy_fields"], "N/A")
 
     def test_unproved_product_version_boundary_remains_unresolved(self) -> None:
         for name in ("libmodbus", "shellinabox", "wpad-openssl"):

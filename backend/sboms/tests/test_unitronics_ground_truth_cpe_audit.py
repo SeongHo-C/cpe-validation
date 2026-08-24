@@ -29,7 +29,7 @@ class UnitronicsGroundTruthCpeAuditTests(SimpleTestCase):
                 row["name"]: row for row in csv.DictReader(handle)
             }
 
-    def test_independent_registry_covers_exact_48_names(self) -> None:
+    def test_independent_registry_covers_exact_39_names(self) -> None:
         root = settings.REPOSITORY_ROOT / "analysis/results"
         with (
             root
@@ -41,8 +41,9 @@ class UnitronicsGroundTruthCpeAuditTests(SimpleTestCase):
                 for row in csv.DictReader(handle)
                 if row["proposed_gt_cpe"]
             }
-        self.assertEqual(len(scope_names), 48)
+        self.assertEqual(len(scope_names), 39)
         self.assertEqual(scope_names, AUDIT_PRODUCT_SPECS.keys())
+        self.assertNotIn("wireguard-tools", AUDIT_PRODUCT_SPECS)
 
     def test_all_independent_expressions_are_canonical(self) -> None:
         for name, spec in AUDIT_PRODUCT_SPECS.items():
@@ -55,11 +56,8 @@ class UnitronicsGroundTruthCpeAuditTests(SimpleTestCase):
             "libusb-1.0-0": "-",
             "open62541": "-",
             "strongswan": "-",
-            "strongswan-charon": "-",
-            "strongswan-swanctl": "-",
             "openwrt": "-",
             "lua": "*",
-            "liblua5.1.5": "*",
             "libc": "*",
         }
         for name, update in expected_updates.items():
@@ -70,6 +68,20 @@ class UnitronicsGroundTruthCpeAuditTests(SimpleTestCase):
         parsed = parse_cpe23(_build_expression(AUDIT_PRODUCT_SPECS["openvpn-openssl"]))
         self.assertIsNotNone(parsed.name)
         self.assertEqual(parsed.name.attribute("sw_edition").canonical, "community")
+
+    def test_approved_derived_splits_are_outside_final_cpe_audit(self) -> None:
+        self.assertTrue(
+            {
+                "ip6tables",
+                "libcap-bin",
+                "libipset13",
+                "liblua5.1.5",
+                "libsqlite3-0",
+                "openssl-util",
+                "strongswan-charon",
+                "strongswan-swanctl",
+            }.isdisjoint(AUDIT_PRODUCT_SPECS)
+        )
 
     def test_wpa_exact_devel_identifier_uses_approved_cpe_update(self) -> None:
         component = self.components["wpa_supplicant"]

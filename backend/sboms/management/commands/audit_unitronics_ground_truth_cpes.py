@@ -21,8 +21,8 @@ from sboms.unitronics_ground_truth_cpe_audit import (
 
 class Command(BaseCommand):
     help = (
-        "Independently audit exactly 48 existing Unitronics CPE-bearing "
-        "candidates in a read-only transaction."
+        "Independently audit exactly 39 final Unitronics CPE-bearing "
+        "representative candidates in a read-only transaction."
     )
 
     def add_arguments(self, parser: CommandParser) -> None:

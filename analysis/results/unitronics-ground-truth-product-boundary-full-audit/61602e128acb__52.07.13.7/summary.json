@@ -1,0 +1,260 @@
+{
+  "audit": "Unitronics full CPE product-boundary audit",
+  "audit_status": {
+    "CHANGE_CPE": 0,
+    "KEEP": 39,
+    "REMOVE_CPE": 1,
+    "REVIEW_REQUIRED": 0
+  },
+  "by_current_validation_result": {
+    "CPE_CONFIRMED": {
+      "CHANGE_CPE": 0,
+      "KEEP": 2,
+      "REMOVE_CPE": 0,
+      "REVIEW_REQUIRED": 0
+    },
+    "OFFICIAL_CPE_MAPPED": {
+      "CHANGE_CPE": 0,
+      "KEEP": 21,
+      "REMOVE_CPE": 0,
+      "REVIEW_REQUIRED": 0
+    },
+    "VERSION_NOT_IN_DICTIONARY": {
+      "CHANGE_CPE": 0,
+      "KEEP": 16,
+      "REMOVE_CPE": 1,
+      "REVIEW_REQUIRED": 0
+    }
+  },
+  "changes": [
+    {
+      "audit_reason": "wireguard-tools is the separately released wg/wg-quick userspace-tools project. The wireguard:wireguard 0.5.3 family instead aligns with the separately versioned Windows client. No direct Dictionary family or fixed NVD Configuration expression exists for the actual product.",
+      "audit_status": "REMOVE_CPE",
+      "component_id": "200186",
+      "current_gt_cpe": "cpe:2.3:a:wireguard:wireguard:1.0.20210223:*:*:*:*:*:*:*",
+      "current_validation_result": "VERSION_NOT_IN_DICTIONARY",
+      "name": "wireguard-tools",
+      "recommended_gt_cpe": "",
+      "recommended_validation_result": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+    }
+  ],
+  "dataset": {
+    "component_count": 582,
+    "dataset_key": "61602e128acb__52.07.13.7",
+    "firmware_version": "52.07.13.7",
+    "manufacturer": "Unitronics",
+    "product": "UCR-ST-B8",
+    "sbom_document_id": 1364
+  },
+  "evidence_strength": {
+    "MODERATE": 13,
+    "STRONG": 27,
+    "WEAK": 0
+  },
+  "methodology_conclusion": {
+    "add_explicit_product_boundary_verification": true,
+    "reason": "The fixed 40-row audit re-detected one mapping that passed a family-existence/version-resolution workflow but failed official upstream product-boundary and NVD usage-context verification."
+  },
+  "mode": "READ_ONLY",
+  "projection": {
+    "current_cpe_bearing": 40,
+    "current_validation_result_distribution": {
+      "CPE_CONFIRMED": 2,
+      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 537,
+      "NVD_CONFIGURATION_ONLY": 0,
+      "OFFICIAL_CPE_MAPPED": 21,
+      "UNRESOLVED": 5,
+      "VERSION_NOT_IN_DICTIONARY": 17
+    },
+    "projected_cpe_bearing": 39,
+    "projected_distinct_canonical_cpes": 39,
+    "projected_duplicate_groups": 0,
+    "projected_validation_result_distribution": {
+      "CPE_CONFIRMED": 2,
+      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 538,
+      "NVD_CONFIGURATION_ONLY": 0,
+      "OFFICIAL_CPE_MAPPED": 21,
+      "UNRESOLVED": 5,
+      "VERSION_NOT_IN_DICTIONARY": 16
+    }
+  },
+  "representative_nvd_review": {
+    "case_count": 23,
+    "components": [
+      "curl",
+      "libcurl4",
+      "libmosquitto-ssl",
+      "libnghttp2-14",
+      "libopenssl3",
+      "openvpn-openssl",
+      "wireguard-tools",
+      "wpa_supplicant"
+    ],
+    "raw_feeds": {
+      "2021": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2021.json.gz",
+        "sha256": "9e71fcee76c01270b9c5014d170c5a395ad173aad30ddd85ae7a157d233f0293"
+      },
+      "2022": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2022.json.gz",
+        "sha256": "343d349e5ae9d056aef12c46fa326cf4605c3f62602943b8dae8aad7185e8aaa"
+      },
+      "2023": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2023.json.gz",
+        "sha256": "8fbd5ecdfd5ea1e1f9efbb4cb75a4740a7056d24eeaff0115da467ae73fda4fd"
+      },
+      "2024": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2024.json.gz",
+        "sha256": "0aada3546812bfd0f3533608cd0f0c2f737bd9b2718b6397fe5a9788b748463b"
+      },
+      "2025": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2025.json.gz",
+        "sha256": "65ead8ecb4c002888b116b8d86bbf334294dbdd06736d52df966adfb2eda79bb"
+      },
+      "2026": {
+        "path": "data/nvd-cve/20260820T110357Z/feeds/nvdcve-2.0-2026.json.gz",
+        "sha256": "9d1f434d7d08e303712828727281e2458d0b10f0bce29bd6f535b14e110ea869"
+      }
+    }
+  },
+  "schema_version": 1,
+  "scope": {
+    "current_cpe_bearing": 40,
+    "current_distinct_canonical_cpes": 40,
+    "current_duplicate_groups": 0,
+    "excluded_no_direct_cpe_components": 537,
+    "excluded_unresolved_components": 5,
+    "input_cpe_bearing_components": 40,
+    "unique_component_ids": 40
+  },
+  "snapshots": {
+    "cpe_dictionary": {
+      "active_count": 1711630,
+      "content_sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+      "deprecated_count": 99631,
+      "manifest_sha256": "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+      "record_count": 1811261,
+      "snapshot_id": "20260819T035002Z"
+    },
+    "nvd_cve": {
+      "configuration_count": 760120,
+      "content_sha256": "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab",
+      "cpe_match_count": 3170148,
+      "manifest_sha256": "80b6107f5225923794d725b252527f575ad2b0c800765fc5ce6d0b07c18d94eb",
+      "record_count": 380865,
+      "snapshot_id": "20260820T110357Z"
+    }
+  },
+  "statistics": {
+    "circular_evidence_risk_count": 0,
+    "direct_replacement_cpe_found_count": 0,
+    "high_risk_case_count": 32,
+    "no_direct_product_cpe_count": 1,
+    "product_boundary_mismatch_count": 1,
+    "semantic_product_duplicate_count": 0,
+    "semantic_product_duplicates": [],
+    "version_space_mismatch_count": 1
+  },
+  "validation": {
+    "audited_family_canonical_parse_failure_count": 0,
+    "candidate_artifact_mutation_count": 0,
+    "canonical_current_gt_parse_failure_count": 0,
+    "commit_count": 0,
+    "component_mutation_count": 0,
+    "configuration_only_gate_violation_count": 0,
+    "database_state_after": {
+      "component_count": 582,
+      "component_fingerprint": "6ce2bc5760b3d237d2d73a82ed01f24d5bd1a382e02c48f2f3d30cb4a4c68cdf",
+      "cpe_bearing_count": 40,
+      "ground_truth_count": 582,
+      "ground_truth_fingerprint": "767b6276ac7d40a9b1efb3611795f88df5d685f2bb882de6fc3c4cc8d6f1d80d"
+    },
+    "database_state_before": {
+      "component_count": 582,
+      "component_fingerprint": "6ce2bc5760b3d237d2d73a82ed01f24d5bd1a382e02c48f2f3d30cb4a4c68cdf",
+      "cpe_bearing_count": 40,
+      "ground_truth_count": 582,
+      "ground_truth_fingerprint": "767b6276ac7d40a9b1efb3611795f88df5d685f2bb882de6fc3c4cc8d6f1d80d"
+    },
+    "deprecated_final_recommendation_count": 0,
+    "existing_audit_artifact_mutation_count": 0,
+    "fixed_cpe_snapshot_only": true,
+    "fixed_nvd_snapshot_only": true,
+    "ground_truth_db_mutation_count": 0,
+    "input_row_count": 40,
+    "migration_count": 0,
+    "protected_artifact_hashes_after": {
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/components.csv": "dbc3f7b149fcc0830b223529985e2326786064f92382d013d4dcd13bd0d6ee9b",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/configuration_only_cases.csv": "923a9ac8caca0993ee992c83dafd6821d471d86ae88dd12602f22f2837adda62",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/deprecated_resolution.csv": "f189a5adebf9bb6dcd86991da0fa8ff3095cbd2a522e0ead18b4ae735a2aa09f",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/evidence_manifest.csv": "efd46dabbb5a7318c704cf03a0fab012239bbdb1a2f2e093062bdcee53b83102",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/human_validation.csv": "fa25383b3d59ffcae6d6c752e2430e9bf3dd4666e47637d6a36276afb0d69db4",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/report.md": "5f4a365791b69ed392ef80fb1cbf567584e6a9391037c8720a08e4ebe2d4bbe5",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/summary.json": "687aa461d76c80962cae4fe4684e827e7465458bafb633b28f1427d02aaa8e29",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unitronics_gt_human_validation.html": "f52fda5dc94f8675241ec1ddad46e7a94eb53c7367cc72258a9d10cf3c22426e",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unresolved.csv": "cb89e06812409c21d3883f56a9014319048796c21eb4ccd2c2ad8f6a7968bd08",
+      "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/audit_report.md": "9451df91b86f6f75166e0fa8156157679280996e55f14518fb144130f3affcf3",
+      "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/audit_results.csv": "67669b0d294f0bec0fa27ce3ce831e8cb693ff0d35ccc428167aa7c3d942d614",
+      "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/summary.json": "cb18ccd090f7c5c45d200de25e29f3b1bc45b5d7426358fb4d9194450d7869d7",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/audit_report.md": "294043a5481feadce8df6e467a81a873a7b607b9b097153c421885729f50b973",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/component_recommendations.csv": "8e30cb29091b902a0442fe3f93fb38f6cec604d4346ba2024eaf9740761dd80a",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/duplicate_groups.csv": "2c715c41378109e01c33ef76a6c956794bc8c14ece334c9bb8ed55fd637bac25",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/summary.json": "5282a67b777ca8050a304e3447d881195895111f967cc97bf639022bab08bc6f",
+      "analysis/results/unitronics-ground-truth-representative-finalization/61602e128acb__52.07.13.7/application_report.md": "b9a4dba4c56d91848c3e845139123482e7141c8e7b94b8e895efc81248f9b836",
+      "analysis/results/unitronics-ground-truth-representative-finalization/61602e128acb__52.07.13.7/final_audit_report.md": "2eb797f1114ef1a79f8aa11338d230217a6ee9e3762fbf11b5ea29a63083a50b",
+      "analysis/results/unitronics-ground-truth-representative-finalization/61602e128acb__52.07.13.7/summary.json": "ba71be8b40d4d88775282b160b0bb9aeb778b1f296ed3648d5b762aa7e96c3b6",
+      "analysis/results/unitronics-openssl-representative-audit/61602e128acb__52.07.13.7/report.md": "0d6689fdd8eb8aed0601f1f483a9afe7fa0096023b560d93f2f4af2e21d3ee61",
+      "analysis/results/unitronics-openssl-representative-audit/61602e128acb__52.07.13.7/summary.json": "85952d1578c68a99b4b6f37abfa24bef22224cc7fe0b0ba263f0dc6c3b0825fb",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/configuration_cases.csv": "14458ded6377eece869ad8c3b756ec1ed7dd92f943783725e6fb9bcfc6922104",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/cpe_family.csv": "e7a6e263a8be3a4e72f8a307ec56ff20fa944039352ee3fa66717a0874936a75",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/report.md": "8923c74f12e7dd18f6d70b9c3ceaa9cb5e502f9693178f5be7f6a507296ae5eb",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/summary.json": "cc123f6b899c7a1f5622c27700bc846b9a4eaf76ea810faec1b9ae8736c036b4"
+    },
+    "protected_artifact_hashes_before": {
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/components.csv": "dbc3f7b149fcc0830b223529985e2326786064f92382d013d4dcd13bd0d6ee9b",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/configuration_only_cases.csv": "923a9ac8caca0993ee992c83dafd6821d471d86ae88dd12602f22f2837adda62",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/deprecated_resolution.csv": "f189a5adebf9bb6dcd86991da0fa8ff3095cbd2a522e0ead18b4ae735a2aa09f",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/evidence_manifest.csv": "efd46dabbb5a7318c704cf03a0fab012239bbdb1a2f2e093062bdcee53b83102",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/human_validation.csv": "fa25383b3d59ffcae6d6c752e2430e9bf3dd4666e47637d6a36276afb0d69db4",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/report.md": "5f4a365791b69ed392ef80fb1cbf567584e6a9391037c8720a08e4ebe2d4bbe5",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/summary.json": "687aa461d76c80962cae4fe4684e827e7465458bafb633b28f1427d02aaa8e29",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unitronics_gt_human_validation.html": "f52fda5dc94f8675241ec1ddad46e7a94eb53c7367cc72258a9d10cf3c22426e",
+      "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unresolved.csv": "cb89e06812409c21d3883f56a9014319048796c21eb4ccd2c2ad8f6a7968bd08",
+      "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/audit_report.md": "9451df91b86f6f75166e0fa8156157679280996e55f14518fb144130f3affcf3",
+      "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/audit_results.csv": "67669b0d294f0bec0fa27ce3ce831e8cb693ff0d35ccc428167aa7c3d942d614",
+      "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/summary.json": "cb18ccd090f7c5c45d200de25e29f3b1bc45b5d7426358fb4d9194450d7869d7",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/audit_report.md": "294043a5481feadce8df6e467a81a873a7b607b9b097153c421885729f50b973",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/component_recommendations.csv": "8e30cb29091b902a0442fe3f93fb38f6cec604d4346ba2024eaf9740761dd80a",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/duplicate_groups.csv": "2c715c41378109e01c33ef76a6c956794bc8c14ece334c9bb8ed55fd637bac25",
+      "analysis/results/unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/summary.json": "5282a67b777ca8050a304e3447d881195895111f967cc97bf639022bab08bc6f",
+      "analysis/results/unitronics-ground-truth-representative-finalization/61602e128acb__52.07.13.7/application_report.md": "b9a4dba4c56d91848c3e845139123482e7141c8e7b94b8e895efc81248f9b836",
+      "analysis/results/unitronics-ground-truth-representative-finalization/61602e128acb__52.07.13.7/final_audit_report.md": "2eb797f1114ef1a79f8aa11338d230217a6ee9e3762fbf11b5ea29a63083a50b",
+      "analysis/results/unitronics-ground-truth-representative-finalization/61602e128acb__52.07.13.7/summary.json": "ba71be8b40d4d88775282b160b0bb9aeb778b1f296ed3648d5b762aa7e96c3b6",
+      "analysis/results/unitronics-openssl-representative-audit/61602e128acb__52.07.13.7/report.md": "0d6689fdd8eb8aed0601f1f483a9afe7fa0096023b560d93f2f4af2e21d3ee61",
+      "analysis/results/unitronics-openssl-representative-audit/61602e128acb__52.07.13.7/summary.json": "85952d1578c68a99b4b6f37abfa24bef22224cc7fe0b0ba263f0dc6c3b0825fb",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/configuration_cases.csv": "14458ded6377eece869ad8c3b756ec1ed7dd92f943783725e6fb9bcfc6922104",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/cpe_family.csv": "e7a6e263a8be3a4e72f8a307ec56ff20fa944039352ee3fa66717a0874936a75",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/report.md": "8923c74f12e7dd18f6d70b9c3ceaa9cb5e502f9693178f5be7f6a507296ae5eb",
+      "analysis/results/unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/summary.json": "cc123f6b899c7a1f5622c27700bc846b9a4eaf76ea810faec1b9ae8736c036b4"
+    },
+    "unique_component_id_count": 40,
+    "version_not_registered_input_count": 17,
+    "version_not_registered_keep_all_invariants_count": 16,
+    "wireguard_known_defect_redetected": true
+  },
+  "wireguard_regression": {
+    "actual_product": "wireguard-tools",
+    "actual_version": "1.0.20210223",
+    "audit_status": "REMOVE_CPE",
+    "current_family": "a:wireguard:wireguard",
+    "detected": true,
+    "direct_configuration_matches": [],
+    "direct_dictionary_matches": [],
+    "known_family_related_criteria": [
+      "cpe:2.3:a:pfsense:pfsense-pkg-wireguard:*:*:*:*:*:*:*:*",
+      "cpe:2.3:a:pfsense:pfsense-pkg-wireguard:0.1.6:*:*:*:*:*:*:*",
+      "cpe:2.3:a:wgportal:wireguard_portal:*:*:*:*:*:*:*:*",
+      "cpe:2.3:a:wireguard:wireguard:0.5.3:*:*:*:*:*:*:*"
+    ]
+  }
+}

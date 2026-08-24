@@ -1,0 +1,208 @@
+{
+  "application": {
+    "candidate_path": "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/components.csv",
+    "candidate_sha256": "dbc3f7b149fcc0830b223529985e2326786064f92382d013d4dcd13bd0d6ee9b",
+    "changed_component_ids": [
+      199684,
+      199846,
+      199862,
+      199870,
+      199896,
+      199958,
+      199996,
+      200022
+    ],
+    "changed_component_names": [
+      "ip6tables",
+      "libcap-bin",
+      "libipset13",
+      "liblua5.1.5",
+      "libsqlite3-0",
+      "openssl-util",
+      "strongswan-charon",
+      "strongswan-swanctl"
+    ],
+    "decision_counts_after": {
+      "CPE_CONFIRMED": 2,
+      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 537,
+      "NVD_CONFIGURATION_ONLY": 0,
+      "OFFICIAL_CPE_MAPPED": 21,
+      "UNRESOLVED": 5,
+      "VERSION_NOT_IN_DICTIONARY": 17
+    },
+    "decision_counts_before": {
+      "CPE_CONFIRMED": 2,
+      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 529,
+      "NVD_CONFIGURATION_ONLY": 0,
+      "OFFICIAL_CPE_MAPPED": 24,
+      "UNRESOLVED": 5,
+      "VERSION_NOT_IN_DICTIONARY": 22
+    },
+    "record_recreation_count": 0,
+    "removed_mapping_count": 8,
+    "transaction_atomic": true
+  },
+  "applied_at": "2026-08-24T21:22:12.777785+00:00",
+  "dataset": {
+    "cpe_bearing_components": 40,
+    "dataset_key": "61602e128acb__52.07.13.7",
+    "distinct_canonical_gt_cpes": 40,
+    "duplicate_canonical_gt_cpe_groups": 0,
+    "ground_truth_records": 582,
+    "gt_cpe_null": 542,
+    "sbom_document_id": 1364
+  },
+  "finalization": "Unitronics representative Ground Truth finalization",
+  "independent_cpe_audit": {
+    "counts": {
+      "ACCEPTED": 40,
+      "CORRECTION_REQUIRED": 0,
+      "EVIDENCE_REVIEW_REQUIRED": 0
+    },
+    "deprecated_final_gt_count": 0,
+    "hashes": {
+      "audit_report.md": "9451df91b86f6f75166e0fa8156157679280996e55f14518fb144130f3affcf3",
+      "audit_results.csv": "67669b0d294f0bec0fa27ce3ce831e8cb693ff0d35ccc428167aa7c3d942d614",
+      "summary.json": "cb18ccd090f7c5c45d200de25e29f3b1bc45b5d7426358fb4d9194450d7869d7"
+    }
+  },
+  "methodology_policy": "For distribution-specific splits of one upstream product/version, assign the parent CPE only to the approved representative Component; do not inherit it to derived splits. Preserve independently identifiable CPE products.",
+  "schema_version": 1,
+  "states": {
+    "curl_libcurl_regression": {
+      "curl": {
+        "component_id": "199625",
+        "decision": "OFFICIAL_CPE_MAPPED",
+        "gt_cpe": "cpe:2.3:a:haxx:curl:8.11.0:*:*:*:*:*:*:*",
+        "resolution_outcome": "CORRECTED_TO_DICTIONARY"
+      },
+      "libcurl4": {
+        "component_id": "199854",
+        "decision": "VERSION_NOT_IN_DICTIONARY",
+        "gt_cpe": "cpe:2.3:a:haxx:libcurl:8.11.0:*:*:*:*:*:*:*",
+        "resolution_outcome": "MANUAL_FROM_OFFICIAL_FAMILY"
+      }
+    },
+    "removed": {
+      "ip6tables": {
+        "component_id": "199684",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      },
+      "libcap-bin": {
+        "component_id": "199846",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      },
+      "libipset13": {
+        "component_id": "199862",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      },
+      "liblua5.1.5": {
+        "component_id": "199870",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      },
+      "libsqlite3-0": {
+        "component_id": "199896",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      },
+      "openssl-util": {
+        "component_id": "199958",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      },
+      "strongswan-charon": {
+        "component_id": "199996",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      },
+      "strongswan-swanctl": {
+        "component_id": "200022",
+        "decision": "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED",
+        "gt_cpe": "",
+        "resolution_outcome": "DIRECT_OFFICIAL_NOT_CONFIRMED"
+      }
+    },
+    "representatives": {
+      "ipset": {
+        "component_id": "199686",
+        "decision": "VERSION_NOT_IN_DICTIONARY",
+        "gt_cpe": "cpe:2.3:a:netfilter:ipset:7.6:*:*:*:*:*:*:*",
+        "resolution_outcome": "MANUAL_FROM_OFFICIAL_FAMILY"
+      },
+      "iptables": {
+        "component_id": "199690",
+        "decision": "VERSION_NOT_IN_DICTIONARY",
+        "gt_cpe": "cpe:2.3:a:netfilter:iptables:1.8.7:*:*:*:*:*:*:*",
+        "resolution_outcome": "MANUAL_FROM_OFFICIAL_FAMILY"
+      },
+      "libcap": {
+        "component_id": "199848",
+        "decision": "OFFICIAL_CPE_MAPPED",
+        "gt_cpe": "cpe:2.3:a:libcap_project:libcap:2.69:*:*:*:*:*:*:*",
+        "resolution_outcome": "CORRECTED_TO_DICTIONARY"
+      },
+      "libopenssl3": {
+        "component_id": "199888",
+        "decision": "OFFICIAL_CPE_MAPPED",
+        "gt_cpe": "cpe:2.3:a:openssl:openssl:3.0.14:*:*:*:*:*:*:*",
+        "resolution_outcome": "CORRECTED_TO_DICTIONARY"
+      },
+      "lua": {
+        "component_id": "199920",
+        "decision": "VERSION_NOT_IN_DICTIONARY",
+        "gt_cpe": "cpe:2.3:a:lua:lua:5.1.5:*:*:*:*:*:*:*",
+        "resolution_outcome": "MANUAL_FROM_OFFICIAL_FAMILY"
+      },
+      "sqlite": {
+        "component_id": "200196",
+        "decision": "CPE_CONFIRMED",
+        "gt_cpe": "cpe:2.3:a:sqlite:sqlite:3.41.2:*:*:*:*:*:*:*",
+        "resolution_outcome": "ORIGINAL_OFFICIAL_CONFIRMED"
+      },
+      "strongswan": {
+        "component_id": "200023",
+        "decision": "VERSION_NOT_IN_DICTIONARY",
+        "gt_cpe": "cpe:2.3:a:strongswan:strongswan:5.9.14:-:*:*:*:*:*:*",
+        "resolution_outcome": "MANUAL_FROM_OFFICIAL_FAMILY"
+      }
+    }
+  },
+  "status": "SUCCESS",
+  "topology": {
+    "components_in_duplicate_groups": 0,
+    "distinct_canonical_gt_cpes": 40,
+    "duplicate_groups": 0
+  },
+  "validation": {
+    "candidate_cpe_mismatch_count": 0,
+    "candidate_decision_mismatch_count": 0,
+    "canonical_parse_failure_count": 0,
+    "commit_count": 0,
+    "component_fingerprint_after": "9ffed80ba47da6bbfbb148b668930f714b8067b657506c5227854fbe82e5460e",
+    "component_fingerprint_before": "9ffed80ba47da6bbfbb148b668930f714b8067b657506c5227854fbe82e5460e",
+    "component_mutation_count": 0,
+    "deprecated_final_gt_count": 0,
+    "ground_truth_fingerprint_after": "9157dec9eaaa26f963d87a501a4d44c015e6adfef31f6d2c825b4187a35478cd",
+    "ground_truth_fingerprint_before": "cd40eeba9c88161d521c22d0fb6a16114dedec658efac57e82ddfa34409c9ef1",
+    "migration_count": 0,
+    "non_target_ground_truth_mutation_count": 0,
+    "test_results": {
+      "django_check": "PASS",
+      "makemigrations_check": "NO_CHANGES",
+      "sboms_test_count": 270,
+      "sboms_test_status": "PASS",
+      "test_environment": "CPE_DICTIONARY_SNAPSHOT_ID unset so test fixtures select their sole complete snapshot"
+    }
+  }
+}

@@ -8,9 +8,20 @@
 - CPE Dictionary: `20260819T035002Z`
 - NVD CVE/Configuration: `20260820T110357Z`
 
-This is a first-pass candidate build, not final or persisted Ground Truth.
+This is the finalization-ready candidate build. Candidate generation itself is
+database read-only; persistence is performed by a separate guarded transaction.
 Original CPE and control `CPE-ID` were excluded from product/version/CPE
 candidate selection and used only for the final Original-versus-GT comparison.
+
+## Approved representative-component policy
+
+The fixed duplicate audit and OpenSSL representative audit authorize exactly
+**8** derived split removals. No generic
+first-duplicate-wins rule is used.
+
+- Removed derived mappings: `ip6tables, libcap-bin, libipset13, liblua5.1.5, libsqlite3-0, openssl-util, strongswan-charon, strongswan-swanctl`
+- Retained representatives: `ipset, iptables, libcap, libopenssl3, lua, sqlite, strongswan`
+- Approval status: `APPLIED_FROM_APPROVED_AUDITS`
 
 ## Product adjudication
 
@@ -31,10 +42,10 @@ direct subcomponents instead of being sent to a generic missing-registry queue.
 | Decision | Count | Percent |
 |---|---:|---:|
 | `CPE_CONFIRMED` | 2 | 0.34% |
-| `OFFICIAL_CPE_MAPPED` | 24 | 4.12% |
-| `VERSION_NOT_IN_DICTIONARY` | 22 | 3.78% |
+| `OFFICIAL_CPE_MAPPED` | 21 | 3.61% |
+| `VERSION_NOT_IN_DICTIONARY` | 16 | 2.75% |
 | `NVD_CONFIGURATION_ONLY` | 0 | 0.00% |
-| `DIRECT_OFFICIAL_CPE_NOT_CONFIRMED` | 529 | 90.89% |
+| `DIRECT_OFFICIAL_CPE_NOT_CONFIRMED` | 538 | 92.44% |
 | `UNRESOLVED` | 5 | 0.86% |
 
 Every component has one of the six existing internal Decisions.
@@ -43,26 +54,26 @@ Every component has one of the six existing internal Decisions.
 
 | Resolution path | Count | Percent |
 |---|---:|---:|
-| `ACTIVE_EXACT` | 26 | 4.47% |
+| `ACTIVE_EXACT` | 23 | 3.95% |
 | `DEPRECATED_TO_ACTIVE` | 0 | 0.00% |
-| `VERSION_NOT_IN_DICTIONARY` | 22 | 3.78% |
+| `VERSION_NOT_IN_DICTIONARY` | 16 | 2.75% |
 | `NVD_CONFIGURATION_ONLY` | 0 | 0.00% |
-| `NO_DIRECT_CPE` | 529 | 90.89% |
+| `NO_DIRECT_CPE` | 538 | 92.44% |
 | `UNRESOLVED` | 5 | 0.86% |
 
-- Proposed GT CPE/expression: **48**
+- Proposed GT CPE/expression: **39**
 - Original equals GT: **2**
-- Original differs from GT: **46**
+- Original differs from GT: **37**
 - Deprecated final GT: **0**
 - Configuration gate violations: **0**
 
 ## Human validation
 
 - Total: **178**
-- Strength: `{"MODERATE": 143, "STRONG": 27, "WEAK": 8}`
-- CPE-mapped candidates: **48**
+- Strength: `{"MODERATE": 142, "STRONG": 28, "WEAK": 8}`
+- CPE-mapped candidates: **39**
 - Unresolved candidates: **5**
-- Reasons: `{"CPE_PRODUCT_FAMILY_AMBIGUITY": 2, "OPAQUE_VENDOR_VERSION_IDENTIFIER": 5, "PRODUCT_BOUNDARY_OR_VERSION_UNRESOLVED": 3, "PRODUCT_WITHOUT_CONFIRMED_DIRECT_CPE": 125, "PROPOSED_GT_CPE_CONFIRMATION": 48, "UNRESOLVED": 5, "WEAK_EVIDENCE": 8}`
+- Reasons: `{"CPE_PRODUCT_FAMILY_AMBIGUITY": 2, "OPAQUE_VENDOR_VERSION_IDENTIFIER": 5, "PRODUCT_BOUNDARY_OR_VERSION_UNRESOLVED": 3, "PRODUCT_WITHOUT_CONFIRMED_DIRECT_CPE": 134, "PROPOSED_GT_CPE_CONFIRMATION": 39, "UNRESOLVED": 5, "WEAK_EVIDENCE": 8}`
 
 The list is focused on proposed CPEs, unresolved rows, weak evidence, CPE-family
 ambiguity, and confirmed products for which no direct CPE was found. Clear
@@ -80,7 +91,7 @@ direct subcomponents are not automatically sent back for 582-row re-review.
 - The exact matching SDK/GPL Makefiles are unavailable, so non-representative package-release decompositions remain product-specific rather than globally inferred.
 - Teltonika internal product names and complete installed Version strings are reproducible, but public release/tag semantics are often unavailable.
 - A first-pass CPE family binding without a Dictionary hit remains a human-validation item; absence is not treated as proof of semantic correctness.
-- This candidate set is not final Ground Truth and has not been persisted.
+- This artifact is finalization-ready, but candidate generation itself remains database read-only; persistence is a separate guarded transaction.
 
 ## Validation
 
@@ -92,8 +103,8 @@ direct subcomponents are not automatically sent back for 582-row re-review.
 - Proposed GT canonical parse failures: 0 — PASS
 - Deprecated final GT: 0 — PASS
 - Configuration gate violations: 0 — PASS
-- Ground Truth DB count: `0 -> 0` — PASS
+- Ground Truth DB count: `582 -> 582` — PASS
 - Existing local evidence hashes unchanged: True — PASS
 
-No Ground Truth, Component, CPE/NVD snapshot, migration, production hook, CVE
-applicability, or final RQ1 state was created or modified.
+This candidate-build command does not modify Ground Truth, Component, CPE/NVD
+snapshot, migration, production hook, CVE applicability, or final RQ1 state.

@@ -93,7 +93,45 @@ LOCAL_EVIDENCE_FILES = (
         "cpe-prerelease-version-policy/"
         "wpa_supplicant-2.11-devel/summary.json"
     ),
+    Path(
+        "unitronics-ground-truth-duplicate-cpe-audit/"
+        "61602e128acb__52.07.13.7/audit_report.md"
+    ),
+    Path(
+        "unitronics-ground-truth-duplicate-cpe-audit/"
+        "61602e128acb__52.07.13.7/duplicate_groups.csv"
+    ),
+    Path(
+        "unitronics-ground-truth-duplicate-cpe-audit/"
+        "61602e128acb__52.07.13.7/component_recommendations.csv"
+    ),
+    Path(
+        "unitronics-ground-truth-duplicate-cpe-audit/"
+        "61602e128acb__52.07.13.7/summary.json"
+    ),
+    Path(
+        "unitronics-openssl-representative-audit/"
+        "61602e128acb__52.07.13.7/report.md"
+    ),
+    Path(
+        "unitronics-openssl-representative-audit/"
+        "61602e128acb__52.07.13.7/summary.json"
+    ),
+    Path(
+        "unitronics-wireguard-product-boundary-audit/"
+        "61602e128acb__52.07.13.7/summary.json"
+    ),
+    Path(
+        "unitronics-ground-truth-product-boundary-full-audit/"
+        "61602e128acb__52.07.13.7/summary.json"
+    ),
 )
+
+DUPLICATE_RECOMMENDATIONS_RELATIVE = LOCAL_EVIDENCE_FILES[13]
+DUPLICATE_SUMMARY_RELATIVE = LOCAL_EVIDENCE_FILES[14]
+OPENSSL_REPRESENTATIVE_SUMMARY_RELATIVE = LOCAL_EVIDENCE_FILES[16]
+WIREGUARD_BOUNDARY_SUMMARY_RELATIVE = LOCAL_EVIDENCE_FILES[17]
+FULL_BOUNDARY_SUMMARY_RELATIVE = LOCAL_EVIDENCE_FILES[18]
 
 OFFICIAL_EVIDENCE = (
     (
@@ -337,6 +375,95 @@ class ProductJudgment:
     prerelease_policy: str = ""
 
 
+@dataclass(frozen=True)
+class ApprovedDerivedSplit:
+    component_id: str
+    representative: str
+    expected_parent_cpe: str
+    expected_current_decision: str
+
+
+@dataclass(frozen=True)
+class ApprovedProductBoundaryExclusion:
+    component_id: str
+    product: str
+    vendor: str
+    normalized_version: str
+    rejected_family: tuple[str, str, str]
+
+
+# This is an approval registry, not a generic duplicate-CPE heuristic. Every
+# entry is backed by the fixed duplicate audit and, for OpenSSL, the separate
+# representative audit. A newly observed duplicate is never added implicitly.
+APPROVED_DERIVED_SPLITS: dict[str, ApprovedDerivedSplit] = {
+    "ip6tables": ApprovedDerivedSplit(
+        "199684",
+        "iptables",
+        "cpe:2.3:a:netfilter:iptables:1.8.7:*:*:*:*:*:*:*",
+        "VERSION_NOT_IN_DICTIONARY",
+    ),
+    "libcap-bin": ApprovedDerivedSplit(
+        "199846",
+        "libcap",
+        "cpe:2.3:a:libcap_project:libcap:2.69:*:*:*:*:*:*:*",
+        "OFFICIAL_CPE_MAPPED",
+    ),
+    "libipset13": ApprovedDerivedSplit(
+        "199862",
+        "ipset",
+        "cpe:2.3:a:netfilter:ipset:7.6:*:*:*:*:*:*:*",
+        "VERSION_NOT_IN_DICTIONARY",
+    ),
+    "liblua5.1.5": ApprovedDerivedSplit(
+        "199870",
+        "lua",
+        "cpe:2.3:a:lua:lua:5.1.5:*:*:*:*:*:*:*",
+        "VERSION_NOT_IN_DICTIONARY",
+    ),
+    "libsqlite3-0": ApprovedDerivedSplit(
+        "199896",
+        "sqlite",
+        "cpe:2.3:a:sqlite:sqlite:3.41.2:*:*:*:*:*:*:*",
+        "OFFICIAL_CPE_MAPPED",
+    ),
+    "openssl-util": ApprovedDerivedSplit(
+        "199958",
+        "libopenssl3",
+        "cpe:2.3:a:openssl:openssl:3.0.14:*:*:*:*:*:*:*",
+        "OFFICIAL_CPE_MAPPED",
+    ),
+    "strongswan-charon": ApprovedDerivedSplit(
+        "199996",
+        "strongswan",
+        "cpe:2.3:a:strongswan:strongswan:5.9.14:-:*:*:*:*:*:*",
+        "VERSION_NOT_IN_DICTIONARY",
+    ),
+    "strongswan-swanctl": ApprovedDerivedSplit(
+        "200022",
+        "strongswan",
+        "cpe:2.3:a:strongswan:strongswan:5.9.14:-:*:*:*:*:*:*",
+        "VERSION_NOT_IN_DICTIONARY",
+    ),
+}
+
+APPROVED_REPRESENTATIVES = frozenset(
+    policy.representative for policy in APPROVED_DERIVED_SPLITS.values()
+)
+
+
+# This registry is intentionally narrow. It records a completed, independently
+# approved product-boundary audit; it is not a generic name-similarity rule.
+APPROVED_PRODUCT_BOUNDARY_EXCLUSIONS = {
+    "wireguard-tools": ApprovedProductBoundaryExclusion(
+        component_id="200186",
+        product="wireguard-tools",
+        vendor="WireGuard project",
+        normalized_version="1.0.20210223",
+        rejected_family=("a", "wireguard", "wireguard"),
+    ),
+}
+
+
 PUBLIC_SPECS: dict[str, ProductSpec] = {
     "busybox": ProductSpec("BusyBox", "BusyBox", ("a", "busybox", "busybox"), "1.34.1", strength="STRONG"),
     "curl": ProductSpec("curl", "curl project", ("a", "haxx", "curl"), "8.11.0", strength="STRONG"),
@@ -388,7 +515,6 @@ PUBLIC_SPECS: dict[str, ProductSpec] = {
     "strongswan": ProductSpec("strongSwan", "strongSwan", ("a", "strongswan", "strongswan"), "5.9.14", strength="STRONG"),
     "strongswan-charon": ProductSpec("strongSwan", "strongSwan", ("a", "strongswan", "strongswan"), "5.9.14", strength="STRONG"),
     "strongswan-swanctl": ProductSpec("strongSwan", "strongSwan", ("a", "strongswan", "strongswan"), "5.9.14", strength="STRONG"),
-    "wireguard-tools": ProductSpec("WireGuard", "WireGuard", ("a", "wireguard", "wireguard"), "1.0.20210223"),
     "xl2tpd": ProductSpec("xl2tpd", "Xelerance", ("a", "xelerance", "xl2tpd"), "1.3.16", family_basis="PROJECT_IDENTITY_TUPLE_NO_DICTIONARY_FAMILY"),
     "zlib": ProductSpec("zlib", "zlib", ("a", "zlib", "zlib"), "1.2.11"),
 }
@@ -527,6 +653,210 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
         raise UnitronicsCandidateBuildError(f"Evidence file is absent: {path}")
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise UnitronicsCandidateBuildError(f"Evidence file is absent: {path}")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise UnitronicsCandidateBuildError(
+            f"Evidence JSON is invalid: {path}: {error}"
+        ) from error
+    if not isinstance(value, dict):
+        raise UnitronicsCandidateBuildError(
+            f"Evidence JSON must contain an object: {path}"
+        )
+    return value
+
+
+def validate_representative_approvals(analysis_root: Path) -> None:
+    """Require the two approved audits to match the fixed eight-row policy."""
+
+    duplicate_rows = _read_csv(
+        analysis_root / DUPLICATE_RECOMMENDATIONS_RELATIVE
+    )
+    approved_without_openssl = {
+        name: policy
+        for name, policy in APPROVED_DERIVED_SPLITS.items()
+        if name != "openssl-util"
+    }
+    removals = {
+        row["component_name"]: row
+        for row in duplicate_rows
+        if row["recommendation"] == "REMOVE_DUPLICATED_GT_CPE"
+    }
+    if set(removals) != set(approved_without_openssl):
+        raise UnitronicsCandidateBuildError(
+            "Duplicate-audit removal set does not match the seven approved "
+            "non-OpenSSL derived splits"
+        )
+    for name, policy in approved_without_openssl.items():
+        row = removals[name]
+        if (
+            row["component_id"] != policy.component_id
+            or row["representative_component"] != policy.representative
+            or row["current_gt_cpe"] != policy.expected_parent_cpe
+            or row["current_validation_result"]
+            != policy.expected_current_decision
+            or row["recommended_gt_cpe"]
+            or row["recommended_validation_result"]
+            != "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+        ):
+            raise UnitronicsCandidateBuildError(
+                f"Duplicate-audit approval mismatch for {name}"
+            )
+
+    duplicate_summary = _read_json(
+        analysis_root / DUPLICATE_SUMMARY_RELATIVE
+    )
+    if (
+        duplicate_summary.get("projected_if_recommendations_applied", {}).get(
+            "projected_removed_duplicate_mappings"
+        )
+        != 7
+    ):
+        raise UnitronicsCandidateBuildError(
+            "Duplicate-audit summary does not approve exactly seven removals"
+        )
+
+    openssl_summary = _read_json(
+        analysis_root / OPENSSL_REPRESENTATIVE_SUMMARY_RELATIVE
+    )
+    if (
+        openssl_summary.get("decision", {}).get("choice")
+        != "A_LIBOPENSSL3_REPRESENTATIVE"
+        or openssl_summary.get("decision", {}).get(
+            "representative_component"
+        )
+        != "libopenssl3"
+        or openssl_summary.get("decision", {}).get(
+            "non_representative_component"
+        )
+        != "openssl-util"
+    ):
+        raise UnitronicsCandidateBuildError(
+            "OpenSSL representative audit does not approve libopenssl3"
+        )
+    openssl_changes = {
+        row.get("component"): row
+        for row in openssl_summary.get(
+            "hypothetical_ground_truth_changes", []
+        )
+        if isinstance(row, dict)
+    }
+    keep = openssl_changes.get("libopenssl3", {})
+    remove = openssl_changes.get("openssl-util", {})
+    policy = APPROVED_DERIVED_SPLITS["openssl-util"]
+    if (
+        keep.get("action") != "KEEP_GT_CPE"
+        or keep.get("recommended_gt_cpe") != policy.expected_parent_cpe
+        or remove.get("component_id") != int(policy.component_id)
+        or remove.get("action") != "REMOVE_DUPLICATED_GT_CPE"
+        or remove.get("recommended_gt_cpe") is not None
+        or remove.get("recommended_decision")
+        != "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+    ):
+        raise UnitronicsCandidateBuildError(
+            "OpenSSL representative change set does not match the approved policy"
+        )
+
+
+def validate_product_boundary_approvals(analysis_root: Path) -> None:
+    """Require the approved WireGuard audits before excluding its false family."""
+
+    wireguard = _read_json(
+        analysis_root / WIREGUARD_BOUNDARY_SUMMARY_RELATIVE
+    )
+    judgment = wireguard.get("judgment", {})
+    comparison = wireguard.get("comparison", {})
+    audited = comparison.get("audited", {})
+    if (
+        wireguard.get("mode") != "READ_ONLY"
+        or judgment.get("classification") != "DIFFERENT_PRODUCT"
+        or judgment.get("audited_actual_product") != "wireguard-tools"
+        or judgment.get("audited_actual_version") != "1.0.20210223"
+        or judgment.get("recommended_gt_cpe") != ""
+        or judgment.get("recommended_validation_result")
+        != "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+        or comparison.get("audit_status") != "CHANGE_REQUIRED"
+        or audited.get("recommended_gt_cpe") != ""
+        or audited.get("recommended_validation_result")
+        != "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+    ):
+        raise UnitronicsCandidateBuildError(
+            "WireGuard product-boundary approval does not match the fixed change"
+        )
+
+    full = _read_json(analysis_root / FULL_BOUNDARY_SUMMARY_RELATIVE)
+    if (
+        full.get("mode") != "READ_ONLY"
+        or full.get("audit_status")
+        != {
+            "CHANGE_CPE": 0,
+            "KEEP": 39,
+            "REMOVE_CPE": 1,
+            "REVIEW_REQUIRED": 0,
+        }
+    ):
+        raise UnitronicsCandidateBuildError(
+            "Full product-boundary audit is not the approved 39/0/1/0 result"
+        )
+    changes = full.get("changes", [])
+    if len(changes) != 1 or any(
+        changes[0].get(key) != value
+        for key, value in {
+            "component_id": "200186",
+            "name": "wireguard-tools",
+            "audit_status": "REMOVE_CPE",
+            "recommended_gt_cpe": "",
+            "recommended_validation_result": (
+                "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+            ),
+        }.items()
+    ):
+        raise UnitronicsCandidateBuildError(
+            "Full product-boundary audit does not approve only wireguard-tools"
+        )
+
+
+def apply_representative_component_policy(
+    component_rows: list[dict[str, str]],
+) -> None:
+    """Remove parent CPE inheritance only for explicitly approved splits."""
+
+    rows_by_name = {row["name"]: row for row in component_rows}
+    if len(rows_by_name) != len(component_rows):
+        raise UnitronicsCandidateBuildError(
+            "Component names must be unique for the fixed representative policy"
+        )
+    for name, policy in APPROVED_DERIVED_SPLITS.items():
+        row = rows_by_name.get(name)
+        representative = rows_by_name.get(policy.representative)
+        if row is None or representative is None:
+            raise UnitronicsCandidateBuildError(
+                f"Approved representative pair is absent: {name} / "
+                f"{policy.representative}"
+            )
+        if (
+            row["component_id"] != policy.component_id
+            or row["proposed_gt_cpe"] != policy.expected_parent_cpe
+            or representative["proposed_gt_cpe"]
+            != policy.expected_parent_cpe
+        ):
+            raise UnitronicsCandidateBuildError(
+                f"Approved representative precondition mismatch for {name}"
+            )
+        row["cpe_resolution_path"] = "NO_DIRECT_CPE"
+        row["proposed_gt_cpe"] = ""
+        row["proposed_decision"] = (
+            "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED"
+        )
+        row["decision_reason"] = (
+            "APPROVED_REPRESENTATIVE_COMPONENT_POLICY"
+        )
+        row["discrepancy_fields"] = "N/A"
 
 
 def _sha256(path: Path) -> str:
@@ -794,6 +1124,40 @@ def adjudicate_component(
             ),
             strength="STRONG",
             forced_human_reason="CPE_PRODUCT_FAMILY_AMBIGUITY",
+        )
+    exclusion = APPROVED_PRODUCT_BOUNDARY_EXCLUSIONS.get(name)
+    if exclusion is not None:
+        if component["component_id"] != exclusion.component_id:
+            raise UnitronicsCandidateBuildError(
+                f"Approved product-boundary component mismatch for {name}"
+            )
+        return ProductJudgment(
+            classification="PRODUCT_IDENTITY_CONFIRMED",
+            product=exclusion.product,
+            vendor=exclusion.vendor,
+            version=exclusion.normalized_version,
+            product_reason=(
+                "The approved independent product-boundary audits identify "
+                "wireguard-tools as the separately released wg/wg-quick "
+                "userspace-tools product, not the wireguard:wireguard family."
+            ),
+            product_evidence=(
+                f"Source={source}; Description={package['description']}; "
+                f"paths={package['representative_paths']}; "
+                "approved audits=LOCAL-18,LOCAL-19"
+            ),
+            version_reason="PRODUCT_SPECIFIC_UPSTREAM_VERSION_NORMALIZATION",
+            version_evidence=(
+                f"Observed {package['version']} preserves upstream "
+                f"{exclusion.normalized_version}; only the OpenWrt package "
+                "release suffix is removed."
+            ),
+            strength="STRONG",
+            family=None,
+            family_basis=(
+                "APPROVED_PRODUCT_BOUNDARY_EXCLUSION:"
+                + ":".join(exclusion.rejected_family)
+            ),
         )
     spec = PUBLIC_SPECS.get(name)
     if spec is not None:
@@ -1426,6 +1790,8 @@ def build_unitronics_candidate_build(
     package_rows = _read_csv(root / LOCAL_EVIDENCE_FILES[1])
     version_rows = _read_csv(root / LOCAL_EVIDENCE_FILES[6])
     mapping_rows = _read_csv(root / LOCAL_EVIDENCE_FILES[8])
+    validate_representative_approvals(root)
+    validate_product_boundary_approvals(root)
     packages_by_id = {row["component_id"]: row for row in package_rows}
     components_by_id = {row["component_id"]: row for row in component_source_rows}
 
@@ -1533,6 +1899,7 @@ def build_unitronics_candidate_build(
             )
         component_rows.append(row)
 
+    apply_representative_component_policy(component_rows)
     rows_by_id = {row["component_id"]: row for row in component_rows}
     for component_id, judgment in judgments.items():
         row = rows_by_id[component_id]
@@ -1629,7 +1996,10 @@ def build_unitronics_candidate_build(
     )
     summary = {
         "schema_version": 1,
-        "analysis_scope": "First-pass 582-component Ground Truth candidate build; read-only and not final GT",
+        "analysis_scope": (
+            "Finalization-ready 582-component Ground Truth candidate build "
+            "with the approved representative-component policy; DB read-only"
+        ),
         "dataset": {
             "sbom_document_id": SBOM_ID,
             "manufacturer": sbom.manufacturer,
@@ -1667,6 +2037,42 @@ def build_unitronics_candidate_build(
             "count": len(proposed_cpes),
             "original_different_count": original_different_count,
             "original_same_count": decision_counts["CPE_CONFIRMED"],
+        },
+        "representative_component_policy": {
+            "status": "APPLIED_FROM_APPROVED_AUDITS",
+            "rule": (
+                "Within one firmware and upstream product/version, retain the "
+                "parent CPE on one approved representative Component; do not "
+                "inherit it to approved distribution-specific derived splits. "
+                "Independently identified CPE products remain eligible."
+            ),
+            "generic_first_duplicate_wins": False,
+            "removed_mapping_count": len(APPROVED_DERIVED_SPLITS),
+            "removed_components": sorted(APPROVED_DERIVED_SPLITS),
+            "representative_components": sorted(APPROVED_REPRESENTATIVES),
+            "approval_artifacts": [
+                str(DUPLICATE_RECOMMENDATIONS_RELATIVE),
+                str(DUPLICATE_SUMMARY_RELATIVE),
+                str(OPENSSL_REPRESENTATIVE_SUMMARY_RELATIVE),
+            ],
+        },
+        "product_boundary_policy": {
+            "status": "APPLIED_FROM_APPROVED_AUDITS",
+            "rule": (
+                "Similar vendor/product labels or the existence of a CPE family "
+                "do not establish a mapping. Confirm that official upstream "
+                "product boundaries agree with CPE title/reference/version "
+                "space and, when needed, fixed-snapshot NVD usage context."
+            ),
+            "generic_semantic_matching_engine_added": False,
+            "approved_exclusions": sorted(
+                APPROVED_PRODUCT_BOUNDARY_EXCLUSIONS
+            ),
+            "wireguard_tools_rejected_family": "a:wireguard:wireguard",
+            "approval_artifacts": [
+                str(WIREGUARD_BOUNDARY_SUMMARY_RELATIVE),
+                str(FULL_BOUNDARY_SUMMARY_RELATIVE),
+            ],
         },
         "evidence_strength": {"counts": strength_counts},
         "human_validation": {
@@ -1715,6 +2121,7 @@ def build_unitronics_candidate_build(
             "component_mutations": 0,
             "migration_count": 0,
             "production_hook_added": False,
+            "representative_policy_approved_entries_only": True,
         },
         "validation": {
             "component_rows": len(component_rows),
@@ -1761,7 +2168,7 @@ def build_unitronics_candidate_build(
             "The exact matching SDK/GPL Makefiles are unavailable, so non-representative package-release decompositions remain product-specific rather than globally inferred.",
             "Teltonika internal product names and complete installed Version strings are reproducible, but public release/tag semantics are often unavailable.",
             "A first-pass CPE family binding without a Dictionary hit remains a human-validation item; absence is not treated as proof of semantic correctness.",
-            "This candidate set is not final Ground Truth and has not been persisted.",
+            "This artifact is finalization-ready, but candidate generation itself remains database read-only; persistence is a separate guarded transaction.",
         ],
     }
     return CandidateBuildAnalysis(
@@ -1816,7 +2223,11 @@ def finalize_validation(
 
 def _write_csv(path: Path, fields: tuple[str, ...], rows: list[dict[str, str]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=fields,
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
 
@@ -1864,6 +2275,7 @@ def _render_report(summary: dict[str, Any]) -> str:
     human = summary["human_validation"]
     validation = summary["validation"]
     gt = summary["ground_truth_candidates"]
+    policy = summary["representative_component_policy"]
     ambiguities = "\n".join(
         f"- `{item['type']}`: {item['effect']} Examples: {', '.join(item['examples'])}."
         for item in summary["new_ambiguity_types"]
@@ -1881,9 +2293,20 @@ def _render_report(summary: dict[str, Any]) -> str:
 - CPE Dictionary: `{CPE_SNAPSHOT_ID}`
 - NVD CVE/Configuration: `{NVD_SNAPSHOT_ID}`
 
-This is a first-pass candidate build, not final or persisted Ground Truth.
+This is the finalization-ready candidate build. Candidate generation itself is
+database read-only; persistence is performed by a separate guarded transaction.
 Original CPE and control `CPE-ID` were excluded from product/version/CPE
 candidate selection and used only for the final Original-versus-GT comparison.
+
+## Approved representative-component policy
+
+The fixed duplicate audit and OpenSSL representative audit authorize exactly
+**{policy['removed_mapping_count']}** derived split removals. No generic
+first-duplicate-wins rule is used.
+
+- Removed derived mappings: `{', '.join(policy['removed_components'])}`
+- Retained representatives: `{', '.join(policy['representative_components'])}`
+- Approval status: `{policy['status']}`
 
 ## Product adjudication
 
@@ -1950,6 +2373,6 @@ direct subcomponents are not automatically sent back for 582-row re-review.
 - Ground Truth DB count: `{validation['ground_truth_count_before']} -> {validation['ground_truth_count_after']}` — PASS
 - Existing local evidence hashes unchanged: {validation['evidence_hashes_unchanged']} — PASS
 
-No Ground Truth, Component, CPE/NVD snapshot, migration, production hook, CVE
-applicability, or final RQ1 state was created or modified.
+This candidate-build command does not modify Ground Truth, Component, CPE/NVD
+snapshot, migration, production hook, CVE applicability, or final RQ1 state.
 """

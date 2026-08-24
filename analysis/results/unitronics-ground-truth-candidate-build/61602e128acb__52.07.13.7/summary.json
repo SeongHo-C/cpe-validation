@@ -1,5 +1,5 @@
 {
-  "analysis_scope": "First-pass 582-component Ground Truth candidate build; read-only and not final GT",
+  "analysis_scope": "Finalization-ready 582-component Ground Truth candidate build with the approved representative-component policy; DB read-only",
   "configuration_only": {
     "gate_entry_component_count": 123,
     "gate_violation_count": 0,
@@ -8,12 +8,12 @@
   },
   "cpe_resolution": {
     "counts": {
-      "ACTIVE_EXACT": 26,
+      "ACTIVE_EXACT": 23,
       "DEPRECATED_TO_ACTIVE": 0,
-      "NO_DIRECT_CPE": 529,
+      "NO_DIRECT_CPE": 538,
       "NVD_CONFIGURATION_ONLY": 0,
       "UNRESOLVED": 5,
-      "VERSION_NOT_IN_DICTIONARY": 22
+      "VERSION_NOT_IN_DICTIONARY": 16
     }
   },
   "dataset": {
@@ -31,11 +31,11 @@
   "decisions": {
     "counts": {
       "CPE_CONFIRMED": 2,
-      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 529,
+      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 538,
       "NVD_CONFIGURATION_ONLY": 0,
-      "OFFICIAL_CPE_MAPPED": 24,
+      "OFFICIAL_CPE_MAPPED": 21,
       "UNRESOLVED": 5,
-      "VERSION_NOT_IN_DICTIONARY": 22
+      "VERSION_NOT_IN_DICTIONARY": 16
     }
   },
   "deprecated": {
@@ -45,14 +45,14 @@
   },
   "evidence_strength": {
     "counts": {
-      "MODERATE": 335,
-      "STRONG": 239,
+      "MODERATE": 334,
+      "STRONG": 240,
       "WEAK": 8
     }
   },
   "ground_truth_candidates": {
-    "count": 48,
-    "original_different_count": 46,
+    "count": 39,
+    "original_different_count": 37,
     "original_same_count": 2
   },
   "guardrails": {
@@ -65,23 +65,24 @@
     "live_nvd_api_calls": 0,
     "migration_count": 0,
     "original_cpe_candidate_evidence_uses": 0,
-    "production_hook_added": false
+    "production_hook_added": false,
+    "representative_policy_approved_entries_only": true
   },
   "human_validation": {
     "count": 178,
-    "cpe_mapped_count": 48,
+    "cpe_mapped_count": 39,
     "reason_counts": {
       "CPE_PRODUCT_FAMILY_AMBIGUITY": 2,
       "OPAQUE_VENDOR_VERSION_IDENTIFIER": 5,
       "PRODUCT_BOUNDARY_OR_VERSION_UNRESOLVED": 3,
-      "PRODUCT_WITHOUT_CONFIRMED_DIRECT_CPE": 125,
-      "PROPOSED_GT_CPE_CONFIRMATION": 48,
+      "PRODUCT_WITHOUT_CONFIRMED_DIRECT_CPE": 134,
+      "PROPOSED_GT_CPE_CONFIRMATION": 39,
       "UNRESOLVED": 5,
       "WEAK_EVIDENCE": 8
     },
     "strength_counts": {
-      "MODERATE": 143,
-      "STRONG": 27,
+      "MODERATE": 142,
+      "STRONG": 28,
       "WEAK": 8
     },
     "unresolved_count": 5
@@ -90,7 +91,7 @@
     "The exact matching SDK/GPL Makefiles are unavailable, so non-representative package-release decompositions remain product-specific rather than globally inferred.",
     "Teltonika internal product names and complete installed Version strings are reproducible, but public release/tag semantics are often unavailable.",
     "A first-pass CPE family binding without a Dictionary hit remains a human-validation item; absence is not treated as proof of semantic correctness.",
-    "This candidate set is not final Ground Truth and has not been persisted."
+    "This artifact is finalization-ready, but candidate generation itself remains database read-only; persistence is a separate guarded transaction."
   ],
   "new_ambiguity_types": [
     {
@@ -126,12 +127,55 @@
       "type": "OPAQUE_VENDOR_REVISION"
     }
   ],
+  "product_boundary_policy": {
+    "approval_artifacts": [
+      "unitronics-wireguard-product-boundary-audit/61602e128acb__52.07.13.7/summary.json",
+      "unitronics-ground-truth-product-boundary-full-audit/61602e128acb__52.07.13.7/summary.json"
+    ],
+    "approved_exclusions": [
+      "wireguard-tools"
+    ],
+    "generic_semantic_matching_engine_added": false,
+    "rule": "Similar vendor/product labels or the existence of a CPE family do not establish a mapping. Confirm that official upstream product boundaries agree with CPE title/reference/version space and, when needed, fixed-snapshot NVD usage context.",
+    "status": "APPLIED_FROM_APPROVED_AUDITS",
+    "wireguard_tools_rejected_family": "a:wireguard:wireguard"
+  },
   "product_classification": {
     "counts": {
       "DIRECT_SUBCOMPONENT_NO_PARENT_INHERITANCE": 404,
       "PRODUCT_IDENTITY_CONFIRMED": 175,
       "UNRESOLVED": 3
     }
+  },
+  "representative_component_policy": {
+    "approval_artifacts": [
+      "unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/component_recommendations.csv",
+      "unitronics-ground-truth-duplicate-cpe-audit/61602e128acb__52.07.13.7/summary.json",
+      "unitronics-openssl-representative-audit/61602e128acb__52.07.13.7/summary.json"
+    ],
+    "generic_first_duplicate_wins": false,
+    "removed_components": [
+      "ip6tables",
+      "libcap-bin",
+      "libipset13",
+      "liblua5.1.5",
+      "libsqlite3-0",
+      "openssl-util",
+      "strongswan-charon",
+      "strongswan-swanctl"
+    ],
+    "removed_mapping_count": 8,
+    "representative_components": [
+      "ipset",
+      "iptables",
+      "libcap",
+      "libopenssl3",
+      "lua",
+      "sqlite",
+      "strongswan"
+    ],
+    "rule": "Within one firmware and upstream product/version, retain the parent CPE on one approved representative Component; do not inherit it to approved distribution-specific derived splits. Independently identified CPE products remain eligible.",
+    "status": "APPLIED_FROM_APPROVED_AUDITS"
   },
   "schema_version": 1,
   "snapshots": {
@@ -161,11 +205,11 @@
     "every_component_has_decision": true,
     "every_component_has_valid_decision": true,
     "evidence_hashes_unchanged": true,
-    "ground_truth_count_after": 0,
-    "ground_truth_count_before": 0,
+    "ground_truth_count_after": 582,
+    "ground_truth_count_before": 582,
     "ground_truth_count_unchanged": true,
     "opkg_plus_non_opkg": "575 + 7 = 582",
-    "proposed_gt_count": 48,
+    "proposed_gt_count": 39,
     "proposed_gt_parser_failure_count": 0
   }
 }
