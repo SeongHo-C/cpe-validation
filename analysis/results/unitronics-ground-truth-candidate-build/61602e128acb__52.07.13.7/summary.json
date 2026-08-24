@@ -1,0 +1,171 @@
+{
+  "analysis_scope": "First-pass 582-component Ground Truth candidate build; read-only and not final GT",
+  "configuration_only": {
+    "gate_entry_component_count": 123,
+    "gate_violation_count": 0,
+    "gt_expression_count": 0,
+    "product_found_component_count": 0
+  },
+  "cpe_resolution": {
+    "counts": {
+      "ACTIVE_EXACT": 26,
+      "DEPRECATED_TO_ACTIVE": 0,
+      "NO_DIRECT_CPE": 529,
+      "NVD_CONFIGURATION_ONLY": 0,
+      "UNRESOLVED": 5,
+      "VERSION_NOT_IN_DICTIONARY": 22
+    }
+  },
+  "dataset": {
+    "component_count": 582,
+    "distinct_source_count": 303,
+    "firmware_sha256": "6fe59fb6e3fa2883bc96faa1488f9de56c5ecd5324f2d2c68ec5364b315ed81c",
+    "firmware_version": "52.07.13.7",
+    "manufacturer": "Unitronics",
+    "non_opkg_count": 7,
+    "opkg_count": 575,
+    "product": "UCR-ST-B8",
+    "sbom_document_id": 1364,
+    "sbom_sha256": "61602e128acb7cdc378bdd868da489100bfb8f3dc587f0f12c5cf08cb26dd13e"
+  },
+  "decisions": {
+    "counts": {
+      "CPE_CONFIRMED": 2,
+      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 529,
+      "NVD_CONFIGURATION_ONLY": 0,
+      "OFFICIAL_CPE_MAPPED": 24,
+      "UNRESOLVED": 5,
+      "VERSION_NOT_IN_DICTIONARY": 22
+    }
+  },
+  "deprecated": {
+    "encounter_count": 0,
+    "final_deprecated_gt_count": 0,
+    "resolved_to_active_count": 0
+  },
+  "evidence_strength": {
+    "counts": {
+      "MODERATE": 335,
+      "STRONG": 239,
+      "WEAK": 8
+    }
+  },
+  "ground_truth_candidates": {
+    "count": 48,
+    "original_different_count": 46,
+    "original_same_count": 2
+  },
+  "guardrails": {
+    "component_mutations": 0,
+    "control_cpe_id_candidate_evidence_uses": 0,
+    "cve_applicability_evaluations": 0,
+    "database_transaction_read_only": true,
+    "ground_truth_mutations": 0,
+    "live_cpe_dictionary_calls": 0,
+    "live_nvd_api_calls": 0,
+    "migration_count": 0,
+    "original_cpe_candidate_evidence_uses": 0,
+    "production_hook_added": false
+  },
+  "human_validation": {
+    "count": 178,
+    "cpe_mapped_count": 48,
+    "reason_counts": {
+      "CPE_PRODUCT_FAMILY_AMBIGUITY": 2,
+      "OPAQUE_VENDOR_VERSION_IDENTIFIER": 5,
+      "PRODUCT_BOUNDARY_OR_VERSION_UNRESOLVED": 3,
+      "PRODUCT_WITHOUT_CONFIRMED_DIRECT_CPE": 125,
+      "PROPOSED_GT_CPE_CONFIRMATION": 48,
+      "UNRESOLVED": 5,
+      "WEAK_EVIDENCE": 8
+    },
+    "strength_counts": {
+      "MODERATE": 143,
+      "STRONG": 27,
+      "WEAK": 8
+    },
+    "unresolved_count": 5
+  },
+  "method_limitations": [
+    "The exact matching SDK/GPL Makefiles are unavailable, so non-representative package-release decompositions remain product-specific rather than globally inferred.",
+    "Teltonika internal product names and complete installed Version strings are reproducible, but public release/tag semantics are often unavailable.",
+    "A first-pass CPE family binding without a Dictionary hit remains a human-validation item; absence is not treated as proof of semantic correctness.",
+    "This candidate set is not final Ground Truth and has not been persisted."
+  ],
+  "new_ambiguity_types": [
+    {
+      "effect": "One package combines hostapd and wpa_supplicant roles; no single product CPE was selected.",
+      "examples": [
+        "wpad-openssl"
+      ],
+      "type": "MULTI_PRODUCT_BINARY_BOUNDARY"
+    },
+    {
+      "effect": "Exact installed Version does not reproducibly establish the public upstream release.",
+      "examples": [
+        "libmodbus",
+        "shellinabox"
+      ],
+      "type": "UPSTREAM_VERSION_HIDDEN_BY_VENDOR_IDENTIFIER"
+    },
+    {
+      "effect": "canonical:ppp and samba:ppp remain semantically possible without using control/original CPE as truth.",
+      "examples": [
+        "ppp",
+        "point-to-point_protocol"
+      ],
+      "type": "CPE_PRODUCT_FAMILY_AMBIGUITY"
+    },
+    {
+      "effect": "Short vendor hashes are preserved and require human provenance confirmation.",
+      "examples": [
+        "gsmctl",
+        "gsmd",
+        "mobifd"
+      ],
+      "type": "OPAQUE_VENDOR_REVISION"
+    }
+  ],
+  "product_classification": {
+    "counts": {
+      "DIRECT_SUBCOMPONENT_NO_PARENT_INHERITANCE": 404,
+      "PRODUCT_IDENTITY_CONFIRMED": 175,
+      "UNRESOLVED": 3
+    }
+  },
+  "schema_version": 1,
+  "snapshots": {
+    "cpe_dictionary": {
+      "active": 1711630,
+      "content_sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+      "deprecated": 99631,
+      "manifest_sha256": "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+      "snapshot_id": "20260819T035002Z",
+      "total": 1811261
+    },
+    "nvd_cve": {
+      "configurations": 760120,
+      "content_sha256": "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab",
+      "cpe_matches": 3170148,
+      "cves": 380865,
+      "manifest_sha256": "80b6107f5225923794d725b252527f575ad2b0c800765fc5ce6d0b07c18d94eb",
+      "snapshot_id": "20260820T110357Z"
+    }
+  },
+  "validation": {
+    "component_rows": 582,
+    "component_rows_equal_582": true,
+    "configuration_gate_violation_count": 0,
+    "decision_partition": 582,
+    "deprecated_final_gt_count": 0,
+    "every_component_has_decision": true,
+    "every_component_has_valid_decision": true,
+    "evidence_hashes_unchanged": true,
+    "ground_truth_count_after": 0,
+    "ground_truth_count_before": 0,
+    "ground_truth_count_unchanged": true,
+    "opkg_plus_non_opkg": "575 + 7 = 582",
+    "proposed_gt_count": 48,
+    "proposed_gt_parser_failure_count": 0
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "analysis_scope": "Read-only 582-component proposed Ground Truth full dry-run; no persistence and no CVE applicability",
+  "automatic_coverage": {
+    "denominator": 582,
+    "proposed_decision_count": 191,
+    "proposed_decision_percent": 32.8179,
+    "review_free_terminal_count": 189,
+    "review_free_terminal_percent": 32.4742,
+    "review_required_with_proposed_decision_count": 2,
+    "undecided_review_count": 391
+  },
+  "configuration_only": {
+    "configuration_product_found_count": 0,
+    "gate_query_component_count": 3,
+    "gate_violation_count": 0,
+    "gt_expression_count": 0,
+    "template_ambiguity_count": 0
+  },
+  "control_cpe_id_comparison": {
+    "comparison_unit": "part/vendor/product family only for CPE 2.2 URI versus proposed CPE 2.3",
+    "counts": {
+      "DIFFERENT_PART_VENDOR_PRODUCT": 1,
+      "GT_ABSENT": 80,
+      "NO_CONTROL_CPE_ID": 493,
+      "SAME_PART_VENDOR_PRODUCT": 8
+    },
+    "used_as_ground_truth_evidence": false
+  },
+  "dataset": {
+    "component_count": 582,
+    "distinct_source_count": 303,
+    "firmware_sha256": "6fe59fb6e3fa2883bc96faa1488f9de56c5ecd5324f2d2c68ec5364b315ed81c",
+    "firmware_version": "52.07.13.7",
+    "manufacturer": "Unitronics",
+    "non_opkg_count": 7,
+    "opkg_count": 575,
+    "product": "UCR-ST-B8",
+    "sbom_document_id": 1364,
+    "sbom_sha256": "61602e128acb7cdc378bdd868da489100bfb8f3dc587f0f12c5cf08cb26dd13e"
+  },
+  "decisions": {
+    "counts": {
+      "CPE_CONFIRMED": 1,
+      "DIRECT_OFFICIAL_CPE_NOT_CONFIRMED": 179,
+      "OFFICIAL_CPE_MAPPED": 3,
+      "UNDECIDED_REVIEW": 391,
+      "UNRESOLVED": 2,
+      "VERSION_NOT_IN_DICTIONARY": 6
+    }
+  },
+  "deprecated": {
+    "dead_end_count": 0,
+    "deprecated_final_gt_count": 0,
+    "exact_encounter_component_count": 0,
+    "family_encounter_component_count": 1,
+    "multi_hop_count": 0,
+    "multiple_replacement_count": 0,
+    "one_to_one_replacement_count": 0,
+    "resolved_active_endpoint_count": 0,
+    "review_stop_count": 1
+  },
+  "guardrails": {
+    "component_mutations": 0,
+    "control_cpe_id_candidate_evidence_uses": 0,
+    "cve_applicability_evaluations": 0,
+    "database_transaction_read_only": true,
+    "ground_truth_mutations": 0,
+    "live_api_calls": 0,
+    "live_web_dependencies": 0,
+    "migration_count": 0,
+    "original_cpe_candidate_evidence_uses": 0,
+    "production_hook_added": false
+  },
+  "human_validation_candidates": {
+    "count": 10,
+    "decision_counts": {
+      "CPE_CONFIRMED": 1,
+      "OFFICIAL_CPE_MAPPED": 3,
+      "VERSION_NOT_IN_DICTIONARY": 6
+    }
+  },
+  "mapping_paths": {
+    "counts": {
+      "ACTIVE_EXACT": 4,
+      "NO_DIRECT_CPE": 3,
+      "REVIEW_STOP": 393,
+      "SKIPPED_NON_PRODUCT_RUNTIME": 176,
+      "VERSION_NOT_IN_DICTIONARY": 6
+    }
+  },
+  "normalization": {
+    "counts": {
+      "DATE_OR_GIT_VERSION": 5,
+      "EXACT_PRODUCT_VERSION": 1,
+      "NOT_EVALUATED_RUNTIME_REVIEW": 387,
+      "NO_PRODUCT_VERSION": 175,
+      "PACKAGE_RELEASE_REMOVED": 9,
+      "VENDOR_SPECIFIC_VERSION": 5
+    }
+  },
+  "remaining_evidence_gaps": [
+    {
+      "affected_count": 384,
+      "effect": "Structural package role cannot safely create positive or plugin-negative runtime decisions.",
+      "gap": "official_runtime_role_registry"
+    },
+    {
+      "affected_count": 1,
+      "effect": "canonical:ppp and samba:ppp both remain possible; automatic family selection is blocked.",
+      "gap": "CPE_family_binding_for_PPP_snapshot"
+    },
+    {
+      "affected_count": 5,
+      "effect": "Vendor version boundaries remain unproven.",
+      "gap": "vendor_product_version_evidence"
+    },
+    {
+      "affected_count": 3,
+      "effect": "Three fixed representative library/plugin cases retain an explicit runtime-boundary review stop.",
+      "gap": "fixed_runtime_product_boundary_evidence"
+    }
+  ],
+  "representative_regression": {
+    "case_count": 11,
+    "changed_cases": [],
+    "passed": true
+  },
+  "review_queue": {
+    "cause_group_counts": {
+      "CPE_PRODUCT_IDENTITY_AMBIGUITY": 1,
+      "FIXED_RUNTIME_BOUNDARY_AMBIGUITY": 3,
+      "NO_FIXED_OFFICIAL_RUNTIME_ROLE_EVIDENCE": 384,
+      "VENDOR_RUNTIME_VERSION_AMBIGUITY": 5
+    },
+    "count": 393,
+    "reason_counts": {
+      "Exact dependency and payload make libext2fs core-like in this firmware, while upstream installation documentation separates libraries from the management programs; v1 cannot reproducibly choose the suite boundary. Evidence: control+list+status+sibling dependency; version and architecture match; UP-E2FSPROGS-README; UP-E2FSPROGS-INSTALL; UP-E2FSPROGS-EXT2FS.": 1,
+      "NO_FIXED_OFFICIAL_RUNTIME_ROLE_EVIDENCE": 384,
+      "Official architecture makes the kernel interface a core daemon port and the exact minimal meta-package depends on this plugin, but the available evidence does not prove exclusive runtime selection over alternatives. Evidence: control+list+status+sibling dependency; version and architecture match; UP-STRONGSWAN-CHARON; UP-STRONGSWAN-PLUGINS; UP-STRONGSWAN-PLUGIN-LOAD.": 1,
+      "PPP maps to multiple active vendor families in the fixed Dictionary.": 1,
+      "The socket is part of the official daemon architecture and the exact minimal profile depends on this implementation, but plugin replaceability and active selection are not fully established. Evidence: control+list+status+sibling dependency; version and architecture match; UP-STRONGSWAN-CHARON; UP-STRONGSWAN-PLUGINS; UP-STRONGSWAN-PLUGIN-LOAD.": 1,
+      "limited application of PRODUCT_RUNTIME v1; exact SBOM+control+status; /usr/sbin/datasender; vendor Source/siblings; UP-TELTONIKA-DATA-SENDER; UP-TELTONIKA-SDK": 1,
+      "limited application of PRODUCT_RUNTIME v1; exact SBOM+control+status; /usr/sbin/gpsd; vendor Source/siblings; UP-TELTONIKA-SDK": 1,
+      "limited application of PRODUCT_RUNTIME v1; exact SBOM+control+status; /usr/sbin/gsmctl; vendor Source/siblings; UP-TELTONIKA-GSMCTL; UP-TELTONIKA-SDK": 1,
+      "limited application of PRODUCT_RUNTIME v1; exact SBOM+control+status; /usr/sbin/mobifd; vendor Source; UP-TELTONIKA-SDK": 1,
+      "limited application of PRODUCT_RUNTIME v1; exact SBOM+control+status; /usr/sbin/modbus_client; vendor Source; UP-TELTONIKA-SDK": 1
+    },
+    "stage_counts": {
+      "CPE_PRODUCT_IDENTITY": 1,
+      "PRODUCT_RUNTIME": 392
+    }
+  },
+  "runtime": {
+    "counts": {
+      "NON_PRODUCT_RUNTIME": 176,
+      "PRODUCT_RUNTIME": 14,
+      "REVIEW_REQUIRED": 392
+    },
+    "policy": "Only fixed official evidence can create PRODUCT_RUNTIME; structural role alone is never a positive terminal rule.",
+    "product_runtime_normalized_count": 14,
+    "product_runtime_normalized_percent": 100.0
+  },
+  "schema_version": 1,
+  "snapshots": {
+    "cpe_dictionary": {
+      "active": 1711630,
+      "content_sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+      "deprecated": 99631,
+      "manifest_sha256": "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+      "snapshot_id": "20260819T035002Z",
+      "total": 1811261
+    },
+    "nvd_cve": {
+      "configurations": 760120,
+      "content_sha256": "a8a1b6ca66a0383272a3ca035559229b1fc59535f029828b984a3998234c6eab",
+      "cpe_matches": 3170148,
+      "cves": 380865,
+      "manifest_sha256": "80b6107f5225923794d725b252527f575ad2b0c800765fc5ce6d0b07c18d94eb",
+      "snapshot_id": "20260820T110357Z"
+    }
+  },
+  "validation": {
+    "component_rows": 582,
+    "component_rows_equal_582": true,
+    "configuration_gate_violation_count": 0,
+    "decision_plus_undecided_equal_582": true,
+    "decision_plus_undecided_partition": 582,
+    "deprecated_final_gt_count": 0,
+    "distinct_source_count": 303,
+    "distinct_source_count_equal_303": true,
+    "evidence_hashes_unchanged": true,
+    "ground_truth_count_after": 0,
+    "ground_truth_count_before": 0,
+    "ground_truth_count_unchanged": true,
+    "opkg_plus_non_opkg": "575 + 7 = 582",
+    "proposed_gt_count": 10,
+    "proposed_gt_parser_failure_count": 0,
+    "runtime_partition": 582,
+    "runtime_partition_equal_582": true
+  }
+}

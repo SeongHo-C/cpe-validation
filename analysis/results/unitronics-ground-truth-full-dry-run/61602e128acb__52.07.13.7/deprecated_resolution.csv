@@ -1,0 +1,2 @@
+component_id,name,encounter_type,candidate_families,deprecated_candidate_count,deprecated_cpes,replacement_count,replacement_depth,replacement_chain,active_endpoints,resolved_active_cpe,resolution_status,review_required,notes
+199971,ppp,PRODUCT_WIDE_FAMILY_AMBIGUITY,"[{""active"": 63, ""deprecated"": 0, ""family"": [""a"", ""canonical"", ""ppp""]}, {""active"": 58, ""deprecated"": 5, ""family"": [""a"", ""samba"", ""ppp""]}]",5,[],0,0,[],[],,NOT_RUN_CPE_FAMILY_AMBIGUOUS,true,Family selection precedes Deprecated traversal; no candidate family was chosen by first-row order.

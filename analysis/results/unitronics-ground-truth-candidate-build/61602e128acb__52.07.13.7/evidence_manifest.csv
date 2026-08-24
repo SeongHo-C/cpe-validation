@@ -1,0 +1,27 @@
+evidence_id,evidence_type,locator,sha256,accessed_at,use
+LOCAL-01,LOCAL_IMMUTABLE_ARTIFACT,unitronics-ground-truth-preanalysis/61602e128acb__52.07.13.7/components.csv,ceb955de9591e718011203da25a6b2552cad8f89cf8e66ae24c216f837cea528,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-02,LOCAL_IMMUTABLE_ARTIFACT,unitronics-source-package-analysis/61602e128acb__52.07.13.7/packages.csv,30e016f31ea84dc0189af4f43b30996c692a7af44e53efc8e83ca3c3a812c050,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-03,LOCAL_IMMUTABLE_ARTIFACT,unitronics-source-package-analysis/61602e128acb__52.07.13.7/report.md,404749a7fdb65e4c813a1aa1d6aa2065486c3021490a735ff3d0ff11d134533f,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-04,LOCAL_IMMUTABLE_ARTIFACT,unitronics-product-runtime-rulebook/61602e128acb__52.07.13.7/rulebook.md,e9d17b39d4bb4757d3e487cdf71ef4ea5d96c736e52ff356e7b3e64e0de0eb2a,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-05,LOCAL_IMMUTABLE_ARTIFACT,unitronics-product-runtime-rulebook/61602e128acb__52.07.13.7/representative_cases.csv,c288ba83a18ede5baa7f7e590d4a818ae8669efa428933d275dbf831ed2d8672,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-06,LOCAL_IMMUTABLE_ARTIFACT,unitronics-version-normalization-rulebook/61602e128acb__52.07.13.7/rulebook.md,13cc27708351a9e159466f4c3535487b529e56ea6dc87d9b65c19bb10e4046bf,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-07,LOCAL_IMMUTABLE_ARTIFACT,unitronics-version-normalization-rulebook/61602e128acb__52.07.13.7/representative_cases.csv,9a93555398828287a5db684e401c536ff504957908493f4a3d060d14656c025a,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-08,LOCAL_IMMUTABLE_ARTIFACT,unitronics-cpe-mapping-decision-dry-run/61602e128acb__52.07.13.7/rulebook.md,6864a036a62d5c4970fa0c0ef607c2dc49dad1d82cfd0b56e8738da9cb6889cd,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-09,LOCAL_IMMUTABLE_ARTIFACT,unitronics-cpe-mapping-decision-dry-run/61602e128acb__52.07.13.7/representative_cases.csv,c2007297022d610c56a46dad9c364078609575927b5690c9370b949cb46bdaa9,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-10,LOCAL_IMMUTABLE_ARTIFACT,cpe-mapping-rulebook-boundary-tests/20260819T035002Z__20260820T110357Z/summary.json,3ed9439830840df662f728bf19f80a93d002d342f942c98c3265be995fba53db,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+LOCAL-11,LOCAL_IMMUTABLE_ARTIFACT,cpe-prerelease-version-policy/wpa_supplicant-2.11-devel/summary.json,64356709c4c0bf8a6e3becc1d4b1050e2164a9f9787ccd2d117701c2e576629a,,"Exact firmware linkage, product boundary, version rule, or CPE boundary evidence"
+UP-OPENWRT-POLICY,OFFICIAL_UPSTREAM_URL,https://openwrt.org/docs/guide-developer/package-policies,,2026-08-23,Separates PKG_VERSION/source revision from PKG_RELEASE.
+UP-BUSYBOX-1.34.1,OFFICIAL_UPSTREAM_URL,https://www.busybox.net/downloads/,,2026-08-23,Official archive contains busybox-1.34.1.
+UP-DROPBEAR-2020.81,OFFICIAL_UPSTREAM_URL,https://matt.ucc.asn.au/dropbear/releases/,,2026-08-23,Official archive contains dropbear-2020.81.
+UP-SQLITE-3.41.2,OFFICIAL_UPSTREAM_URL,https://www.sqlite.org/releaselog/3_41_2.html,,2026-08-23,Official release log identifies SQLite 3.41.2.
+UP-LIBCAP-2.69,OFFICIAL_UPSTREAM_URL,https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/,,2026-08-23,Official archive contains libcap-2.69.
+UP-LIBGPIOD,OFFICIAL_UPSTREAM_URL,https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/,,2026-08-23,Official project hosts the library and GPIO command-line tools.
+UP-ETHTOOL,OFFICIAL_UPSTREAM_URL,https://www.kernel.org/pub/software/network/ethtool/,,2026-08-23,Official project describes ethtool and publishes releases.
+UP-IPSET-7.6,OFFICIAL_UPSTREAM_URL,https://www.netfilter.org/pub/ipset/,,2026-08-23,Official archive contains ipset-7.6.
+UP-IPSET-STRUCTURE,OFFICIAL_UPSTREAM_URL,https://www.netfilter.org/projects/ipset/index.html,,2026-08-23,Official project distinguishes the userspace utility and framework.
+UP-LUA-5.1.5,OFFICIAL_UPSTREAM_URL,https://www.lua.org/versions.html,,2026-08-23,Official version history identifies Lua 5.1.5 as the final Lua 5.1 release.
+UP-LIBUSB-1.0.24,OFFICIAL_UPSTREAM_URL,https://github.com/libusb/libusb/releases/tag/v1.0.24,,2026-08-23,Official project release identifies libusb 1.0.24 as a final release.
+UP-OPEN62541-1.4.0,OFFICIAL_UPSTREAM_URL,https://github.com/open62541/open62541/releases/tag/v1.4.0,,2026-08-23,Official project release identifies open62541 1.4.0 as the first final 1.4 release.
+UP-WPA-2.11,OFFICIAL_UPSTREAM_URL,https://w1.fi/releases/,,2026-08-23,Official archive publishes the final wpa_supplicant-2.11 source release.
+UP-MUSL-1.2.4,OFFICIAL_UPSTREAM_URL,https://musl.libc.org/releases.html,,2026-08-23,Official release history identifies musl 1.2.4 as a final release.
+UP-OPENWRT-21.02.0,OFFICIAL_UPSTREAM_URL,https://downloads.openwrt.org/releases/21.02.0/,,2026-08-23,Official release archive distinguishes OpenWrt 21.02.0 from its release candidates.

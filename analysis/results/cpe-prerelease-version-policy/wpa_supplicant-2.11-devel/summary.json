@@ -1,0 +1,222 @@
+{
+  "candidate_evaluations": [
+    {
+      "candidate": "A",
+      "cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11:*:*:*:*:*:*:*",
+      "decision": "REJECTED",
+      "distinguishes_final_release": false,
+      "family_consistency": "GENERIC_UPDATE_PATTERN_BUT_DEVEL_NOT_EXPLICIT",
+      "nist_compatibility": "SYNTACTICALLY_VALID_BUT_IMPRECISE",
+      "observed_version_preservation": false,
+      "present_in_snapshot": false,
+      "reason": "The explicit devel state is lost. In a WFN, update='*' is ANY, not an exact assertion of the observed development state.",
+      "update": "*",
+      "version": "2.11"
+    },
+    {
+      "candidate": "B",
+      "cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11:devel:*:*:*:*:*:*",
+      "decision": "RECOMMENDED",
+      "distinguishes_final_release": true,
+      "family_consistency": "CONSISTENT_WITH_EXPLICIT_PRE_UPDATE_ROWS",
+      "nist_compatibility": "COMPATIBLE_AND_SEMANTICALLY_ALIGNED",
+      "observed_version_preservation": true,
+      "present_in_snapshot": false,
+      "reason": "It preserves the upstream base release and explicit development state across the version/update attributes, matching the family's pre1 and pre4 modeling.",
+      "update": "devel",
+      "version": "2.11"
+    },
+    {
+      "candidate": "C",
+      "cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11-devel:*:*:*:*:*:*:*",
+      "decision": "REJECTED",
+      "distinguishes_final_release": true,
+      "family_consistency": "INCONSISTENT_WITH_EXPLICIT_PRE_UPDATE_ROWS",
+      "nist_compatibility": "SYNTACTICALLY_VALID_BUT_NOT_PREFERRED",
+      "observed_version_preservation": true,
+      "present_in_snapshot": false,
+      "reason": "It is lossless and syntactically valid, but treats a release-state suffix as an atomic version despite this family's split modeling.",
+      "update": "*",
+      "version": "2.11-devel"
+    }
+  ],
+  "decision": {
+    "normalization_reason": "Split the verified upstream development-state token into update, consistent with NIST attribute semantics and the fixed family's pre1/pre4 practice, while preserving 2.11-devel without conflating it with final 2.11.",
+    "recommended_gt_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11:devel:*:*:*:*:*:*",
+    "recommended_update_attribute": "devel",
+    "recommended_validation_result": "VERSION_NOT_IN_DICTIONARY",
+    "recommended_validation_result_label": "Version Not Registered",
+    "recommended_version_attribute": "2.11",
+    "selected_candidate": "B"
+  },
+  "existing_artifact_impact": {
+    "current_candidate": {
+      "actual_product_version": "2.11",
+      "discrepancy_fields": [],
+      "gt_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11:*:*:*:*:*:*:*",
+      "validation_result": "VERSION_NOT_IN_DICTIONARY"
+    },
+    "files_modified_in_this_analysis": 0,
+    "first_audit_recommendation": {
+      "actual_product_version": "2.11-devel",
+      "discrepancy_fields": [
+        "VERSION"
+      ],
+      "gt_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11-devel:*:*:*:*:*:*:*",
+      "validation_result": "VERSION_NOT_IN_DICTIONARY"
+    },
+    "future_logic_change": "Separate audited actual_product_version from CPE version/update attributes in the Unitronics audit spec and regenerate only after explicit approval.",
+    "new_recommendation": {
+      "actual_product_version": "2.11-devel",
+      "discrepancy_fields": [
+        "UPDATE"
+      ],
+      "gt_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:2.11:devel:*:*:*:*:*:*",
+      "validation_result": "VERSION_NOT_IN_DICTIONARY"
+    }
+  },
+  "family": {
+    "attribute_pattern_counts": {
+      "EXPLICIT_PRERELEASE_UPDATE": 2,
+      "GENERIC_UPDATE_ANY": 75
+    },
+    "explicit_prerelease_update_cases": [
+      {
+        "raw_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:0.2.3:pre1:*:*:*:*:*:*",
+        "same_version_generic_update_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:0.2.3:*:*:*:*:*:*:*",
+        "status": "ACTIVE",
+        "update": "pre1",
+        "version": "0.2.3"
+      },
+      {
+        "raw_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:0.3.0:pre4:*:*:*:*:*:*",
+        "same_version_generic_update_cpe": "cpe:2.3:a:w1.fi:wpa_supplicant:0.3.0:*:*:*:*:*:*:*",
+        "status": "ACTIVE",
+        "update": "pre4",
+        "version": "0.3.0"
+      }
+    ],
+    "part": "a",
+    "prerelease_kind_counts": {
+      "alpha": 0,
+      "beta": 0,
+      "devel": 0,
+      "pre": 2,
+      "rc": 0,
+      "snapshot": 0
+    },
+    "prerelease_token_counts": {
+      "pre1": 1,
+      "pre4": 1
+    },
+    "prerelease_token_in_version_count": 0,
+    "product": "wpa_supplicant",
+    "record_count": 77,
+    "searched_token_counts": {
+      "alpha": 0,
+      "beta": 0,
+      "devel": 0,
+      "pre": 0,
+      "pre1": 1,
+      "pre2": 0,
+      "rc": 0,
+      "rc1": 0,
+      "snapshot": 0
+    },
+    "status_counts": {
+      "ACTIVE": 77,
+      "DEPRECATED": 0
+    },
+    "vendor": "w1.fi"
+  },
+  "guardrails": {
+    "cve_applicability_evaluations": 0,
+    "database_transaction_read_only": true,
+    "ground_truth_mutations": 0,
+    "migration_count": 0,
+    "nvd_configuration_queries": 0,
+    "other_47_candidates_modified": 0
+  },
+  "nist_cpe_23": {
+    "accessed_at": "2026-08-23",
+    "beta_example": "Internet Explorer 8.0.6001 Beta is modeled with version=8.0.6001 and update=beta.",
+    "interpretation_limit": "The specification does not impose a universal suffix grammar; family and upstream semantics are still required.",
+    "source": "https://nvlpubs.nist.gov/nistpubs/legacy/ir/nistir7695.pdf",
+    "update_definition": "Section 5.3.3.5: vendor-specific particular update, service pack, or point release.",
+    "version_definition": "Section 5.3.3.4: vendor-specific release version; discoverable version information should be copied directly and not truncated or otherwise modified."
+  },
+  "normalization_policy": [
+    {
+      "examples": "1.2.3-pre1 -> version=1.2.3, update=pre1; 1.2.3-rc1 -> version=1.2.3, update=rc1; wpa_supplicant 2.11-devel -> version=2.11, update=devel",
+      "outcome": "MOVE_TO_UPDATE",
+      "when": "The upstream suffix is a separable release-state/update token and the same CPE family consistently models comparable tokens in update."
+    },
+    {
+      "examples": "Do not split solely because a version contains '-' or letters.",
+      "outcome": "KEEP_IN_VERSION",
+      "when": "The complete string is the upstream canonical version, the suffix is not a separately modeled release state, or family evidence consistently keeps the token in version."
+    },
+    {
+      "examples": "Remove only the proven package revision, never pre/rc/beta/devel.",
+      "outcome": "PACKAGE_RELEASE_REMOVE",
+      "when": "Authoritative package metadata proves the suffix is a distribution package/build revision outside the upstream product version."
+    },
+    {
+      "examples": "Escalate instead of applying a global suffix regex.",
+      "outcome": "REVIEW_REQUIRED",
+      "when": "Upstream semantics are ambiguous, family practice is absent or mixed, or splitting would discard or invent version information."
+    }
+  ],
+  "observed_evidence": {
+    "actual_product_version": "2.11-devel",
+    "firmware_identifier": "wpa_supplicant v2.11-devel",
+    "meaning": "Upstream development state before the distinct final 2.11 release"
+  },
+  "protected_artifact_hashes": {
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/components.csv": "8c875d49321f7bf278d21c1d0a2126da721fb85893dc676639b4be90f87de171",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/configuration_only_cases.csv": "fb8d248b7de0b952379287ad75d989f7c92f745b5e64d54f1bf557a835608d1f",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/deprecated_resolution.csv": "b38bb0717538518bf9df89343276c424facdd655a95eed2f76fcd35dcce355a4",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/evidence_manifest.csv": "ccb9d2eae36bd18f9fd0f8c817db8282245cf826b5c4d5391470e475cd293d33",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/human_validation.csv": "3f9df4e74638cd4a7056a3546e456ad88e4f82f691450e691c077ad5137abee6",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/report.md": "f681c4085bb90368a2c445ece01cbb5a881c770b43d07419d2c6cdb3c1011513",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/summary.json": "c20ddefa98afe53b423cc1c5846ce8e2471bd3f1f41c3021ff1bee2792275a0a",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unitronics_gt_human_validation.html": "d705d382dd6e12957fb8d269dbcdbe08367ccbb92facb8d66bee17368a6dff53",
+    "analysis/results/unitronics-ground-truth-candidate-build/61602e128acb__52.07.13.7/unresolved.csv": "5dce546c1558f1567fdd25871781db17f00140d1412dcbd6de2f1ba49c47cd25",
+    "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/audit_report.md": "9e80b45ae88dfcac852114985a9d250100a75225f5cd6ff4381ccab4e973b19e",
+    "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/audit_results.csv": "e71aeefc75ee3dd082eb3ee9aa175b549f62848b431d8af764de6af85bb5c63a",
+    "analysis/results/unitronics-ground-truth-cpe-audit/61602e128acb__52.07.13.7/summary.json": "42041853941ca342b690223f1468feb040d40fbdc7953ce82df0fc2f125ad3ab"
+  },
+  "schema_version": 1,
+  "scope": "wpa_supplicant 2.11-devel CPE prerelease modeling only",
+  "snapshot": {
+    "content_sha256": "9035416631831f5f50d3c723d813370532e7ceee0c5a93c8473897d5a97bfd7a",
+    "manifest_sha256": "d0353e020f67a19070ebf297615cba0a91b636f3f89bd580f73fd786719fddce",
+    "snapshot_id": "20260819T035002Z"
+  },
+  "upstream": {
+    "accessed_at": "2026-08-23",
+    "final_release_archive_member": "wpa_supplicant-2.11.tar.gz",
+    "final_version_macro": "2.11",
+    "final_version_source": "https://git.w1.fi/cgit/hostap/plain/src/common/version.h?h=hostap_2_11",
+    "pre_final_version_macro": "2.11-devel",
+    "pre_final_version_source": "https://git.w1.fi/cgit/hostap/plain/src/common/version.h?h=hostap_2_11%5E",
+    "release_archive": "https://w1.fi/releases/",
+    "testing_archive": "https://w1.fi/releases/testing/"
+  },
+  "validation": {
+    "active_family_exists": true,
+    "all_candidates_compared": true,
+    "candidate_canonical_parse_failures": 0,
+    "family_canonical_parse_failures": 0,
+    "family_database_count": 77,
+    "family_rows_equal_database_count": true,
+    "family_rows_exported": 77,
+    "final_and_devel_distinguished": true,
+    "fixed_snapshot": true,
+    "ground_truth_count_after": 0,
+    "ground_truth_count_before": 0,
+    "ground_truth_count_unchanged": true,
+    "protected_artifacts_unchanged": true,
+    "recommended_cpe_absent_from_snapshot": true
+  }
+}
