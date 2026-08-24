@@ -427,7 +427,7 @@ describe("Ground Truth decision and discrepancy workflow", () => {
       "The product exists in the CPE Dictionary, but this version is not registered.",
       "The product is not in the CPE Dictionary but is referenced in an NVD CVE Configuration.",
       "The software product was identified, but no direct CPE could be confirmed.",
-      "The software product or version could not be determined with sufficient evidence.",
+      "The product, version, product boundary, or a unique Ground Truth CPE could not be established with sufficient evidence.",
     ]) {
       expect(
         within(editor()).queryByText(description),
@@ -629,6 +629,11 @@ describe("Ground Truth decision and discrepancy workflow", () => {
 
     const review = editor()
     await chooseDecision(user, "UNRESOLVED")
+    expect(
+      within(review).getByText(
+        "The product, version, product boundary, or a unique Ground Truth CPE could not be established with sufficient evidence.",
+      ),
+    ).toBeInTheDocument()
     expect(within(review).queryAllByRole("checkbox")).toHaveLength(0)
     const trigger = await openDiscrepancyTypes(user)
     const options = screen.getByLabelText(

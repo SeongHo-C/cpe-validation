@@ -35,7 +35,7 @@ export const groundTruthDecisionDescriptions: Record<
   DIRECT_OFFICIAL_CPE_NOT_CONFIRMED:
     "The software product was identified, but no direct CPE could be confirmed.",
   UNRESOLVED:
-    "The software product or version could not be determined with sufficient evidence.",
+    "The product, version, product boundary, or a unique Ground Truth CPE could not be established with sufficient evidence.",
 }
 
 export function isGroundTruthDecisionCode(

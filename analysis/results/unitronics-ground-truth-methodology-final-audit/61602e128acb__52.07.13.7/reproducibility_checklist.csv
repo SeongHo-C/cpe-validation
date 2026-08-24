@@ -1,0 +1,38 @@
+check_id,area,requirement,observed,status,evidence,limitation
+METH-01,Definition,Unable to Determine covers product uncertainty,Approved final description explicitly includes product,PASS,ground-truth-decision.ts,
+METH-02,Definition,Unable to Determine covers version uncertainty,Approved final description explicitly includes version,PASS,ground-truth-decision.ts,
+METH-03,Definition,Unable to Determine covers product-boundary uncertainty,Approved final description explicitly includes product boundary,PASS,ground-truth-decision.ts,
+METH-04,Definition,Unable to Determine covers non-unique GT CPE,Approved final description explicitly includes a unique Ground Truth CPE,PASS,ground-truth-decision.ts,
+METH-05,Definition,Internal code is unchanged,UNRESOLVED,PASS,ground-truth-decision.ts,
+METH-06,Definition,UI label is unchanged,Unable to Determine,PASS,ground-truth-decision.ts,
+METH-07,Definition,All five observed rows fit the final definition,"3 product/version/boundary rows; 2 non-unique-template rows",PASS,unresolved.csv and preceding methodology audit,
+METH-08,Definition,No Direct CPE Found remains distinct,"404 bounded subcomponents; 123 no representation; 2 family ambiguity",PASS,components.csv,
+DATA-01,Result invariance,All 582 components retain one result,"2+24+22+0+529+5=582",PASS,candidate summary,
+DATA-02,Result invariance,CPE-bearing count is unchanged,48 to 48,PASS,candidate summary hash unchanged,
+DATA-03,Result invariance,GT CPE values are unchanged,0 changes,PASS,candidate components hash unchanged,
+DATA-04,Result invariance,CPE Validation Results are unchanged,0 changes,PASS,candidate components hash unchanged,
+DATA-05,Result invariance,Unable to Determine count is unchanged,5 to 5,PASS,candidate summary hash unchanged,
+AUD-01,Independent audit,Accepted count is unchanged,48 to 48,PASS,audit summary hash unchanged,
+AUD-02,Independent audit,Correction and review counts remain zero,"0 corrections; 0 evidence reviews",PASS,audit summary,
+AUD-03,Independent audit,Circular evidence risk remains zero,0,PASS,audit summary,
+AUD-04,Independent audit,Canonical parse failures remain zero,0,PASS,audit summary,
+AUD-05,Independent audit,Final Deprecated GT remains zero,0,PASS,audit summary,
+UI-01,Frontend,Approved description is displayed for UNRESOLVED,Explicit selected-result assertion passes,PASS,ground-truth.test.tsx,
+UI-02,Frontend,Ground Truth UI regression test passes,10 of 10,PASS,Vitest,
+UI-03,Frontend,TypeScript and production build pass,tsc and Vite PASS,PASS,npm run build,Chunk-size warning is non-blocking
+UI-04,Frontend,Frontend lint passes,oxlint PASS,PASS,npm run lint,
+REPRO-01,Reproducibility,Candidate baseline hashes are unchanged,components and summary hashes unchanged,PASS,SHA-256 comparison,
+REPRO-02,Reproducibility,Audit baseline hashes are unchanged,results and summary hashes unchanged,PASS,SHA-256 comparison,
+REPRO-03,Reproducibility,Relevant backend regression suite passes,52 of 52,PASS,Django tests,
+REPRO-04,Reproducibility,Official upstream evidence is immutable,15 URLs lack content hashes,PASS_WITH_LIMITATION,evidence manifest,Archive or hash upstream content
+REPRO-05,Reproducibility,Raw firmware extraction is repository-contained,Derived evidence is hashed but extraction environment is external,PASS_WITH_LIMITATION,evidence artifacts,Preserve extraction inputs and tooling
+REPRO-06,Reproducibility,Full review HTML is generated from scratch,Core CSV and JSON reproduce but full HTML generation is partial,PASS_WITH_LIMITATION,HTML refresh implementation,Presentation limitation only
+REPRO-07,Reproducibility,Long-term environment is self-contained,Fixed PostgreSQL snapshots and execution environment must be preserved,PASS_WITH_LIMITATION,snapshot provenance,Archive database and environment
+SAFE-01,Safety,Ground Truth DB remains unchanged,0 to 0,PASS,final DB query,
+SAFE-02,Safety,Database mutation count is zero,0,PASS,read-only scope,
+SAFE-03,Safety,Migration count is zero,0,PASS,makemigrations check,
+SAFE-04,Safety,Existing methodology audit is preserved,Previous audit artifact hashes unchanged,PASS,analysis aggregate hash,
+SAFE-05,Safety,Commit count is zero,0,PASS,git HEAD unchanged,
+FINAL-01,Final verdict,Blocking issue count is zero,0,PASS,final audit,
+FINAL-02,Final verdict,Ground Truth DB application readiness,READY,PASS,final audit,
+
