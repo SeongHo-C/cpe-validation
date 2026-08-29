@@ -1,4 +1,0 @@
-component_id,name,part,vendor,product,dictionary_active_tuple_count,dictionary_deprecated_tuple_count,gate_status,configuration_gate_passed,configuration_match,criteria,match_criteria_id,criteria_version,version_start_including,version_start_excluding,version_end_including,version_end_excluding,occurrence_count,distinct_cve_count,stable_template_status,proposed_gt_cpe,review_required,notes
-199949,netifd,a,openwrt,netifd,0,0,ALLOWED,true,false,,,,,,,,0,0,NOT_APPLICABLE_NO_MATCH,,false,Gate passed; no fixed-snapshot criteria matched.
-199974,procd,a,openwrt,procd,0,0,ALLOWED,true,false,,,,,,,,0,0,NOT_APPLICABLE_NO_MATCH,,false,Gate passed; no fixed-snapshot criteria matched.
-199961,opkg,a,openwrt,opkg,0,0,ALLOWED,true,false,,,,,,,,0,0,NOT_APPLICABLE_NO_MATCH,,false,Gate passed; no fixed-snapshot criteria matched.

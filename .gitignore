@@ -236,3 +236,6 @@ data/source-artifacts/
 
 # Reproducible but large generated NVD/Dictionary coverage detail
 analysis/results/nvd-cpe-dictionary-coverage/*/criteria_coverage.csv.gz
+
+# Local Ground Truth research data
+/.ground-truth/
