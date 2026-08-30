@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "purpose": "Frozen CPE product-family candidate universe for RQ2",
+  "family_definition": [
+    "part",
+    "vendor",
+    "product"
+  ],
+  "candidate_file": "candidate_families.csv",
+  "search_condition": "searchable == true",
+  "candidate_sources": [
+    "ACTIVE_DICTIONARY",
+    "NVD_CONFIGURATION_ONLY"
+  ],
+  "cpe_snapshot": "20260819T035002Z",
+  "nvd_snapshot": "20260820T110357Z",
+  "active_dictionary_families": 149598,
+  "nvd_configuration_only_families": 31895,
+  "total_candidate_families": 181493,
+  "searchable_candidate_families": 181484,
+  "non_searchable_candidate_families": 9,
+  "deprecated_final_candidates": 0,
+  "candidate_file_sha256": "fdc3412c730cb2cff75a161d8cdde85336ef2c9c79d51fe9addd87a1e9774576",
+  "family_set_sha256": "fb28c692496178ce12de0981381ef1e934f5c5ea6251077f620173a9fe7e2aa3",
+  "positive_gt_components_at_validation": 158,
+  "positive_gt_components_covered": 158,
+  "universe_sealed_before_gt_validation": true,
+  "universe_deterministic": true
+}

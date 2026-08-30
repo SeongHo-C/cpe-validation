@@ -239,3 +239,6 @@ analysis/results/nvd-cpe-dictionary-coverage/*/criteria_coverage.csv.gz
 
 # Local Ground Truth research data
 /.ground-truth/
+
+# Generated CPE candidate universe
+/data/cpe_candidate_universe/candidate_families.csv
