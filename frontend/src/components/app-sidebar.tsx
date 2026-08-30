@@ -1,6 +1,7 @@
 import {
   BookOpenText,
   Boxes,
+  ChartNoAxesCombined,
   ClipboardCheck,
   Layers3,
   ShieldCheck,
@@ -35,6 +36,11 @@ const navigationItems = [
     label: "CPE Dictionary",
     to: "/cpe-dictionary",
     icon: BookOpenText,
+  },
+  {
+    label: "CPE Analysis",
+    to: "/cpe-analysis",
+    icon: ChartNoAxesCombined,
   },
 ] as const
 

@@ -29,6 +29,12 @@ const routeMetadata = {
     title: "CPE Dictionary",
     description: "NVD CPE Dictionary exploration",
   },
+  "/cpe-analysis": {
+    eyebrow: "Research Evaluation",
+    title: "CPE Analysis",
+    description:
+      "Compare CPE product-family matching performance across algorithms.",
+  },
 } as const
 
 export function AppHeader({ apiStatus }: AppHeaderProps) {

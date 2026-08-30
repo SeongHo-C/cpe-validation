@@ -5,6 +5,7 @@ import {
 } from "react-router-dom"
 
 import { AppShell } from "@/components/app-shell"
+import { CpeAnalysisPage } from "@/features/cpe-analysis/cpe-analysis-page"
 import { CpeDictionaryPage } from "@/features/cpe-dictionary/cpe-dictionary-page"
 import { ComponentsPage } from "@/features/components/components-page"
 import { GroundTruthEditorPage } from "@/features/ground-truth/ground-truth-editor-page"
@@ -35,6 +36,7 @@ function App() {
           path="cpe-dictionary"
           element={<CpeDictionaryPage />}
         />
+        <Route path="cpe-analysis" element={<CpeAnalysisPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
