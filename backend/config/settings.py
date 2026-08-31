@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "rest_framework",
+    "cpe_analysis",
     "sboms",
     "cpe_dictionary",
     "nvd_cve",
