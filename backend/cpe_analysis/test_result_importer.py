@@ -341,6 +341,74 @@ class BenchmarkResultImporterTests(TestCase):
         )
         self.assertEqual(run.query_results.count(), 3)
 
+    def test_ratcliff_import_uses_canonical_id_and_empty_parameters(
+        self,
+    ) -> None:
+        self.rows = [
+            {**row, "algorithm_id": "ratcliff_obershelp"}
+            for row in self.rows
+        ]
+        self.expected_identity = replace(
+            self.expected_identity,
+            algorithm_id="ratcliff_obershelp",
+        )
+        self.write_artifacts()
+
+        result = self.import_results(run_parameters={})
+
+        run = CPEAnalysisRun.objects.get(pk=result.run_id)
+        self.assertEqual(run.algorithm_id, "ratcliff_obershelp")
+        self.assertEqual(run.parameters, {})
+        self.assertEqual(run.query_results.count(), 3)
+
+    def test_existing_three_algorithms_do_not_block_ratcliff_import(
+        self,
+    ) -> None:
+        for algorithm_id in (
+            "length_normalized_levenshtein",
+            "jaro_winkler",
+            "character_trigram_dice",
+        ):
+            CPEAnalysisRun.objects.create(
+                algorithm_id=algorithm_id,
+                status="COMPLETED",
+                parameters={},
+                query_count=1,
+                candidate_family_count=1,
+            )
+        self.rows = [
+            {**row, "algorithm_id": "ratcliff_obershelp"}
+            for row in self.rows
+        ]
+        self.expected_identity = replace(
+            self.expected_identity,
+            algorithm_id="ratcliff_obershelp",
+        )
+        self.write_artifacts()
+
+        result = self.import_results(run_parameters={})
+
+        run = CPEAnalysisRun.objects.get(pk=result.run_id)
+        self.assertEqual(run.algorithm_id, "ratcliff_obershelp")
+        self.assertEqual(CPEAnalysisRun.objects.count(), 4)
+
+    def test_duplicate_ratcliff_import_is_blocked(self) -> None:
+        self.rows = [
+            {**row, "algorithm_id": "ratcliff_obershelp"}
+            for row in self.rows
+        ]
+        self.expected_identity = replace(
+            self.expected_identity,
+            algorithm_id="ratcliff_obershelp",
+        )
+        self.write_artifacts()
+        self.import_results(run_parameters={})
+
+        with self.assertRaises(ExistingAnalysisRunError):
+            self.import_results(run_parameters={})
+        self.assertEqual(CPEAnalysisRun.objects.count(), 1)
+        self.assertEqual(CPEAnalysisQueryResult.objects.count(), 3)
+
     def test_existing_baseline_runs_do_not_block_character_import(
         self,
     ) -> None:
