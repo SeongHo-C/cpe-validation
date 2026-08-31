@@ -22,12 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 CPE_ANALYSIS_ALGORITHM_IDS = (
-    "exact_match",
     "length_normalized_levenshtein",
     "jaro_winkler",
     "character_trigram_dice",
-    "token_jaccard",
-    "tfidf_cosine",
+    "ratcliff_obershelp",
 )
 
 

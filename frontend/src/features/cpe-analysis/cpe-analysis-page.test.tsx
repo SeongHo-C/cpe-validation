@@ -18,10 +18,7 @@ function jsonResponse<T>(body: T, status = 200): Response {
   } as unknown as Response
 }
 
-function installFetch(
-  summaryStatus = 200,
-  characterCompleted = false,
-) {
+function installFetch(summaryStatus = 200) {
   vi.mocked(fetch).mockImplementation((input) => {
     const url = new URL(String(input), "http://frontend.test")
     if (url.pathname === "/api/health/") {
@@ -36,16 +33,9 @@ function installFetch(
             ? {
                 positive_gt_components_at_validation: 158,
                 searchable_candidate_families: 181_484,
-                method_count: 6,
-                completed_method_count: characterCompleted ? 3 : 1,
+                method_count: 4,
+                completed_method_count: 4,
                 algorithms: [
-                  {
-                    algorithm_id: "exact_match",
-                    status: "NOT_RUN",
-                    query_count: null,
-                    candidate_family_count: null,
-                    metrics: null,
-                  },
                   {
                     algorithm_id: "length_normalized_levenshtein",
                     status: "COMPLETED",
@@ -58,47 +48,42 @@ function installFetch(
                       mrr: 0.5565417164607827,
                     },
                   },
-                  ...[
-                    "jaro_winkler",
-                    "character_trigram_dice",
-                    "token_jaccard",
-                    "tfidf_cosine",
-                  ].map((algorithmId) =>
-                    algorithmId === "jaro_winkler" && characterCompleted
-                      ? {
-                          algorithm_id: algorithmId,
-                          status: "COMPLETED",
-                          query_count: 158,
-                          candidate_family_count: 181_484,
-                          metrics: {
-                            top1_accuracy: 0.43670886075949367,
-                            recall_at_5: 0.8481012658227848,
-                            recall_at_10: 0.8860759493670886,
-                            mrr: 0.6082612255091588,
-                          },
-                        }
-                      : algorithmId === "character_trigram_dice" &&
-                    characterCompleted
-                      ? {
-                          algorithm_id: algorithmId,
-                          status: "COMPLETED",
-                          query_count: 158,
-                          candidate_family_count: 181_484,
-                          metrics: {
-                            top1_accuracy: 0.5,
-                            recall_at_5: 0.8607594936708861,
-                            recall_at_10: 0.8987341772151899,
-                            mrr: 0.6523244057752082,
-                          },
-                        }
-                      : {
-                          algorithm_id: algorithmId,
-                          status: "NOT_RUN",
-                          query_count: null,
-                          candidate_family_count: null,
-                          metrics: null,
-                        },
-                  ),
+                  {
+                    algorithm_id: "jaro_winkler",
+                    status: "COMPLETED",
+                    query_count: 158,
+                    candidate_family_count: 181_484,
+                    metrics: {
+                      top1_accuracy: 0.43670886075949367,
+                      recall_at_5: 0.8481012658227848,
+                      recall_at_10: 0.8860759493670886,
+                      mrr: 0.6082612255091588,
+                    },
+                  },
+                  {
+                    algorithm_id: "character_trigram_dice",
+                    status: "COMPLETED",
+                    query_count: 158,
+                    candidate_family_count: 181_484,
+                    metrics: {
+                      top1_accuracy: 0.5,
+                      recall_at_5: 0.8607594936708861,
+                      recall_at_10: 0.8987341772151899,
+                      mrr: 0.6523244057752082,
+                    },
+                  },
+                  {
+                    algorithm_id: "ratcliff_obershelp",
+                    status: "COMPLETED",
+                    query_count: 158,
+                    candidate_family_count: 181_484,
+                    metrics: {
+                      top1_accuracy: 0.45569620253164556,
+                      recall_at_5: 0.8227848101265823,
+                      recall_at_10: 0.8354430379746836,
+                      mrr: 0.6058037627846183,
+                    },
+                  },
                 ],
               }
             : {
@@ -131,7 +116,7 @@ describe("CPE Analysis dashboard", () => {
     vi.unstubAllGlobals()
   })
 
-  it("renders four KPIs and a six-method leaderboard", async () => {
+  it("renders the completed final four-method dashboard", async () => {
     installFetch()
     renderAppAt("/cpe-analysis")
 
@@ -154,9 +139,14 @@ describe("CPE Analysis dashboard", () => {
       .toBeInTheDocument()
     expect(within(summary).getByText("181,484"))
       .toBeInTheDocument()
-    expect(within(summary).getByText("6")).toBeInTheDocument()
-    expect(within(summary).getByText("1 / 6"))
+    expect(within(summary).getByText("4")).toBeInTheDocument()
+    expect(within(summary).getByText("4 / 4"))
       .toBeInTheDocument()
+    expect(
+      within(summary).getByText(
+        "Character-level similarity methods",
+      ),
+    ).toBeInTheDocument()
     expect(within(summary).getByText("Methods evaluated"))
       .toBeInTheDocument()
     const benchmarkProgress = within(summary).getByRole("progressbar", {
@@ -164,11 +154,11 @@ describe("CPE Analysis dashboard", () => {
     })
     expect(benchmarkProgress).toHaveAttribute(
       "aria-valuetext",
-      "1 of 6 methods evaluated",
+      "4 of 4 methods evaluated",
     )
     expect(
       Number(benchmarkProgress.getAttribute("aria-valuenow")),
-    ).toBeCloseTo(100 / 6)
+    ).toBe(100)
     for (const label of [
       "Evaluation Set",
       "Candidate Families",
@@ -182,30 +172,34 @@ describe("CPE Analysis dashboard", () => {
       name: "Algorithms",
     })
     expect(within(algorithmCards).getAllByRole("listitem"))
-      .toHaveLength(6)
+      .toHaveLength(4)
     expect(within(algorithmCards).queryByRole("button"))
       .not.toBeInTheDocument()
     for (const name of [
-      "Exact Match",
       "Levenshtein",
       "Jaro-Winkler",
       "Character n-gram",
-      "Token Jaccard",
-      "TF-IDF + Cosine",
+      "Ratcliff–Obershelp",
     ]) {
       expect(within(algorithmCards).getByRole("heading", { name }))
         .toBeInTheDocument()
     }
-    expect(within(algorithmCards).getByText("Baseline"))
-      .toBeInTheDocument()
+    for (const removed of [
+      "Exact Match",
+      "Token Jaccard",
+      "TF-IDF + Cosine",
+    ]) {
+      expect(within(algorithmCards).queryByText(removed))
+        .not.toBeInTheDocument()
+    }
     const levenshteinCard = within(algorithmCards)
       .getByRole("heading", { name: "Levenshtein" })
       .closest("li")
     expect(levenshteinCard).not.toBeNull()
     expect(within(levenshteinCard!).getByText("Completed"))
       .toBeInTheDocument()
-    expect(within(algorithmCards).getAllByText("Not Run"))
-      .toHaveLength(5)
+    expect(within(algorithmCards).getAllByText("Completed"))
+      .toHaveLength(4)
     expect(screen.queryByText("Selected Algorithm"))
       .not.toBeInTheDocument()
     expect(screen.queryByText("Selected"))
@@ -214,7 +208,7 @@ describe("CPE Analysis dashboard", () => {
     const table = screen.getByRole("table", {
       name: "Product-family retrieval performance leaderboard",
     })
-    expect(within(table).getAllByRole("row")).toHaveLength(7)
+    expect(within(table).getAllByRole("row")).toHaveLength(5)
     expect(
       within(table)
         .getAllByRole("columnheader")
@@ -236,8 +230,22 @@ describe("CPE Analysis dashboard", () => {
       expect(within(levenshteinRow).getByText(metric))
         .toBeInTheDocument()
     }
-    expect(within(table).getAllByText("-")).toHaveLength(20)
-    expect(within(table).getAllByText("Not Run")).toHaveLength(5)
+    const characterRow = within(table).getByRole("row", {
+      name: /Character n-gram/,
+    })
+    for (const metric of ["50.00%", "86.08%", "89.87%", "0.6523"]) {
+      expect(within(characterRow).getByText(metric))
+        .toBeInTheDocument()
+    }
+    const ratcliffRow = within(table).getByRole("row", {
+      name: /Ratcliff–Obershelp/,
+    })
+    for (const metric of ["45.57%", "82.28%", "83.54%", "0.6058"]) {
+      expect(within(ratcliffRow).getByText(metric))
+        .toBeInTheDocument()
+    }
+    expect(within(table).queryByText("Not Run"))
+      .not.toBeInTheDocument()
 
     await waitFor(() => {
       expect(analysisRequestCount()).toBe(1)
@@ -267,33 +275,4 @@ describe("CPE Analysis dashboard", () => {
       .not.toBeInTheDocument()
   })
 
-  it("matches completed Character n-gram by its canonical ID", async () => {
-    installFetch(200, true)
-    renderAppAt("/cpe-analysis")
-
-    const summary = await screen.findByRole("region", {
-      name: "Experiment Summary",
-    })
-    expect(within(summary).getByText("3 / 6")).toBeInTheDocument()
-
-    const algorithms = screen.getByRole("region", {
-      name: "Algorithms",
-    })
-    const characterCard = within(algorithms)
-      .getByRole("heading", { name: "Character n-gram" })
-      .closest("li")
-    expect(characterCard).not.toBeNull()
-    expect(within(characterCard!).getByText("Completed"))
-      .toBeInTheDocument()
-
-    const table = screen.getByRole("table", {
-      name: "Product-family retrieval performance leaderboard",
-    })
-    const characterRow = within(table).getByRole("row", {
-      name: /Character n-gram/,
-    })
-    for (const metric of ["50.00%", "86.08%", "89.87%", "0.6523"]) {
-      expect(within(characterRow).getByText(metric)).toBeInTheDocument()
-    }
-  })
 })

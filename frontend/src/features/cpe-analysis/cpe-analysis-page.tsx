@@ -40,7 +40,6 @@ interface AlgorithmDefinition {
   id: string
   name: string
   descriptor: string
-  baseline?: boolean
 }
 
 interface AlgorithmView extends AlgorithmDefinition {
@@ -49,12 +48,6 @@ interface AlgorithmView extends AlgorithmDefinition {
 }
 
 const algorithms: readonly AlgorithmDefinition[] = [
-  {
-    id: "exact_match",
-    name: "Exact Match",
-    descriptor: "Exact baseline",
-    baseline: true,
-  },
   {
     id: "length_normalized_levenshtein",
     name: "Levenshtein",
@@ -71,14 +64,9 @@ const algorithms: readonly AlgorithmDefinition[] = [
     descriptor: "Character fragments",
   },
   {
-    id: "token_jaccard",
-    name: "Token Jaccard",
-    descriptor: "Token overlap",
-  },
-  {
-    id: "tfidf_cosine",
-    name: "TF-IDF + Cosine",
-    descriptor: "Weighted token vector",
+    id: "ratcliff_obershelp",
+    name: "Ratcliff–Obershelp",
+    descriptor: "Common substring",
   },
 ]
 
@@ -198,7 +186,7 @@ function ExperimentSummary({
     {
       label: "Methods",
       value: formatInteger(summary.method_count),
-      description: "1 baseline · 5 similarity methods",
+      description: "Character-level similarity methods",
     },
     {
       label: "Benchmark",
@@ -268,7 +256,7 @@ function AlgorithmCards({ algorithms }: { algorithms: AlgorithmView[] }) {
         </p>
       </div>
       <ul
-        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6"
+        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
       >
         {algorithms.map((algorithm) => (
           <li key={algorithm.id} className="min-w-0">
@@ -289,11 +277,6 @@ function AlgorithmCards({ algorithms }: { algorithms: AlgorithmView[] }) {
               <p className="mt-1 text-xs text-muted-foreground">
                 {algorithm.descriptor}
               </p>
-              <div className="mt-auto min-h-5 pt-3">
-                {algorithm.baseline ? (
-                  <Badge variant="outline">Baseline</Badge>
-                ) : null}
-              </div>
             </Card>
           </li>
         ))}
@@ -351,9 +334,6 @@ function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
                     )}
                   >
                     {algorithm.name}
-                    {algorithm.baseline ? (
-                      <Badge variant="outline">Baseline</Badge>
-                    ) : null}
                   </span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {algorithm.descriptor}

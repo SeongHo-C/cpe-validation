@@ -18,6 +18,13 @@ from cpe_analysis.views import CPE_ANALYSIS_ALGORITHM_IDS
 
 
 class CpeAnalysisSummaryAPITests(TestCase):
+    final_algorithm_ids = (
+        "length_normalized_levenshtein",
+        "jaro_winkler",
+        "character_trigram_dice",
+        "ratcliff_obershelp",
+    )
+
     def setUp(self) -> None:
         self.temporary_directory = TemporaryDirectory()
         self.addCleanup(self.temporary_directory.cleanup)
@@ -49,6 +56,9 @@ class CpeAnalysisSummaryAPITests(TestCase):
         algorithm_id: str = "length_normalized_levenshtein",
         status_value: str = CPEAnalysisRunStatus.COMPLETED,
         top1_accuracy: float | None = 0.4,
+        recall_at_5: float = 0.7848101265822784,
+        recall_at_10: float = 0.8037974683544303,
+        mrr: float = 0.5565417164607827,
         completed_at=None,
     ) -> CPEAnalysisRun:
         is_completed = status_value == CPEAnalysisRunStatus.COMPLETED
@@ -59,9 +69,9 @@ class CpeAnalysisSummaryAPITests(TestCase):
             query_count=158,
             candidate_family_count=181_484,
             top1_accuracy=top1_accuracy if is_completed else None,
-            recall_at_5=0.7848101265822784 if is_completed else None,
-            recall_at_10=0.8037974683544303 if is_completed else None,
-            mrr=0.5565417164607827 if is_completed else None,
+            recall_at_5=recall_at_5 if is_completed else None,
+            recall_at_10=recall_at_10 if is_completed else None,
+            mrr=mrr if is_completed else None,
             unique_correct_count=63 if is_completed else None,
             ambiguous_count=55 if is_completed else None,
             not_top_group_count=40 if is_completed else None,
@@ -102,11 +112,21 @@ class CpeAnalysisSummaryAPITests(TestCase):
         body = response.json()
         self.assertEqual(body["positive_gt_components_at_validation"], 158)
         self.assertEqual(body["searchable_candidate_families"], 181_484)
-        self.assertEqual(body["method_count"], 6)
+        self.assertEqual(body["method_count"], 4)
         self.assertEqual(body["completed_method_count"], 0)
         self.assertEqual(
             [algorithm["algorithm_id"] for algorithm in body["algorithms"]],
-            list(CPE_ANALYSIS_ALGORITHM_IDS),
+            list(self.final_algorithm_ids),
+        )
+        self.assertEqual(
+            CPE_ANALYSIS_ALGORITHM_IDS,
+            self.final_algorithm_ids,
+        )
+        self.assertTrue(
+            {"exact_match", "token_jaccard", "tfidf_cosine"}.isdisjoint(
+                algorithm["algorithm_id"]
+                for algorithm in body["algorithms"]
+            )
         )
         self.assertTrue(
             all(
@@ -172,6 +192,73 @@ class CpeAnalysisSummaryAPITests(TestCase):
         self.assertEqual(character["metrics"]["top1_accuracy"], 0.5)
         self.assertNotIn(
             "character_ngram",
+            [algorithm["algorithm_id"] for algorithm in body["algorithms"]],
+        )
+
+    def test_final_four_completed_runs_and_metrics_are_returned(self) -> None:
+        self.write_manifest(self.valid_manifest())
+        now = timezone.now()
+        expected_metrics = {
+            "length_normalized_levenshtein": {
+                "top1_accuracy": 0.3987341772151899,
+                "recall_at_5": 0.7848101265822784,
+                "recall_at_10": 0.8037974683544303,
+                "mrr": 0.5565417164607827,
+            },
+            "jaro_winkler": {
+                "top1_accuracy": 0.43670886075949367,
+                "recall_at_5": 0.8481012658227848,
+                "recall_at_10": 0.8860759493670886,
+                "mrr": 0.6082612255091588,
+            },
+            "character_trigram_dice": {
+                "top1_accuracy": 0.5,
+                "recall_at_5": 0.8607594936708861,
+                "recall_at_10": 0.8987341772151899,
+                "mrr": 0.6523244057752082,
+            },
+            "ratcliff_obershelp": {
+                "top1_accuracy": 0.45569620253164556,
+                "recall_at_5": 0.8227848101265823,
+                "recall_at_10": 0.8354430379746836,
+                "mrr": 0.6058037627846183,
+            },
+        }
+        for algorithm_id, metrics in expected_metrics.items():
+            self.create_run(
+                algorithm_id=algorithm_id,
+                completed_at=now,
+                **metrics,
+            )
+        self.create_run(
+            algorithm_id="future_unknown_method",
+            completed_at=now,
+        )
+
+        with self.assertNumQueries(1):
+            response = self.client.get(self.url)
+
+        body = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(body["method_count"], 4)
+        self.assertEqual(body["completed_method_count"], 4)
+        self.assertEqual(
+            [algorithm["algorithm_id"] for algorithm in body["algorithms"]],
+            list(self.final_algorithm_ids),
+        )
+        self.assertTrue(
+            all(
+                algorithm["status"] == CPEAnalysisRunStatus.COMPLETED
+                for algorithm in body["algorithms"]
+            )
+        )
+        for algorithm_id, metrics in expected_metrics.items():
+            self.assertEqual(
+                self.algorithm_by_id(body, algorithm_id)["metrics"],
+                metrics,
+            )
+        self.assertNotIn(
+            "future_unknown_method",
             [algorithm["algorithm_id"] for algorithm in body["algorithms"]],
         )
 
