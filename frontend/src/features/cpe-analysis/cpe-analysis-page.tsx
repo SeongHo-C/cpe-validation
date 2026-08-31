@@ -33,7 +33,7 @@ import {
   type CpeAnalysisSummary,
 } from "@/features/cpe-analysis/cpe-analysis-api"
 import { isAbortError } from "@/lib/api-client"
-import { formatInteger, formatPercent } from "@/lib/format"
+import { formatInteger } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 interface AlgorithmDefinition {
@@ -66,7 +66,7 @@ const algorithms: readonly AlgorithmDefinition[] = [
     descriptor: "Character position",
   },
   {
-    id: "character_ngram",
+    id: "character_trigram_dice",
     name: "Character n-gram",
     descriptor: "Character fragments",
   },
@@ -88,6 +88,11 @@ const metricColumns = [
   { key: "recall_at_10", label: "Recall@10", type: "percent" },
   { key: "mrr", label: "MRR", type: "decimal" },
 ] as const
+const percentMetricFormatter = new Intl.NumberFormat("en-US", {
+  style: "percent",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
 const statusLabels: Record<CpeAnalysisAlgorithmStatus, string> = {
   COMPLETED: "Completed",
   NOT_RUN: "Not Run",
@@ -120,7 +125,7 @@ function formatMetric(
 ): string | null {
   if (value === null || value === undefined) return null
   return type === "percent"
-    ? formatPercent(value, 2)
+    ? percentMetricFormatter.format(value)
     : value.toFixed(4)
 }
 

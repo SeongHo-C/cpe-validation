@@ -151,6 +151,30 @@ class CpeAnalysisSummaryAPITests(TestCase):
             },
         )
 
+    def test_canonical_character_trigram_run_is_completed(self) -> None:
+        self.write_manifest(self.valid_manifest())
+        self.create_run(
+            algorithm_id="character_trigram_dice",
+            top1_accuracy=0.5,
+            completed_at=timezone.now(),
+        )
+
+        response = self.client.get(self.url)
+
+        body = response.json()
+        character = self.algorithm_by_id(
+            body,
+            "character_trigram_dice",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(body["completed_method_count"], 1)
+        self.assertEqual(character["status"], "COMPLETED")
+        self.assertEqual(character["metrics"]["top1_accuracy"], 0.5)
+        self.assertNotIn(
+            "character_ngram",
+            [algorithm["algorithm_id"] for algorithm in body["algorithms"]],
+        )
+
     def test_latest_completed_run_is_selected(self) -> None:
         self.write_manifest(self.valid_manifest())
         now = timezone.now()

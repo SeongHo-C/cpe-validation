@@ -262,6 +262,46 @@ class BenchmarkResultImporterTests(TestCase):
 
         self.assertEqual(result.component_coverage, 3)
 
+    def test_top_level_algorithm_id_manifest_is_supported(self) -> None:
+        manifest_path = self.artifact_directory / "input_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest.pop("algorithm")
+        manifest["algorithm_id"] = "test_algorithm"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        result = self.import_results(dry_run=True)
+
+        self.assertEqual(result.component_coverage, 3)
+
+    def test_matching_manifest_algorithm_fields_are_supported(self) -> None:
+        manifest_path = self.artifact_directory / "input_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["algorithm_id"] = "test_algorithm"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        result = self.import_results(dry_run=True)
+
+        self.assertEqual(result.component_coverage, 3)
+
+    def test_conflicting_manifest_algorithm_fields_are_rejected(self) -> None:
+        manifest_path = self.artifact_directory / "input_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["algorithm_id"] = "different_algorithm"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        with self.assertRaises(BenchmarkArtifactValidationError):
+            self.import_results(dry_run=True)
+
+    def test_compact_summary_without_dataset_is_supported(self) -> None:
+        summary_path = self.artifact_directory / "summary.json"
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary.pop("dataset")
+        summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+        result = self.import_results(dry_run=True)
+
+        self.assertEqual(result.component_coverage, 3)
+
     def test_dry_run_validates_without_inserting_rows(self) -> None:
         result = self.import_results(dry_run=True)
 
@@ -270,6 +310,70 @@ class BenchmarkResultImporterTests(TestCase):
         self.assertEqual(result.inserted_query_results, 0)
         self.assertEqual(CPEAnalysisRun.objects.count(), 0)
         self.assertEqual(CPEAnalysisQueryResult.objects.count(), 0)
+
+    def test_character_trigram_import_uses_canonical_id_and_parameters(
+        self,
+    ) -> None:
+        self.rows = [
+            {**row, "algorithm_id": "character_trigram_dice"}
+            for row in self.rows
+        ]
+        self.expected_identity = replace(
+            self.expected_identity,
+            algorithm_id="character_trigram_dice",
+        )
+        self.write_artifacts()
+        manifest_path = self.artifact_directory / "input_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest.pop("algorithm")
+        manifest["algorithm_id"] = "character_trigram_dice"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        result = self.import_results(
+            run_parameters={"q": 3, "coefficient": "dice"}
+        )
+
+        run = CPEAnalysisRun.objects.get(pk=result.run_id)
+        self.assertEqual(run.algorithm_id, "character_trigram_dice")
+        self.assertEqual(
+            run.parameters,
+            {"q": 3, "coefficient": "dice"},
+        )
+        self.assertEqual(run.query_results.count(), 3)
+
+    def test_existing_baseline_runs_do_not_block_character_import(
+        self,
+    ) -> None:
+        for algorithm_id in (
+            "length_normalized_levenshtein",
+            "jaro_winkler",
+        ):
+            CPEAnalysisRun.objects.create(
+                algorithm_id=algorithm_id,
+                status="COMPLETED",
+                parameters={},
+                query_count=1,
+                candidate_family_count=1,
+            )
+        self.rows = [
+            {**row, "algorithm_id": "character_trigram_dice"}
+            for row in self.rows
+        ]
+        self.expected_identity = replace(
+            self.expected_identity,
+            algorithm_id="character_trigram_dice",
+        )
+        self.write_artifacts()
+
+        result = self.import_results(
+            run_parameters={"q": 3, "coefficient": "dice"}
+        )
+
+        self.assertEqual(
+            CPEAnalysisRun.objects.get(pk=result.run_id).algorithm_id,
+            "character_trigram_dice",
+        )
+        self.assertEqual(CPEAnalysisRun.objects.count(), 3)
 
     def test_duplicate_component_artifact_is_rejected(self) -> None:
         duplicate_rows = [dict(row) for row in self.rows]

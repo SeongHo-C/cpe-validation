@@ -25,7 +25,7 @@ CPE_ANALYSIS_ALGORITHM_IDS = (
     "exact_match",
     "length_normalized_levenshtein",
     "jaro_winkler",
-    "character_ngram",
+    "character_trigram_dice",
     "token_jaccard",
     "tfidf_cosine",
 )

@@ -18,7 +18,10 @@ function jsonResponse<T>(body: T, status = 200): Response {
   } as unknown as Response
 }
 
-function installFetch(summaryStatus = 200) {
+function installFetch(
+  summaryStatus = 200,
+  characterCompleted = false,
+) {
   vi.mocked(fetch).mockImplementation((input) => {
     const url = new URL(String(input), "http://frontend.test")
     if (url.pathname === "/api/health/") {
@@ -34,7 +37,7 @@ function installFetch(summaryStatus = 200) {
                 positive_gt_components_at_validation: 158,
                 searchable_candidate_families: 181_484,
                 method_count: 6,
-                completed_method_count: 1,
+                completed_method_count: characterCompleted ? 3 : 1,
                 algorithms: [
                   {
                     algorithm_id: "exact_match",
@@ -57,16 +60,45 @@ function installFetch(summaryStatus = 200) {
                   },
                   ...[
                     "jaro_winkler",
-                    "character_ngram",
+                    "character_trigram_dice",
                     "token_jaccard",
                     "tfidf_cosine",
-                  ].map((algorithmId) => ({
-                    algorithm_id: algorithmId,
-                    status: "NOT_RUN",
-                    query_count: null,
-                    candidate_family_count: null,
-                    metrics: null,
-                  })),
+                  ].map((algorithmId) =>
+                    algorithmId === "jaro_winkler" && characterCompleted
+                      ? {
+                          algorithm_id: algorithmId,
+                          status: "COMPLETED",
+                          query_count: 158,
+                          candidate_family_count: 181_484,
+                          metrics: {
+                            top1_accuracy: 0.43670886075949367,
+                            recall_at_5: 0.8481012658227848,
+                            recall_at_10: 0.8860759493670886,
+                            mrr: 0.6082612255091588,
+                          },
+                        }
+                      : algorithmId === "character_trigram_dice" &&
+                    characterCompleted
+                      ? {
+                          algorithm_id: algorithmId,
+                          status: "COMPLETED",
+                          query_count: 158,
+                          candidate_family_count: 181_484,
+                          metrics: {
+                            top1_accuracy: 0.5,
+                            recall_at_5: 0.8607594936708861,
+                            recall_at_10: 0.8987341772151899,
+                            mrr: 0.6523244057752082,
+                          },
+                        }
+                      : {
+                          algorithm_id: algorithmId,
+                          status: "NOT_RUN",
+                          query_count: null,
+                          candidate_family_count: null,
+                          metrics: null,
+                        },
+                  ),
                 ],
               }
             : {
@@ -233,5 +265,35 @@ describe("CPE Analysis dashboard", () => {
       .not.toBeInTheDocument()
     expect(screen.queryByText("181,484"))
       .not.toBeInTheDocument()
+  })
+
+  it("matches completed Character n-gram by its canonical ID", async () => {
+    installFetch(200, true)
+    renderAppAt("/cpe-analysis")
+
+    const summary = await screen.findByRole("region", {
+      name: "Experiment Summary",
+    })
+    expect(within(summary).getByText("3 / 6")).toBeInTheDocument()
+
+    const algorithms = screen.getByRole("region", {
+      name: "Algorithms",
+    })
+    const characterCard = within(algorithms)
+      .getByRole("heading", { name: "Character n-gram" })
+      .closest("li")
+    expect(characterCard).not.toBeNull()
+    expect(within(characterCard!).getByText("Completed"))
+      .toBeInTheDocument()
+
+    const table = screen.getByRole("table", {
+      name: "Product-family retrieval performance leaderboard",
+    })
+    const characterRow = within(table).getByRole("row", {
+      name: /Character n-gram/,
+    })
+    for (const metric of ["50.00%", "86.08%", "89.87%", "0.6523"]) {
+      expect(within(characterRow).getByText(metric)).toBeInTheDocument()
+    }
   })
 })

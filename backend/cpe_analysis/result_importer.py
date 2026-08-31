@@ -101,6 +101,20 @@ VERIFIED_JARO_WINKLER_IDENTITY = ExpectedBenchmarkIdentity(
 )
 
 
+VERIFIED_CHARACTER_TRIGRAM_DICE_IDENTITY = ExpectedBenchmarkIdentity(
+    algorithm_id="character_trigram_dice",
+    query_count=158,
+    candidate_family_count=181_484,
+    top1_count=79,
+    recall_at_5_count=136,
+    recall_at_10_count=142,
+    mrr=0.6523244057752082,
+    unique_correct_count=79,
+    ambiguous_count=55,
+    not_top_group_count=24,
+)
+
+
 @dataclass(frozen=True)
 class QueryResultRecord:
     component_id: int
@@ -427,6 +441,55 @@ def _validate_aggregate(
         )
 
 
+def _algorithm_id_from_manifest_value(value: object) -> str:
+    if isinstance(value, dict):
+        algorithm_id = value.get("algorithm_id")
+    elif isinstance(value, str):
+        algorithm_id = value
+    else:
+        raise BenchmarkArtifactValidationError(
+            "input_manifest algorithm must be an algorithm ID or object."
+        )
+    if not isinstance(algorithm_id, str) or not algorithm_id:
+        raise BenchmarkArtifactValidationError(
+            "input_manifest algorithm ID must be a non-empty string."
+        )
+    return algorithm_id
+
+
+def _resolve_manifest_algorithm_id(
+    input_manifest: Mapping[str, object],
+) -> str:
+    direct_algorithm_id = input_manifest.get("algorithm_id")
+    if direct_algorithm_id is not None and (
+        not isinstance(direct_algorithm_id, str)
+        or not direct_algorithm_id
+    ):
+        raise BenchmarkArtifactValidationError(
+            "input_manifest algorithm_id must be a non-empty string."
+        )
+
+    legacy_algorithm_id = None
+    if "algorithm" in input_manifest:
+        legacy_algorithm_id = _algorithm_id_from_manifest_value(
+            input_manifest["algorithm"]
+        )
+
+    if direct_algorithm_id is None and legacy_algorithm_id is None:
+        raise BenchmarkArtifactValidationError(
+            "input_manifest must define algorithm_id or algorithm."
+        )
+    if (
+        direct_algorithm_id is not None
+        and legacy_algorithm_id is not None
+        and direct_algorithm_id != legacy_algorithm_id
+    ):
+        raise BenchmarkArtifactValidationError(
+            "input_manifest algorithm_id conflicts with algorithm."
+        )
+    return direct_algorithm_id or legacy_algorithm_id
+
+
 def load_and_validate_benchmark(
     artifact_directory: Path,
 ) -> ValidatedBenchmark:
@@ -506,15 +569,7 @@ def load_and_validate_benchmark(
         metrics=metrics,
     )
 
-    manifest_algorithm = input_manifest.get("algorithm")
-    if isinstance(manifest_algorithm, dict):
-        manifest_algorithm_id = manifest_algorithm.get("algorithm_id")
-    elif isinstance(manifest_algorithm, str):
-        manifest_algorithm_id = manifest_algorithm
-    else:
-        raise BenchmarkArtifactValidationError(
-            "input_manifest algorithm must be an algorithm ID or object."
-        )
+    manifest_algorithm_id = _resolve_manifest_algorithm_id(input_manifest)
     manifest_expectations = {
         "input_manifest algorithm_id": (
             manifest_algorithm_id,
@@ -546,20 +601,24 @@ def load_and_validate_benchmark(
         expected=algorithm_id,
     )
     summary_dataset = summary.get("dataset")
-    if not isinstance(summary_dataset, dict):
+    if summary_dataset is not None and not isinstance(
+        summary_dataset,
+        dict,
+    ):
         raise BenchmarkArtifactValidationError(
             "summary dataset must be an object."
         )
-    _require_equal(
-        label="summary query count",
-        observed=summary_dataset.get("queries"),
-        expected=metrics.query_count,
-    )
-    _require_equal(
-        label="summary candidate family count",
-        observed=summary_dataset.get("candidate_families"),
-        expected=candidate_family_count,
-    )
+    if summary_dataset is not None:
+        _require_equal(
+            label="summary query count",
+            observed=summary_dataset.get("queries"),
+            expected=metrics.query_count,
+        )
+        _require_equal(
+            label="summary candidate family count",
+            observed=summary_dataset.get("candidate_families"),
+            expected=candidate_family_count,
+        )
     summary_aggregate = summary.get("aggregate_metrics")
     if not isinstance(summary_aggregate, dict):
         raise BenchmarkArtifactValidationError(
