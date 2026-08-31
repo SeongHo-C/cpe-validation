@@ -27,69 +27,95 @@ import {
 } from "@/components/ui/table"
 import {
   getCpeAnalysisSummary,
+  type CpeAnalysisAlgorithmStatus,
+  type CpeAnalysisMetrics,
   type CpeAnalysisSummary,
 } from "@/features/cpe-analysis/cpe-analysis-api"
 import { isAbortError } from "@/lib/api-client"
-import { formatInteger } from "@/lib/format"
-
-type AlgorithmStatus = "not_run"
+import { formatInteger, formatPercent } from "@/lib/format"
 
 interface AlgorithmDefinition {
   id: string
   name: string
   descriptor: string
-  status: AlgorithmStatus
   baseline?: boolean
+}
+
+interface AlgorithmView extends AlgorithmDefinition {
+  status: CpeAnalysisAlgorithmStatus
+  metrics: CpeAnalysisMetrics | null
 }
 
 const algorithms: readonly AlgorithmDefinition[] = [
   {
-    id: "exact-match",
+    id: "exact_match",
     name: "Exact Match",
     descriptor: "Exact baseline",
-    status: "not_run",
     baseline: true,
   },
   {
-    id: "levenshtein",
+    id: "length_normalized_levenshtein",
     name: "Levenshtein",
     descriptor: "Edit distance",
-    status: "not_run",
   },
   {
-    id: "jaro-winkler",
+    id: "jaro_winkler",
     name: "Jaro-Winkler",
     descriptor: "Character position",
-    status: "not_run",
   },
   {
-    id: "character-ngram",
+    id: "character_ngram",
     name: "Character n-gram",
     descriptor: "Character fragments",
-    status: "not_run",
   },
   {
-    id: "token-jaccard",
+    id: "token_jaccard",
     name: "Token Jaccard",
     descriptor: "Token overlap",
-    status: "not_run",
   },
   {
-    id: "tfidf-cosine",
+    id: "tfidf_cosine",
     name: "TF-IDF + Cosine",
     descriptor: "Weighted token vector",
-    status: "not_run",
   },
 ]
 
 const metricColumns = [
-  "Top-1 Accuracy",
-  "Recall@5",
-  "Recall@10",
-  "MRR",
+  { key: "top1_accuracy", label: "Top-1 Accuracy", type: "percent" },
+  { key: "recall_at_5", label: "Recall@5", type: "percent" },
+  { key: "recall_at_10", label: "Recall@10", type: "percent" },
+  { key: "mrr", label: "MRR", type: "decimal" },
 ] as const
-const statusLabels: Record<AlgorithmStatus, string> = {
-  not_run: "Not Run",
+const statusLabels: Record<CpeAnalysisAlgorithmStatus, string> = {
+  COMPLETED: "Completed",
+  NOT_RUN: "Not Run",
+}
+
+function mergeAlgorithmResults(
+  summary: CpeAnalysisSummary | null,
+): AlgorithmView[] {
+  const results = new Map(
+    summary?.algorithms.map((result) => [result.algorithm_id, result]),
+  )
+
+  return algorithms.map((algorithm) => {
+    const result = results.get(algorithm.id)
+    return {
+      ...algorithm,
+      status: result?.status ?? "NOT_RUN",
+      metrics: result?.metrics ?? null,
+    }
+  })
+}
+
+function formatMetric(
+  value: number | null | undefined,
+  type: "percent" | "decimal",
+): string | null {
+  if (value === null || value === undefined) return null
+  return type === "percent"
+    ? formatPercent(value, 2)
+    : value.toFixed(4)
 }
 
 function SummarySkeleton() {
@@ -134,17 +160,15 @@ function ExperimentSummary({
     },
     {
       label: "Methods",
-      value: formatInteger(algorithms.length),
+      value: formatInteger(summary.method_count),
       description: "1 baseline · 5 similarity methods",
     },
     {
       label: "Benchmark",
-      value: (
-        <Badge variant="secondary" className="h-6 px-2.5 text-sm">
-          Not Run
-        </Badge>
-      ),
-      description: "No evaluation run yet",
+      value: `${formatInteger(
+        summary.completed_method_count,
+      )} / ${formatInteger(summary.method_count)}`,
+      description: "Methods evaluated",
     },
   ]
 
@@ -178,7 +202,7 @@ function ExperimentSummary({
   )
 }
 
-function AlgorithmCards() {
+function AlgorithmCards({ algorithms }: { algorithms: AlgorithmView[] }) {
   return (
     <section aria-labelledby="algorithms-title">
       <div className="mb-3">
@@ -222,13 +246,13 @@ function AlgorithmCards() {
   )
 }
 
-function PerformanceTable() {
+function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
   return (
     <section aria-labelledby="performance-title">
       <Card className="gap-0 py-0">
         <DataPanelHeader
           title={<h2 id="performance-title">Performance</h2>}
-          description="Leaderboard metrics will appear after an evaluation run."
+          description="Latest completed product-family retrieval benchmark metrics."
         />
         <Table className="min-w-[820px] table-fixed">
           <TableCaption className="sr-only">
@@ -244,11 +268,11 @@ function PerformanceTable() {
               </TableHead>
               {metricColumns.map((column) => (
                 <TableHead
-                  key={column}
+                  key={column.key}
                   scope="col"
                   className="text-center"
                 >
-                  {column}
+                  {column.label}
                 </TableHead>
               ))}
             </TableRow>
@@ -272,14 +296,22 @@ function PerformanceTable() {
                     {statusLabels[algorithm.status]}
                   </Badge>
                 </TableCell>
-                {metricColumns.map((column) => (
-                  <TableCell
-                    key={column}
-                    className="py-2.5 text-center tabular-nums text-muted-foreground"
-                  >
-                    <span aria-label="Not evaluated">-</span>
-                  </TableCell>
-                ))}
+                {metricColumns.map((column) => {
+                  const value = formatMetric(
+                    algorithm.metrics?.[column.key],
+                    column.type,
+                  )
+                  return (
+                    <TableCell
+                      key={column.key}
+                      className="py-2.5 text-center tabular-nums text-muted-foreground"
+                    >
+                      {value ?? (
+                        <span aria-label="Not evaluated">-</span>
+                      )}
+                    </TableCell>
+                  )
+                })}
               </TableRow>
             ))}
           </TableBody>
@@ -295,6 +327,7 @@ export function CpeAnalysisPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [reloadToken, setReloadToken] = useState(0)
+  const displayedAlgorithms = mergeAlgorithmResults(summary)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -353,8 +386,8 @@ export function CpeAnalysisPage() {
         <ExperimentSummary summary={summary} />
       ) : null}
 
-      <AlgorithmCards />
-      <PerformanceTable />
+      <AlgorithmCards algorithms={displayedAlgorithms} />
+      <PerformanceTable algorithms={displayedAlgorithms} />
     </PageContent>
   )
 }

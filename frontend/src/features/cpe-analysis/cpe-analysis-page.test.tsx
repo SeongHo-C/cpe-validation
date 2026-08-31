@@ -33,6 +33,41 @@ function installFetch(summaryStatus = 200) {
             ? {
                 positive_gt_components_at_validation: 158,
                 searchable_candidate_families: 181_484,
+                method_count: 6,
+                completed_method_count: 1,
+                algorithms: [
+                  {
+                    algorithm_id: "exact_match",
+                    status: "NOT_RUN",
+                    query_count: null,
+                    candidate_family_count: null,
+                    metrics: null,
+                  },
+                  {
+                    algorithm_id: "length_normalized_levenshtein",
+                    status: "COMPLETED",
+                    query_count: 158,
+                    candidate_family_count: 181_484,
+                    metrics: {
+                      top1_accuracy: 0.3987341772151899,
+                      recall_at_5: 0.7848101265822784,
+                      recall_at_10: 0.8037974683544303,
+                      mrr: 0.5565417164607827,
+                    },
+                  },
+                  ...[
+                    "jaro_winkler",
+                    "character_ngram",
+                    "token_jaccard",
+                    "tfidf_cosine",
+                  ].map((algorithmId) => ({
+                    algorithm_id: algorithmId,
+                    status: "NOT_RUN",
+                    query_count: null,
+                    candidate_family_count: null,
+                    metrics: null,
+                  })),
+                ],
               }
             : {
                 code: "cpe_analysis_manifest_unavailable",
@@ -88,7 +123,9 @@ describe("CPE Analysis dashboard", () => {
     expect(within(summary).getByText("181,484"))
       .toBeInTheDocument()
     expect(within(summary).getByText("6")).toBeInTheDocument()
-    expect(within(summary).getByText("Not Run"))
+    expect(within(summary).getByText("1 / 6"))
+      .toBeInTheDocument()
+    expect(within(summary).getByText("Methods evaluated"))
       .toBeInTheDocument()
     for (const label of [
       "Evaluation Set",
@@ -119,8 +156,14 @@ describe("CPE Analysis dashboard", () => {
     }
     expect(within(algorithmCards).getByText("Baseline"))
       .toBeInTheDocument()
+    const levenshteinCard = within(algorithmCards)
+      .getByRole("heading", { name: "Levenshtein" })
+      .closest("li")
+    expect(levenshteinCard).not.toBeNull()
+    expect(within(levenshteinCard!).getByText("Completed"))
+      .toBeInTheDocument()
     expect(within(algorithmCards).getAllByText("Not Run"))
-      .toHaveLength(6)
+      .toHaveLength(5)
     expect(screen.queryByText("Selected Algorithm"))
       .not.toBeInTheDocument()
     expect(screen.queryByText("Selected"))
@@ -142,8 +185,17 @@ describe("CPE Analysis dashboard", () => {
       "Recall@10",
       "MRR",
     ])
-    expect(within(table).getAllByText("-")).toHaveLength(24)
-    expect(within(table).getAllByText("Not Run")).toHaveLength(6)
+    const levenshteinRow = within(table).getByRole("row", {
+      name: /Levenshtein/,
+    })
+    expect(within(levenshteinRow).getByText("Completed"))
+      .toBeInTheDocument()
+    for (const metric of ["39.87%", "78.48%", "80.38%", "0.5565"]) {
+      expect(within(levenshteinRow).getByText(metric))
+        .toBeInTheDocument()
+    }
+    expect(within(table).getAllByText("-")).toHaveLength(20)
+    expect(within(table).getAllByText("Not Run")).toHaveLength(5)
 
     await waitFor(() => {
       expect(analysisRequestCount()).toBe(1)
