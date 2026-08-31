@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -33,6 +34,7 @@ import {
 } from "@/features/cpe-analysis/cpe-analysis-api"
 import { isAbortError } from "@/lib/api-client"
 import { formatInteger, formatPercent } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 interface AlgorithmDefinition {
   id: string
@@ -90,6 +92,10 @@ const statusLabels: Record<CpeAnalysisAlgorithmStatus, string> = {
   COMPLETED: "Completed",
   NOT_RUN: "Not Run",
 }
+const statusBadgeClasses: Record<CpeAnalysisAlgorithmStatus, string> = {
+  COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  NOT_RUN: "border-border/70 bg-muted/60 text-muted-foreground",
+}
 
 function mergeAlgorithmResults(
   summary: CpeAnalysisSummary | null,
@@ -118,6 +124,21 @@ function formatMetric(
     : value.toFixed(4)
 }
 
+function AlgorithmStatusBadge({
+  status,
+}: {
+  status: CpeAnalysisAlgorithmStatus
+}) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn("shrink-0", statusBadgeClasses[status])}
+    >
+      {statusLabels[status]}
+    </Badge>
+  )
+}
+
 function SummarySkeleton() {
   return (
     <section aria-label="Loading experiment summary">
@@ -141,10 +162,21 @@ function ExperimentSummary({
 }: {
   summary: CpeAnalysisSummary
 }) {
+  const benchmarkProgress =
+    summary.method_count > 0
+      ? Math.min(
+          Math.max(
+            (summary.completed_method_count / summary.method_count) * 100,
+            0,
+          ),
+          100,
+        )
+      : 0
   const metrics: readonly {
     label: string
     value: ReactNode
     description: string
+    progress?: number
   }[] = [
     {
       label: "Evaluation Set",
@@ -169,6 +201,7 @@ function ExperimentSummary({
         summary.completed_method_count,
       )} / ${formatInteger(summary.method_count)}`,
       description: "Methods evaluated",
+      progress: benchmarkProgress,
     },
   ]
 
@@ -188,12 +221,25 @@ function ExperimentSummary({
               {metric.label}
             </dt>
             <dd className="mt-2">
-              <span className="flex min-h-7 items-center font-heading text-2xl font-semibold tracking-tight">
+              <span className="flex min-h-7 items-center font-heading text-2xl font-bold tracking-tight tabular-nums text-foreground">
                 {metric.value}
               </span>
-              <span className="mt-1 block text-xs text-muted-foreground">
+              <span className="mt-1.5 block text-xs text-muted-foreground">
                 {metric.description}
               </span>
+              {metric.progress !== undefined ? (
+                <Progress
+                  value={metric.progress}
+                  aria-label="Benchmark progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={metric.progress}
+                  aria-valuetext={`${formatInteger(
+                    summary.completed_method_count,
+                  )} of ${formatInteger(summary.method_count)} methods evaluated`}
+                  className="mt-2.5 [&_[data-slot=progress-indicator]]:bg-emerald-500/75"
+                />
+              ) : null}
             </dd>
           </Card>
         ))}
@@ -205,14 +251,14 @@ function ExperimentSummary({
 function AlgorithmCards({ algorithms }: { algorithms: AlgorithmView[] }) {
   return (
     <section aria-labelledby="algorithms-title">
-      <div className="mb-3">
+      <div className="mb-3 space-y-1">
         <h2
           id="algorithms-title"
           className="font-heading text-base font-semibold tracking-tight"
         >
           Algorithms
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Matching methods included in the product-family evaluation.
         </p>
       </div>
@@ -221,14 +267,19 @@ function AlgorithmCards({ algorithms }: { algorithms: AlgorithmView[] }) {
       >
         {algorithms.map((algorithm) => (
           <li key={algorithm.id} className="min-w-0">
-            <Card size="sm" className="h-full min-h-28 gap-0 px-3 py-3">
+            <Card
+              size="sm"
+              className={cn(
+                "h-full min-h-28 gap-0 px-3 py-3",
+                algorithm.status === "COMPLETED" &&
+                  "bg-emerald-50/35 ring-emerald-200/80",
+              )}
+            >
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-heading text-sm font-semibold leading-snug">
                   {algorithm.name}
                 </h3>
-                <Badge variant="secondary" className="shrink-0">
-                  {statusLabels[algorithm.status]}
-                </Badge>
+                <AlgorithmStatusBadge status={algorithm.status} />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {algorithm.descriptor}
@@ -258,7 +309,7 @@ function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
           <TableCaption className="sr-only">
             Product-family retrieval performance leaderboard
           </TableCaption>
-          <TableHeader className="bg-muted/45">
+          <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead scope="col" className="w-[34%] px-4">
                 Algorithm
@@ -279,9 +330,21 @@ function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
           </TableHeader>
           <TableBody>
             {algorithms.map((algorithm) => (
-              <TableRow key={algorithm.id}>
+              <TableRow
+                key={algorithm.id}
+                className={cn(
+                  algorithm.status === "COMPLETED" &&
+                    "bg-emerald-50/25 hover:bg-emerald-50/40",
+                )}
+              >
                 <TableCell className="px-4 py-2.5">
-                  <span className="flex items-center gap-2 font-medium">
+                  <span
+                    className={cn(
+                      "flex items-center gap-2 font-medium",
+                      algorithm.status === "COMPLETED" &&
+                        "font-semibold text-foreground",
+                    )}
+                  >
                     {algorithm.name}
                     {algorithm.baseline ? (
                       <Badge variant="outline">Baseline</Badge>
@@ -292,9 +355,7 @@ function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
                   </span>
                 </TableCell>
                 <TableCell className="py-2.5">
-                  <Badge variant="secondary">
-                    {statusLabels[algorithm.status]}
-                  </Badge>
+                  <AlgorithmStatusBadge status={algorithm.status} />
                 </TableCell>
                 {metricColumns.map((column) => {
                   const value = formatMetric(
@@ -304,7 +365,12 @@ function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
                   return (
                     <TableCell
                       key={column.key}
-                      className="py-2.5 text-center tabular-nums text-muted-foreground"
+                      className={cn(
+                        "py-2.5 text-center tabular-nums",
+                        value === null
+                          ? "text-muted-foreground/70"
+                          : "font-medium text-foreground",
+                      )}
                     >
                       {value ?? (
                         <span aria-label="Not evaluated">-</span>

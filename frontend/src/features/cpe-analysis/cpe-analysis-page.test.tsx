@@ -127,6 +127,16 @@ describe("CPE Analysis dashboard", () => {
       .toBeInTheDocument()
     expect(within(summary).getByText("Methods evaluated"))
       .toBeInTheDocument()
+    const benchmarkProgress = within(summary).getByRole("progressbar", {
+      name: "Benchmark progress",
+    })
+    expect(benchmarkProgress).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 6 methods evaluated",
+    )
+    expect(
+      Number(benchmarkProgress.getAttribute("aria-valuenow")),
+    ).toBeCloseTo(100 / 6)
     for (const label of [
       "Evaluation Set",
       "Candidate Families",
