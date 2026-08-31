@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -121,6 +122,7 @@ class BenchmarkResultImporterTests(TestCase):
         aggregate_updates: dict[str, object] | None = None,
     ) -> None:
         rows = rows if rows is not None else self.rows
+        algorithm_id = str(rows[0]["algorithm_id"])
         with (
             self.artifact_directory / "per_query_results.csv"
         ).open("w", newline="", encoding="utf-8") as handle:
@@ -147,7 +149,7 @@ class BenchmarkResultImporterTests(TestCase):
             )
         }
         aggregate = {
-            "algorithm_id": "test_algorithm",
+            "algorithm_id": algorithm_id,
             "candidate_family_count": 10,
             "correct_but_ambiguous_count": outcomes[
                 "CORRECT_BUT_AMBIGUOUS"
@@ -168,13 +170,13 @@ class BenchmarkResultImporterTests(TestCase):
         }
         aggregate.update(aggregate_updates or {})
         input_manifest = {
-            "algorithm": {"algorithm_id": "test_algorithm"},
+            "algorithm": {"algorithm_id": algorithm_id},
             "candidate_family_count": 10,
             "query_count": len(rows),
             "version_used": False,
         }
         summary = {
-            "algorithm_id": "test_algorithm",
+            "algorithm_id": algorithm_id,
             "aggregate_metrics": aggregate,
             "dataset": {
                 "candidate_families": 10,
@@ -191,10 +193,16 @@ class BenchmarkResultImporterTests(TestCase):
                 encoding="utf-8",
             )
 
-    def import_results(self, *, dry_run: bool = False):
+    def import_results(
+        self,
+        *,
+        run_parameters: dict[str, object] | None = None,
+        dry_run: bool = False,
+    ):
         return import_benchmark_results(
             self.artifact_directory,
             expected_identity=self.expected_identity,
+            run_parameters=run_parameters,
             dry_run=dry_run,
         )
 
@@ -220,6 +228,39 @@ class BenchmarkResultImporterTests(TestCase):
         self.assertAlmostEqual(run.recall_at_10, metrics.recall_at_10)
         self.assertAlmostEqual(run.mrr, metrics.mrr)
         self.assertEqual(metrics.top_group_hit_count, 2)
+
+    def test_successful_jaro_import_persists_parameters(self) -> None:
+        parameters = {
+            "max_prefix_length": 4,
+            "prefix_weight": 0.1,
+            "prefix_gate": None,
+        }
+        self.rows = [
+            {**row, "algorithm_id": "jaro_winkler"}
+            for row in self.rows
+        ]
+        self.expected_identity = replace(
+            self.expected_identity,
+            algorithm_id="jaro_winkler",
+        )
+        self.write_artifacts()
+
+        result = self.import_results(run_parameters=parameters)
+
+        run = CPEAnalysisRun.objects.get(pk=result.run_id)
+        self.assertEqual(run.algorithm_id, "jaro_winkler")
+        self.assertEqual(run.parameters, parameters)
+        self.assertEqual(run.query_results.count(), 3)
+
+    def test_string_algorithm_id_manifest_is_supported(self) -> None:
+        manifest_path = self.artifact_directory / "input_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["algorithm"] = "test_algorithm"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        result = self.import_results(dry_run=True)
+
+        self.assertEqual(result.component_coverage, 3)
 
     def test_dry_run_validates_without_inserting_rows(self) -> None:
         result = self.import_results(dry_run=True)
@@ -250,9 +291,37 @@ class BenchmarkResultImporterTests(TestCase):
         self.assertEqual(CPEAnalysisRun.objects.count(), 1)
         self.assertEqual(CPEAnalysisQueryResult.objects.count(), 3)
 
+    def test_existing_different_algorithm_does_not_block_import(self) -> None:
+        CPEAnalysisRun.objects.create(
+            algorithm_id="other_algorithm",
+            status="COMPLETED",
+            parameters={},
+            query_count=1,
+            candidate_family_count=1,
+        )
+
+        result = self.import_results()
+
+        self.assertIsNotNone(result.run_id)
+        self.assertEqual(CPEAnalysisRun.objects.count(), 2)
+        self.assertEqual(
+            CPEAnalysisRun.objects.get(pk=result.run_id).algorithm_id,
+            "test_algorithm",
+        )
+
     def test_invalid_rank_artifact_leaves_no_partial_rows(self) -> None:
         invalid_rows = [dict(row) for row in self.rows]
         invalid_rows[2]["best_rank"] = 3
+        self.write_artifacts(rows=invalid_rows)
+
+        with self.assertRaises(BenchmarkArtifactValidationError):
+            self.import_results()
+        self.assertEqual(CPEAnalysisRun.objects.count(), 0)
+        self.assertEqual(CPEAnalysisQueryResult.objects.count(), 0)
+
+    def test_invalid_outcome_artifact_leaves_no_partial_rows(self) -> None:
+        invalid_rows = [dict(row) for row in self.rows]
+        invalid_rows[2]["outcome"] = "UNIQUE_CORRECT"
         self.write_artifacts(rows=invalid_rows)
 
         with self.assertRaises(BenchmarkArtifactValidationError):

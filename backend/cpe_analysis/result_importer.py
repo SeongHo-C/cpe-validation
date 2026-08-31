@@ -87,6 +87,20 @@ VERIFIED_LEVENSHTEIN_IDENTITY = ExpectedBenchmarkIdentity(
 )
 
 
+VERIFIED_JARO_WINKLER_IDENTITY = ExpectedBenchmarkIdentity(
+    algorithm_id="jaro_winkler",
+    query_count=158,
+    candidate_family_count=181_484,
+    top1_count=69,
+    recall_at_5_count=134,
+    recall_at_10_count=140,
+    mrr=0.6082612255091588,
+    unique_correct_count=69,
+    ambiguous_count=51,
+    not_top_group_count=38,
+)
+
+
 @dataclass(frozen=True)
 class QueryResultRecord:
     component_id: int
@@ -493,13 +507,17 @@ def load_and_validate_benchmark(
     )
 
     manifest_algorithm = input_manifest.get("algorithm")
-    if not isinstance(manifest_algorithm, dict):
+    if isinstance(manifest_algorithm, dict):
+        manifest_algorithm_id = manifest_algorithm.get("algorithm_id")
+    elif isinstance(manifest_algorithm, str):
+        manifest_algorithm_id = manifest_algorithm
+    else:
         raise BenchmarkArtifactValidationError(
-            "input_manifest algorithm must be an object."
+            "input_manifest algorithm must be an algorithm ID or object."
         )
     manifest_expectations = {
         "input_manifest algorithm_id": (
-            manifest_algorithm.get("algorithm_id"),
+            manifest_algorithm_id,
             algorithm_id,
         ),
         "input_manifest query_count": (
@@ -725,6 +743,7 @@ def import_benchmark_results(
     artifact_directory: Path,
     *,
     expected_identity: ExpectedBenchmarkIdentity,
+    run_parameters: Mapping[str, object] | None = None,
     dry_run: bool = False,
 ) -> PersistenceResult:
     benchmark = load_and_validate_benchmark(artifact_directory)
@@ -755,7 +774,7 @@ def import_benchmark_results(
         run = CPEAnalysisRun(
             algorithm_id=benchmark.algorithm_id,
             status=CPEAnalysisRunStatus.COMPLETED,
-            parameters={},
+            parameters=dict(run_parameters or {}),
             query_count=metrics.query_count,
             candidate_family_count=benchmark.candidate_family_count,
             top1_accuracy=metrics.top1_accuracy,
