@@ -161,6 +161,22 @@ def _canonicalize_attribute(
             raise CPE23CanonicalizationError(
                 f"{name} contains an unquoted '*' away from an endpoint"
             )
+        wildcard_by_position = dict(wildcard_positions)
+        prefix_wildcard_kinds = {
+            wildcard_by_position[position]
+            for position in range(first_non_wildcard)
+        }
+        suffix_wildcard_kinds = {
+            wildcard_by_position[position]
+            for position in range(last_non_wildcard + 1, logical_position)
+        }
+        if any(
+            kinds == {"*", "?"}
+            for kinds in (prefix_wildcard_kinds, suffix_wildcard_kinds)
+        ):
+            raise CPE23CanonicalizationError(
+                f"{name} mixes unquoted '*' and '?' at one endpoint"
+            )
 
     return CPE23Attribute(
         name=name,
