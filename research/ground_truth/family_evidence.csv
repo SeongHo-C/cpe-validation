@@ -1,0 +1,4 @@
+vendor,product,family_entry_count,update_any_count,update_na_count,update_concrete_count,qualifier_pattern,version_qualifier_precedent,update_qualifier_precedent,ground_truth_policy_consequence,related_case
+w1.fi,wpa_supplicant,77,75,0,2,PREVIEW_PRE_RELEASE,None,"pre1; pre4","Preserve verified -devel provenance; use base CPE VERSION and UPDATE=* because devel has no direct family precedent.","Teltonika 2.12-devel; Unitronics 2.11-devel"
+w1.fi,hostapd,52,52,0,0,NONE,None,None,"Represent verified 2.10-devel as CPE VERSION=2.10 and UPDATE=*.","ACKSYS hostapd 2.10-devel"
+invisible-island,ncurses,321,13,6,302,DATE_OR_PATCHLEVEL,None,"302 date-like UPDATE values","Represent verified 6.1.20180127 as CPE VERSION=6.1 and UPDATE=20180127.","ACKSYS and MDEX ncurses 6.1.20180127"
