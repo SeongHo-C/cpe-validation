@@ -139,75 +139,40 @@ describe("CPE Analysis dashboard", () => {
       .toBeInTheDocument()
     expect(within(summary).getByText("181,484"))
       .toBeInTheDocument()
-    expect(within(summary).getByText("4")).toBeInTheDocument()
-    expect(within(summary).getByText("4 / 4"))
+    expect(within(summary).getByText("50.00%"))
       .toBeInTheDocument()
-    expect(
-      within(summary).getByText(
-        "Character-level similarity methods",
-      ),
-    ).toBeInTheDocument()
-    expect(within(summary).getByText("Methods evaluated"))
+    expect(within(summary).getByText("89.87%"))
       .toBeInTheDocument()
-    const benchmarkProgress = within(summary).getByRole("progressbar", {
-      name: "Benchmark progress",
-    })
-    expect(benchmarkProgress).toHaveAttribute(
-      "aria-valuetext",
-      "4 of 4 methods evaluated",
-    )
-    expect(
-      Number(benchmarkProgress.getAttribute("aria-valuenow")),
-    ).toBe(100)
     for (const label of [
       "Evaluation Set",
       "Candidate Families",
-      "Methods",
-      "Benchmark",
+      "Best Top-1",
+      "Best Recall@10",
     ]) {
       expect(within(summary).getByText(label)).toBeInTheDocument()
     }
-
-    const algorithmCards = screen.getByRole("region", {
-      name: "Algorithms",
-    })
-    expect(within(algorithmCards).getAllByRole("listitem"))
-      .toHaveLength(4)
-    expect(within(algorithmCards).queryByRole("button"))
-      .not.toBeInTheDocument()
-    for (const name of [
-      "Levenshtein",
-      "Jaro-Winkler",
-      "Character n-gram",
-      "Ratcliff–Obershelp",
-    ]) {
-      expect(within(algorithmCards).getByRole("heading", { name }))
-        .toBeInTheDocument()
-    }
     for (const removed of [
-      "Exact Match",
-      "Token Jaccard",
-      "TF-IDF + Cosine",
+      "Methods",
+      "Benchmark",
+      "Character-level similarity methods",
+      "Methods evaluated",
     ]) {
-      expect(within(algorithmCards).queryByText(removed))
+      expect(within(summary).queryByText(removed))
         .not.toBeInTheDocument()
     }
-    const levenshteinCard = within(algorithmCards)
-      .getByRole("heading", { name: "Levenshtein" })
-      .closest("li")
-    expect(levenshteinCard).not.toBeNull()
-    expect(within(levenshteinCard!).getByText("Completed"))
-      .toBeInTheDocument()
-    expect(within(algorithmCards).getAllByText("Completed"))
-      .toHaveLength(4)
-    expect(screen.queryByText("Selected Algorithm"))
+    expect(within(summary).queryByRole("progressbar"))
       .not.toBeInTheDocument()
-    expect(screen.queryByText("Selected"))
+    expect(screen.queryByRole("region", { name: "Algorithms" }))
+      .not.toBeInTheDocument()
+    expect(screen.queryByText("API Connected"))
       .not.toBeInTheDocument()
 
     const table = screen.getByRole("table", {
       name: "Product-family retrieval performance leaderboard",
     })
+    expect(table.parentElement).toHaveClass("overflow-x-auto")
+    expect(within(table).getAllByRole("rowgroup")[0])
+      .toHaveClass("bg-slate-50")
     expect(within(table).getAllByRole("row")).toHaveLength(5)
     expect(
       within(table)
@@ -215,7 +180,6 @@ describe("CPE Analysis dashboard", () => {
         .map((header) => header.textContent),
     ).toEqual([
       "Algorithm",
-      "Status",
       "Top-1 Accuracy",
       "Recall@5",
       "Recall@10",
@@ -224,8 +188,6 @@ describe("CPE Analysis dashboard", () => {
     const levenshteinRow = within(table).getByRole("row", {
       name: /Levenshtein/,
     })
-    expect(within(levenshteinRow).getByText("Completed"))
-      .toBeInTheDocument()
     for (const metric of ["39.87%", "78.48%", "80.38%", "0.5565"]) {
       expect(within(levenshteinRow).getByText(metric))
         .toBeInTheDocument()
@@ -233,9 +195,22 @@ describe("CPE Analysis dashboard", () => {
     const characterRow = within(table).getByRole("row", {
       name: /Character n-gram/,
     })
+    expect(characterRow).toHaveClass("hover:bg-slate-50")
+    expect(characterRow).not.toHaveClass("bg-cyan-50/45")
+    expect(within(characterRow).getAllByRole("cell")[0])
+      .toHaveClass("border-l-2", "border-l-cyan-600")
+    const bestBadge = within(characterRow).getByText("Best")
+    expect(bestBadge).toHaveClass(
+      "h-4",
+      "border-cyan-600/20",
+      "bg-transparent",
+      "text-[10px]",
+      "text-cyan-700",
+    )
     for (const metric of ["50.00%", "86.08%", "89.87%", "0.6523"]) {
-      expect(within(characterRow).getByText(metric))
-        .toBeInTheDocument()
+      const metricValue = within(characterRow).getByText(metric)
+      expect(metricValue).toHaveClass("font-semibold", "text-foreground")
+      expect(metricValue).not.toHaveClass("text-cyan-800")
     }
     const ratcliffRow = within(table).getByRole("row", {
       name: /Ratcliff–Obershelp/,
@@ -244,7 +219,20 @@ describe("CPE Analysis dashboard", () => {
       expect(within(ratcliffRow).getByText(metric))
         .toBeInTheDocument()
     }
-    expect(within(table).queryByText("Not Run"))
+    for (const [name, descriptor] of [
+      ["Levenshtein", "Edit distance"],
+      ["Jaro-Winkler", "Character position"],
+      ["Character n-gram", "Character fragments"],
+      ["Ratcliff–Obershelp", "Common substring"],
+    ]) {
+      const row = within(table).getByRole("row", {
+        name: new RegExp(name),
+      })
+      expect(within(row).getByText(descriptor)).toBeInTheDocument()
+    }
+    expect(within(table).queryByText("Completed"))
+      .not.toBeInTheDocument()
+    expect(within(table).queryByText("Status"))
       .not.toBeInTheDocument()
 
     await waitFor(() => {
@@ -264,9 +252,8 @@ describe("CPE Analysis dashboard", () => {
     ).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Retry" }))
       .toBeInTheDocument()
-    expect(
-      screen.getByRole("region", { name: "Algorithms" }),
-    ).toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "Algorithms" }))
+      .not.toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Performance" }))
       .toBeInTheDocument()
     expect(screen.queryByText("Selected Algorithm"))

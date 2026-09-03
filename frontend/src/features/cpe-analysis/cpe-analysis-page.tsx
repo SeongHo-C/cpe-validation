@@ -15,7 +15,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -28,7 +27,6 @@ import {
 } from "@/components/ui/table"
 import {
   getCpeAnalysisSummary,
-  type CpeAnalysisAlgorithmStatus,
   type CpeAnalysisMetrics,
   type CpeAnalysisSummary,
 } from "@/features/cpe-analysis/cpe-analysis-api"
@@ -43,7 +41,6 @@ interface AlgorithmDefinition {
 }
 
 interface AlgorithmView extends AlgorithmDefinition {
-  status: CpeAnalysisAlgorithmStatus
   metrics: CpeAnalysisMetrics | null
 }
 
@@ -76,19 +73,13 @@ const metricColumns = [
   { key: "recall_at_10", label: "Recall@10", type: "percent" },
   { key: "mrr", label: "MRR", type: "decimal" },
 ] as const
+type MetricKey = (typeof metricColumns)[number]["key"]
+
 const percentMetricFormatter = new Intl.NumberFormat("en-US", {
   style: "percent",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
-const statusLabels: Record<CpeAnalysisAlgorithmStatus, string> = {
-  COMPLETED: "Completed",
-  NOT_RUN: "Not Run",
-}
-const statusBadgeClasses: Record<CpeAnalysisAlgorithmStatus, string> = {
-  COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  NOT_RUN: "border-border/70 bg-muted/60 text-muted-foreground",
-}
 
 function mergeAlgorithmResults(
   summary: CpeAnalysisSummary | null,
@@ -101,8 +92,8 @@ function mergeAlgorithmResults(
     const result = results.get(algorithm.id)
     return {
       ...algorithm,
-      status: result?.status ?? "NOT_RUN",
-      metrics: result?.metrics ?? null,
+      metrics:
+        result?.status === "COMPLETED" ? result.metrics : null,
     }
   })
 }
@@ -117,19 +108,31 @@ function formatMetric(
     : value.toFixed(4)
 }
 
-function AlgorithmStatusBadge({
-  status,
-}: {
-  status: CpeAnalysisAlgorithmStatus
-}) {
-  return (
-    <Badge
-      variant="outline"
-      className={cn("shrink-0", statusBadgeClasses[status])}
-    >
-      {statusLabels[status]}
-    </Badge>
-  )
+function highestMetric(
+  algorithms: AlgorithmView[],
+  key: MetricKey,
+): number | null {
+  return algorithms.reduce<number | null>((highest, algorithm) => {
+    const value = algorithm.metrics?.[key]
+    if (value === null || value === undefined) return highest
+    return highest === null || value > highest ? value : highest
+  }, null)
+}
+
+function bestAlgorithmId(algorithms: AlgorithmView[]): string | null {
+  let bestId: string | null = null
+  let bestMrr: number | null = null
+
+  for (const algorithm of algorithms) {
+    const mrr = algorithm.metrics?.mrr
+    if (mrr === null || mrr === undefined) continue
+    if (bestMrr === null || mrr > bestMrr) {
+      bestId = algorithm.id
+      bestMrr = mrr
+    }
+  }
+
+  return bestId
 }
 
 function SummarySkeleton() {
@@ -152,24 +155,15 @@ function SummarySkeleton() {
 
 function ExperimentSummary({
   summary,
+  algorithms,
 }: {
   summary: CpeAnalysisSummary
+  algorithms: AlgorithmView[]
 }) {
-  const benchmarkProgress =
-    summary.method_count > 0
-      ? Math.min(
-          Math.max(
-            (summary.completed_method_count / summary.method_count) * 100,
-            0,
-          ),
-          100,
-        )
-      : 0
   const metrics: readonly {
     label: string
     value: ReactNode
     description: string
-    progress?: number
   }[] = [
     {
       label: "Evaluation Set",
@@ -184,17 +178,22 @@ function ExperimentSummary({
       description: "Searchable CPE product families",
     },
     {
-      label: "Methods",
-      value: formatInteger(summary.method_count),
-      description: "Character-level similarity methods",
+      label: "Best Top-1",
+      value:
+        formatMetric(
+          highestMetric(algorithms, "top1_accuracy"),
+          "percent",
+        ) ?? "-",
+      description: "Highest observed Top-1 accuracy",
     },
     {
-      label: "Benchmark",
-      value: `${formatInteger(
-        summary.completed_method_count,
-      )} / ${formatInteger(summary.method_count)}`,
-      description: "Methods evaluated",
-      progress: benchmarkProgress,
+      label: "Best Recall@10",
+      value:
+        formatMetric(
+          highestMetric(algorithms, "recall_at_10"),
+          "percent",
+        ) ?? "-",
+      description: "Highest observed Recall@10",
     },
   ]
 
@@ -220,19 +219,6 @@ function ExperimentSummary({
               <span className="mt-1.5 block text-xs text-muted-foreground">
                 {metric.description}
               </span>
-              {metric.progress !== undefined ? (
-                <Progress
-                  value={metric.progress}
-                  aria-label="Benchmark progress"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={metric.progress}
-                  aria-valuetext={`${formatInteger(
-                    summary.completed_method_count,
-                  )} of ${formatInteger(summary.method_count)} methods evaluated`}
-                  className="mt-2.5 [&_[data-slot=progress-indicator]]:bg-emerald-500/75"
-                />
-              ) : null}
             </dd>
           </Card>
         ))}
@@ -241,51 +227,15 @@ function ExperimentSummary({
   )
 }
 
-function AlgorithmCards({ algorithms }: { algorithms: AlgorithmView[] }) {
-  return (
-    <section aria-labelledby="algorithms-title">
-      <div className="mb-3 space-y-1">
-        <h2
-          id="algorithms-title"
-          className="font-heading text-base font-semibold tracking-tight"
-        >
-          Algorithms
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Matching methods included in the product-family evaluation.
-        </p>
-      </div>
-      <ul
-        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        {algorithms.map((algorithm) => (
-          <li key={algorithm.id} className="min-w-0">
-            <Card
-              size="sm"
-              className={cn(
-                "h-full min-h-28 gap-0 px-3 py-3",
-                algorithm.status === "COMPLETED" &&
-                  "bg-emerald-50/35 ring-emerald-200/80",
-              )}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-heading text-sm font-semibold leading-snug">
-                  {algorithm.name}
-                </h3>
-                <AlgorithmStatusBadge status={algorithm.status} />
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {algorithm.descriptor}
-              </p>
-            </Card>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
 function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
+  const bestId = bestAlgorithmId(algorithms)
+  const bestMetrics = Object.fromEntries(
+    metricColumns.map((column) => [
+      column.key,
+      highestMetric(algorithms, column.key),
+    ]),
+  ) as Record<MetricKey, number | null>
+
   return (
     <section aria-labelledby="performance-title">
       <Card className="gap-0 py-0">
@@ -293,17 +243,14 @@ function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
           title={<h2 id="performance-title">Performance</h2>}
           description="Latest completed product-family retrieval benchmark metrics."
         />
-        <Table className="min-w-[820px] table-fixed">
+        <Table className="min-w-[700px] table-fixed">
           <TableCaption className="sr-only">
             Product-family retrieval performance leaderboard
           </TableCaption>
-          <TableHeader className="bg-muted/40">
+          <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead scope="col" className="w-[34%] px-4">
+              <TableHead scope="col" className="w-[36%] px-4">
                 Algorithm
-              </TableHead>
-              <TableHead scope="col" className="w-28">
-                Status
               </TableHead>
               {metricColumns.map((column) => (
                 <TableHead
@@ -317,54 +264,62 @@ function PerformanceTable({ algorithms }: { algorithms: AlgorithmView[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {algorithms.map((algorithm) => (
-              <TableRow
-                key={algorithm.id}
-                className={cn(
-                  algorithm.status === "COMPLETED" &&
-                    "bg-emerald-50/25 hover:bg-emerald-50/40",
-                )}
-              >
-                <TableCell className="px-4 py-2.5">
-                  <span
+            {algorithms.map((algorithm) => {
+              const isBest = algorithm.id === bestId
+              return (
+                <TableRow
+                  key={algorithm.id}
+                  className="hover:bg-slate-50"
+                >
+                  <TableCell
                     className={cn(
-                      "flex items-center gap-2 font-medium",
-                      algorithm.status === "COMPLETED" &&
-                        "font-semibold text-foreground",
+                      "px-4 py-2.5",
+                      isBest && "border-l-2 border-l-cyan-600",
                     )}
                   >
-                    {algorithm.name}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {algorithm.descriptor}
-                  </span>
-                </TableCell>
-                <TableCell className="py-2.5">
-                  <AlgorithmStatusBadge status={algorithm.status} />
-                </TableCell>
-                {metricColumns.map((column) => {
-                  const value = formatMetric(
-                    algorithm.metrics?.[column.key],
-                    column.type,
-                  )
-                  return (
-                    <TableCell
-                      key={column.key}
-                      className={cn(
-                        "py-2.5 text-center tabular-nums",
-                        value === null
-                          ? "text-muted-foreground/70"
-                          : "font-medium text-foreground",
-                      )}
-                    >
-                      {value ?? (
-                        <span aria-label="Not evaluated">-</span>
-                      )}
-                    </TableCell>
-                  )
-                })}
-              </TableRow>
-            ))}
+                    <span className="flex items-center gap-2 font-medium text-foreground">
+                      {algorithm.name}
+                      {isBest ? (
+                        <Badge
+                          variant="outline"
+                          className="h-4 border-cyan-600/20 bg-transparent px-1.5 py-0 text-[10px] text-cyan-700"
+                        >
+                          Best
+                        </Badge>
+                      ) : null}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {algorithm.descriptor}
+                    </span>
+                  </TableCell>
+                  {metricColumns.map((column) => {
+                    const rawValue = algorithm.metrics?.[column.key]
+                    const value = formatMetric(rawValue, column.type)
+                    const isBestMetric =
+                      rawValue !== null &&
+                      rawValue !== undefined &&
+                      rawValue === bestMetrics[column.key]
+                    return (
+                      <TableCell
+                        key={column.key}
+                        className={cn(
+                          "py-2.5 text-center tabular-nums",
+                          value === null
+                            ? "text-muted-foreground/70"
+                            : isBestMetric
+                              ? "font-semibold text-foreground"
+                              : "font-medium text-foreground",
+                        )}
+                      >
+                        {value ?? (
+                          <span aria-label="Not evaluated">-</span>
+                        )}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </Card>
@@ -434,10 +389,12 @@ export function CpeAnalysisPage() {
       ) : null}
 
       {!isLoading && !hasError && summary ? (
-        <ExperimentSummary summary={summary} />
+        <ExperimentSummary
+          summary={summary}
+          algorithms={displayedAlgorithms}
+        />
       ) : null}
 
-      <AlgorithmCards algorithms={displayedAlgorithms} />
       <PerformanceTable algorithms={displayedAlgorithms} />
     </PageContent>
   )

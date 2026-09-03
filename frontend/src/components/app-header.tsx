@@ -39,6 +39,7 @@ const routeMetadata = {
 
 export function AppHeader({ apiStatus }: AppHeaderProps) {
   const location = useLocation()
+  const showApiStatus = !location.pathname.startsWith("/cpe-analysis")
   const metadata = location.pathname.startsWith(
     "/ground-truth/components/",
   )
@@ -61,7 +62,7 @@ export function AppHeader({ apiStatus }: AppHeaderProps) {
             {metadata.description}
           </p>
         </div>
-        <ApiStatus status={apiStatus} />
+        {showApiStatus ? <ApiStatus status={apiStatus} /> : null}
       </div>
     </header>
   )
