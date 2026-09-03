@@ -38,10 +38,17 @@ docker compose up -d db
 ```
 
 Set `CPE_DICTIONARY_SNAPSHOT_ID=20260819T035002Z` and
-`NVD_CVE_SNAPSHOT_ID=20260820T110357Z` in `.env`. The database used for full
-reproduction must contain these imported snapshots and the 2,038 study
-components. RQ2 can be run directly from the repository CSV inputs; candidate
-universe generation and RQ3 additionally query the database.
+`NVD_CVE_SNAPSHOT_ID=20260820T110357Z` in `.env`. Large research inputs may not
+be included in Git. Before running the experiments, prepare the fixed CPE
+Dictionary snapshot under `data/cpe-dictionary/20260819T035002Z/`, the fixed
+NVD snapshot under `data/nvd-cve/20260820T110357Z/`, the four industrial
+firmware SBOMs under `data/uploaded-sboms/`, and source evidence under
+`data/source-artifacts/`.
+
+Import the prepared snapshots and SBOM components into the configured database;
+full reproduction requires both snapshots and all 2,038 study components. RQ2
+can be run directly from the repository CSV inputs, while candidate universe
+generation and RQ3 additionally query the database.
 
 Output directories in the commands below must not already exist.
 
@@ -90,8 +97,10 @@ backend/.venv/bin/python backend/manage.py run_rq2_benchmarks \
   --output-directory reproduced/rq2
 ```
 
-The committed candidate universe can be used instead by setting
-`--candidate-universe data/cpe_candidate_universe/candidate_families.csv`.
+The Candidate Universe CSV may not be included in Git. It can be regenerated
+with `generate_cpe_candidate_universe` as shown above. If it is already prepared
+at `data/cpe_candidate_universe/candidate_families.csv`, that path can instead be
+passed to `--candidate-universe`.
 
 | Method | Top-1 | Recall@5 | Recall@10 | MRR |
 | --- | ---: | ---: | ---: | ---: |
