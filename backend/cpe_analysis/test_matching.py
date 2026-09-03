@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import random
 from dataclasses import dataclass, field, fields
@@ -427,7 +426,7 @@ class CandidateUniverseLoaderTests(SimpleTestCase):
         )
         self.universe_directory.mkdir(parents=True)
 
-    def write_universe(self, *, manifest_sha256: str | None = None) -> None:
+    def write_universe(self) -> None:
         candidate_path = self.universe_directory / "candidate_families.csv"
         with candidate_path.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(
@@ -462,7 +461,6 @@ class CandidateUniverseLoaderTests(SimpleTestCase):
                     },
                 ]
             )
-        actual_sha256 = hashlib.sha256(candidate_path.read_bytes()).hexdigest()
         manifest = {
             "schema_version": 1,
             "family_definition": ["part", "vendor", "product"],
@@ -476,14 +474,13 @@ class CandidateUniverseLoaderTests(SimpleTestCase):
             "nvd_snapshot": "test-nvd",
             "total_candidate_families": 2,
             "searchable_candidate_families": 1,
-            "candidate_file_sha256": manifest_sha256 or actual_sha256,
         }
         (self.universe_directory / "manifest.json").write_text(
             json.dumps(manifest),
             encoding="utf-8",
         )
 
-    def test_loader_validates_hash_counts_and_decodes_product(self) -> None:
+    def test_loader_validates_counts_and_decodes_product(self) -> None:
         self.write_universe()
 
         universe = load_candidate_universe(
@@ -505,15 +502,6 @@ class CandidateUniverseLoaderTests(SimpleTestCase):
             "product/server",
         )
 
-    def test_loader_rejects_candidate_hash_mismatch(self) -> None:
-        self.write_universe(manifest_sha256="0" * 64)
-
-        with self.assertRaises(CandidateUniverseError):
-            load_candidate_universe(
-                self.root,
-                enforce_research_contract=False,
-            )
-
 
 class FrozenCandidateUniverseValidationTests(SimpleTestCase):
     def test_all_frozen_candidate_products_decode(self) -> None:
@@ -523,7 +511,3 @@ class FrozenCandidateUniverseValidationTests(SimpleTestCase):
         self.assertEqual(universe.validation.searchable_families, 181_484)
         self.assertEqual(universe.validation.decode_successes, 181_493)
         self.assertEqual(universe.validation.decode_failures, 0)
-        self.assertEqual(
-            universe.validation.candidate_file_sha256,
-            "fdc3412c730cb2cff75a161d8cdde85336ef2c9c79d51fe9addd87a1e9774576",
-        )

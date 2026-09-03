@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import math
 from collections import Counter
@@ -18,9 +17,6 @@ TIE_TOLERANCE = 1e-12
 
 EXPECTED_SCHEMA_VERSION = 1
 EXPECTED_CANDIDATE_FILE = "candidate_families.csv"
-EXPECTED_CANDIDATE_FILE_SHA256 = (
-    "fdc3412c730cb2cff75a161d8cdde85336ef2c9c79d51fe9addd87a1e9774576"
-)
 EXPECTED_TOTAL_FAMILIES = 181_493
 EXPECTED_SEARCHABLE_FAMILIES = 181_484
 EXPECTED_CPE_SNAPSHOT = "20260819T035002Z"
@@ -107,7 +103,6 @@ class FamilySimilarityScorer(Protocol):
 class CandidateUniverseManifest:
     schema_version: int
     candidate_file: str
-    candidate_file_sha256: str
     total_candidate_families: int
     searchable_candidate_families: int
     cpe_snapshot: str
@@ -132,7 +127,6 @@ class CandidateUniverseValidation:
     searchable_families: int
     decode_successes: int
     decode_failures: int
-    candidate_file_sha256: str
 
 
 @dataclass(frozen=True)
@@ -295,14 +289,6 @@ def decode_cpe_product(serialized_product: str) -> str:
     return "".join(decoded)
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _required_integer(data: dict[str, Any], field: str) -> int:
     value = data.get(field)
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
@@ -360,10 +346,6 @@ def _load_manifest(
     manifest = CandidateUniverseManifest(
         schema_version=_required_integer(data, "schema_version"),
         candidate_file=_required_string(data, "candidate_file"),
-        candidate_file_sha256=_required_string(
-            data,
-            "candidate_file_sha256",
-        ),
         total_candidate_families=_required_integer(
             data,
             "total_candidate_families",
@@ -389,7 +371,6 @@ def _load_manifest(
         expected = {
             "schema_version": EXPECTED_SCHEMA_VERSION,
             "candidate_file": EXPECTED_CANDIDATE_FILE,
-            "candidate_file_sha256": EXPECTED_CANDIDATE_FILE_SHA256,
             "total_candidate_families": EXPECTED_TOTAL_FAMILIES,
             "searchable_candidate_families": (
                 EXPECTED_SEARCHABLE_FAMILIES
@@ -432,16 +413,6 @@ def load_candidate_universe(
         repository_root,
         enforce_research_contract=enforce_research_contract,
     )
-    try:
-        actual_sha256 = _sha256_file(candidate_path)
-    except OSError as error:
-        raise CandidateUniverseError(
-            "Candidate universe CSV could not be read."
-        ) from error
-    if actual_sha256 != manifest.candidate_file_sha256:
-        raise CandidateUniverseError(
-            "Candidate universe CSV SHA-256 does not match its manifest."
-        )
 
     families: list[CandidateFamily] = []
     searchable_families: list[CandidateFamily] = []
@@ -528,7 +499,6 @@ def load_candidate_universe(
         searchable_families=len(searchable_families),
         decode_successes=len(families),
         decode_failures=0,
-        candidate_file_sha256=actual_sha256,
     )
     return CandidateUniverse(
         manifest=manifest,

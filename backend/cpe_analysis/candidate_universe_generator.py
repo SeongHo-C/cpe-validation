@@ -5,7 +5,6 @@ import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Iterable
 
 from django.db import connection, transaction
 from django.db.models import Count, Q
@@ -118,8 +117,6 @@ class CandidateUniverseGenerationResult:
     total_families: int
     searchable_families: int
     non_searchable_families: int
-    candidate_file_sha256: str
-    family_set_sha256: str
     transaction_read_only: bool
 
     def to_dict(self) -> dict[str, object]:
@@ -138,22 +135,6 @@ def family_id(family: Family) -> str:
     return hashlib.sha256(
         _compact_family_json(family).encode("utf-8")
     ).hexdigest()
-
-
-def family_set_sha256(families: Iterable[Family]) -> str:
-    digest = hashlib.sha256()
-    for family in sorted(families):
-        digest.update(_compact_family_json(family).encode("utf-8"))
-        digest.update(b"\n")
-    return digest.hexdigest()
-
-
-def file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def searchability(family: Family) -> tuple[bool, str]:
@@ -500,8 +481,6 @@ def generate_candidate_universe(
                 cpe_snapshot=cpe_snapshot,
                 nvd_snapshot=nvd_snapshot,
             )
-            candidate_hash = file_sha256(temporary_candidate)
-            family_hash = family_set_sha256(sources)
             result = CandidateUniverseGenerationResult(
                 cpe_snapshot=cpe_snapshot,
                 nvd_snapshot=nvd_snapshot,
@@ -520,8 +499,6 @@ def generate_candidate_universe(
                 total_families=len(sources),
                 searchable_families=searchable_count,
                 non_searchable_families=len(sources) - searchable_count,
-                candidate_file_sha256=candidate_hash,
-                family_set_sha256=family_hash,
                 transaction_read_only=True,
             )
             manifest = {
@@ -546,8 +523,6 @@ def generate_candidate_universe(
                     len(sources) - searchable_count
                 ),
                 "deprecated_final_candidates": 0,
-                "candidate_file_sha256": candidate_hash,
-                "family_set_sha256": family_hash,
             }
             temporary_manifest.write_text(
                 json.dumps(
