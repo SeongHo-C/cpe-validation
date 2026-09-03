@@ -115,7 +115,7 @@ class CPEExactMatchAnalysisTests(TestCase):
         )
         sbom = SBOMDocument.objects.create(
             docker_image=image,
-            source_path="pilot/results/sboms/example-1.0.cdx.json",
+            source_path="fixtures/sboms/example-1.0.cdx.json",
             file_sha256="2" * 64,
             spec_version="1.7",
             generator_name="syft",

@@ -699,7 +699,7 @@ describe("Components routing and page", () => {
     expect(within(resultRow!).getByText("—")).toBeInTheDocument()
     expect(
       screen.getByText(
-        "Showing components without a Primary CPE from all pilot images.",
+        "Showing components without a Primary CPE across all images.",
       ),
     ).toBeInTheDocument()
   })

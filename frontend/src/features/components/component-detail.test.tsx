@@ -89,7 +89,7 @@ const componentDetail: ComponentDetail = {
   ],
   sbom_document: {
     id: 11,
-    source_path: "pilot/results/sboms/alpine-3.24.1.cdx.json",
+    source_path: "fixtures/sboms/alpine-3.24.1.cdx.json",
     spec_version: "1.7",
     generator_name: "syft",
     generator_version: "1.49.0",
@@ -433,7 +433,7 @@ describe("Component Detail panel", () => {
     ).not.toBeInTheDocument()
     expect(componentDetail.sbom_document).toEqual({
       id: 11,
-      source_path: "pilot/results/sboms/alpine-3.24.1.cdx.json",
+      source_path: "fixtures/sboms/alpine-3.24.1.cdx.json",
       spec_version: "1.7",
       generator_name: "syft",
       generator_version: "1.49.0",

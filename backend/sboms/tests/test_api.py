@@ -52,7 +52,7 @@ class ReadOnlyAPITests(APITestCase):
         )
         cls.beta_sbom = SBOMDocument.objects.create(
             docker_image=cls.beta_image,
-            source_path="pilot/results/sboms/beta-2.0.cdx.json",
+            source_path="fixtures/sboms/beta-2.0.cdx.json",
             file_sha256="2" * 64,
             spec_version="1.7",
             serial_number="urn:uuid:beta",
@@ -137,7 +137,7 @@ class ReadOnlyAPITests(APITestCase):
             )
         cls.alpha_sbom = SBOMDocument.objects.create(
             docker_image=cls.alpha_image,
-            source_path="pilot/results/sboms/alpha-1.0.cdx.json",
+            source_path="fixtures/sboms/alpha-1.0.cdx.json",
             file_sha256="1" * 64,
             spec_version="1.7",
             serial_number="urn:uuid:alpha",

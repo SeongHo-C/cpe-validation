@@ -19,7 +19,7 @@ class SbomModelTests(TestCase):
         )
         self.sbom_document = SBOMDocument.objects.create(
             docker_image=self.docker_image,
-            source_path="pilot/results/sboms/example-1.0.cdx.json",
+            source_path="fixtures/sboms/example-1.0.cdx.json",
             file_sha256="b" * 64,
             spec_version="1.7",
             generator_name="syft",
@@ -208,7 +208,7 @@ class SbomModelTests(TestCase):
     def test_same_bom_ref_in_different_sboms_is_allowed(self) -> None:
         second_document = SBOMDocument.objects.create(
             docker_image=self.docker_image,
-            source_path="pilot/results/sboms/example-1.0-second.cdx.json",
+            source_path="fixtures/sboms/example-1.0-second.cdx.json",
             file_sha256="c" * 64,
             spec_version="1.7",
             generator_name="syft",

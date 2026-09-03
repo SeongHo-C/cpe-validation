@@ -88,10 +88,10 @@ export function ImageScopeSummary({
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             {showsMissingCpes
-              ? "Showing components without a Primary CPE from all pilot images."
+              ? "Showing components without a Primary CPE across all images."
               : hasDictionaryFilter
-                ? "Showing Primary CPE Components with the selected Dictionary status from all pilot images."
-                : "Showing components with a primary CPE from all pilot images."}
+                ? "Showing Primary CPE Components with the selected Dictionary status across all images."
+                : "Showing components with a primary CPE across all images."}
           </p>
         </CardHeader>
         <CardContent>

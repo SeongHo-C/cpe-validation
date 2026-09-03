@@ -51,7 +51,7 @@ class CPEProfilingTests(TestCase):
         )
         first_sbom = SBOMDocument.objects.create(
             docker_image=first_image,
-            source_path="pilot/results/sboms/first-1.0.cdx.json",
+            source_path="fixtures/sboms/first-1.0.cdx.json",
             file_sha256="3" * 64,
             spec_version="1.7",
             generator_name="syft",
@@ -59,7 +59,7 @@ class CPEProfilingTests(TestCase):
         )
         second_sbom = SBOMDocument.objects.create(
             docker_image=second_image,
-            source_path="pilot/results/sboms/second-2.0.cdx.json",
+            source_path="fixtures/sboms/second-2.0.cdx.json",
             file_sha256="4" * 64,
             spec_version="1.7",
             generator_name="syft",

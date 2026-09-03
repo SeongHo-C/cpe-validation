@@ -122,7 +122,7 @@ def create_component(
     )
     document = SBOMDocument.objects.create(
         docker_image=image,
-        source_path=f"pilot/results/sboms/{suffix}-1.0.cdx.json",
+        source_path=f"fixtures/sboms/{suffix}-1.0.cdx.json",
         file_sha256=digest_character.upper() * 64,
         spec_version="1.7",
         serial_number=f"urn:uuid:{suffix}",
