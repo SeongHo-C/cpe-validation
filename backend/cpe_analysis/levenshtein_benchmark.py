@@ -45,7 +45,8 @@ ALGORITHM_ID = "length_normalized_levenshtein"
 DEFAULT_OUTPUT_DIRECTORY = Path(
     "/tmp/cpe-family-levenshtein-evaluation"
 )
-GT_DIRECTORY_RELATIVE = Path(
+GT_DIRECTORY_RELATIVE = Path("research/ground_truth")
+GT_ARCHIVE_DIRECTORY_RELATIVE = Path(
     ".ground-truth/FINAL_GT_20260828/repository-files/analysis/"
     "final-ground-truth/FINAL_GT_20260828"
 )
@@ -170,9 +171,10 @@ def _protected_file_hashes(repository_root: Path) -> dict[str, str]:
         "data/cpe-dictionary/20260819T035002Z/nvdcpe-2.0.tar.gz",
         "data/nvd-cve/20260820T110357Z/manifest.json",
         str(GT_DIRECTORY_RELATIVE / "ground_truth.csv"),
-        str(GT_DIRECTORY_RELATIVE / "ground_truth.sha256"),
-        str(GT_DIRECTORY_RELATIVE / "dataset_manifest.json"),
-        str(GT_DIRECTORY_RELATIVE / "snapshot_manifest.json"),
+        str(GT_DIRECTORY_RELATIVE / "incorrect_cpe_fields.csv"),
+        str(GT_ARCHIVE_DIRECTORY_RELATIVE / "ground_truth.sha256"),
+        str(GT_ARCHIVE_DIRECTORY_RELATIVE / "dataset_manifest.json"),
+        str(GT_ARCHIVE_DIRECTORY_RELATIVE / "snapshot_manifest.json"),
     )
     return {
         path: _sha256_file(repository_root / path) for path in relative_paths
@@ -250,11 +252,12 @@ def _load_gt_queries(
     universe: CandidateUniverse,
 ) -> tuple[tuple[BenchmarkQuery, ...], dict[str, object]]:
     gt_directory = repository_root / GT_DIRECTORY_RELATIVE
+    gt_archive_directory = repository_root / GT_ARCHIVE_DIRECTORY_RELATIVE
     gt_path = gt_directory / "ground_truth.csv"
     actual_gt_sha256 = _sha256_file(gt_path)
-    declared_hash = (gt_directory / "ground_truth.sha256").read_text(
-        encoding="utf-8"
-    ).split()[0]
+    declared_hash = (
+        gt_archive_directory / "ground_truth.sha256"
+    ).read_text(encoding="utf-8").split()[0]
     if actual_gt_sha256 != GT_CSV_SHA256 or declared_hash != GT_CSV_SHA256:
         raise LevenshteinBenchmarkError(
             "Frozen Ground Truth CSV SHA-256 does not match its contract."
@@ -344,7 +347,7 @@ def _load_gt_queries(
         raise LevenshteinBenchmarkError(
             "Frozen firmware query distribution does not match its contract."
         )
-    dataset_manifest_path = gt_directory / "dataset_manifest.json"
+    dataset_manifest_path = gt_archive_directory / "dataset_manifest.json"
     return tuple(queries), {
         "dataset_name": "FINAL_GT_20260828",
         "ground_truth_csv": str(GT_DIRECTORY_RELATIVE / "ground_truth.csv"),
